@@ -44,116 +44,165 @@ The values below are kept in bank 0. ?? TODO see how/if the 2nd bank is used? Ma
 
 ## General storage
 
+Alien-formation attack controller data
+
+Drives when and how aliens break out of the base formation to fly their "closed loop" swooping attack patterns.
+The whole structure (`$4350`–`$437F`) is zeroed at level init by the routine at `$32B0`,
+and it's serviced every frame by a 7 way state machine dispatched through the jump table `T3018` (indexed by `Counter93`),
+with each handler reading/updating the behavior state in `$4350`.
+
 >>> memory
 
-|    |     |     |
-| -------- | ------- | ----------------- |
-| 4350      | M4350                | Alien behavior state (0, 1, 2, 3, 4, 5, 6) |
-| 4351      | M4351                | MSB of next closed loop pattern |
-| 4352      | M4352                | LSB of next closed loop pattern |
-| 4353      | M4353                | Number of aliens doing the closed loop pattern |
-| 4354      | M4354                | LSB of pointer to ? |
-| 4355      | M4355                | ? |
-| 4356      | M4356                | ? |
-| 4357      | M4357                | ? |
-| 4358      | M4358                | ? |
-| 4359      | M4359                | ? |
-| 435A      | M435A                | ? |
-| 435B      | M435B                | ? |
-| 435E      | M435E                | Flag for: 'AliensLeft < 5' ($FF) |
-| 435F      | M435F                | 8 bit counter for alien movement |
-| 4360      | PlayerMoved          | Flag for: 'Player moved' ($FF) |
-| 4361      | BulletTriggered      | Flag for: 'Bullet triggered' ($30) and counter |
-| 4362      | M4362                | Flag for: 'Player shield active' and animation counter |
-| 4363      | ParticleExplosion    | Flag for: 'Particle explosion start' and animation counter |
-| 4364      | M4364                | Flag for: 'Enemy hit detected' ($FF) and counter |
-| 4366      | M4366                | Flag for: 'Mothership or bird wing hit detected' ($FF) |
-| 4367      | M4367                | Flag for: 'Mothership partially faded in' ($FF) |
-| 4368      | M4368                | Maturity of the birds. From 'egg' over 'no wings' to 'adult' ($01 to $0F) |
-| 4369      | M4369                | Flag for: 'Bonus explosion' ($FF) |
-| 436A      | M436A                | Flag for: 'Bonus live added' ($FF) and counter |
-| 436B      | M436B                | Flag for: 'Mother ship score display' ($FF) and counter|
-| 436D      | M436D                | ? |
-| 436E      | M436E                | ? |
-| 436F      | M436F                | ? |
-| 4370      | M4370                | Explosion slot0 animation index |
-| 4371      | M4371                | Explosion slot0 BCD score value (last digit is ever 0) |
-| 4372      | M4372                | Explosion slot0 MSB screen ram |
-| 4373      | M4373                | Explosion slot0 LSB screen ram |
-| 4374      | M4374                | Explosion slot1 animation index |
-| 4375      | M4375                | Explosion slot1 BCD score value (last digit is ever 0) |
-| 4376      | M4376                | Explosion slot1 MSB screen ram |
-| 4377      | M4377                | Explosion slot1 LSB screen ram |
-| 4378      | M4378                | Bonus explosion slot0 animation index |
-| 4379      | M4379                | Bonus explosion slot0 BCD score value (last digit is ever 0) |
-| 437A      | M437A                | Bonus explosion slot0 MSB screen ram |
-| 437B      | M437B                | Bonus explosion slot0 LSB screen ram |
-| 437C      | M437C                | Bonus explosion slot1 animation index |
-| 437D      | M437D                | Bonus explosion slot1 BCD score value (last digit is ever 0) |
-| 437E      | M437E                | Bonus explosion slot1 MSB screen ram |
-| 437F      | M437F                | Bonus explosion slot1 LSB screen ram |
-| 4380      | M4380                | Ever set to 0 (prevents overflow) |
-| 4381      | Score1high           | Player 1 score BCD (high) |
-| 4382      | Score1mid            | Player 1 score BCD (mid) |
-| 4383      | Score1low            | Player 1 score BCD (low) |
-| 4384      | M4384                | Ever set to 0 (prevents overflow) |
-| 4385      | Score2high           | Player 2 score BCD (high) |
-| 4386      | Score2mid            | Player 2 score BCD (mid) |
-| 4387      | Score2low            | Player 2 score BCD (low) |
-| 4388      | M4388                | Ever set to 0 (prevents overflow) |
-| 4389      | HiScorehigh          | Hi score BCD (high) |
-| 438A      | HiScoremid           | Hi score BCD (mid) |
-| 438B      | HiScorelow           | Hi score BCD (low) |
-| 438C      | SoundControlA        | RAM copy of sound device control register A (0x6000) |
-| 438D      | SoundControlB        | RAM copy of sound device control register B (0x6800) |
-| 438E      | M438E                | ? |
-| 438F      | CoinCount            | Number of coins inserted (max is 9) |
-| 4390      | Player1Lives         | Player 1 number of lives |
-| 4391      | Player2Lives         | Player 2 number of lives |
-| 4392      | M4392                | Ever set to 0 ? |
-| 4393      | Counter93            | Free running counter during playtime at game level 3 |
-| 4394      | M4394                | Start value list pointer for alien movement MSB |
-| 4395      | M4395                | Start value list pointer for alien movement LSB |
-| 4396      | M4396                | ? |
-| 4397      | M4397                | ? |
-| 4398:4399 | Counter98            | 16 bit counter (MSB:LSB) actual index for slow print at intro splash |
-| 439A:439B | Counter9A            | 16 bit counter (MSB:LSB) and.. |
-| 439B      | M439B                | Next index for slow print at intro splash |
-| 439C      | M439C                | ? |
-| 439D      | M439D                | Fist two digits of BCD score value for mothership explosion |
-| 439E      | M439E                | Mapped player ship position, left part: ($09 to $C0) |
-| 439F      | M439F                | Mapped player ship position, right part: ($17 to $C8) |
-| 43A0      | IN0Current           | Current value of IN0: bit0='coin', bit1='1 player', bit2='2 players', bit4='fire', bit5='right', bit6='left', bit7='shield' |
-| 43A1      | IN0Previous          | Previous value of IN0    |
-| 43A2      | GameOrAttract        | Attract mode=0, One player game mode=1, Two players game mode=2 |
-| 43A3      | GameAndDemoOrSplash  | Game and demo for player 1=0, Game for player 2=1, Intro splash=2 |
-| 43A4      | GameState            | Game state=0 - 7 |
-| 43A5      | CounterA5            | 8 bit counter (e.g.: score flash time) |
-| 43A6      | ShieldCount          | Counts shield time and controls shield picture. Shields end at C0. |
-| 43A7      | AnimationCounter     | For mothership's antenna and the alien pilot animation |
-| 43A8      | M43A8                | Temporary storage (MSB of pointer to table $1860) |
-| 43A9      | M43A9                | Temporary storage (LSB of pointer to table $1860) |
-| 43AA      | M43AA                | ? |
-| 43AB      | M43AB                | Counter value for (2x2) planets |
-| 43AC      | M43AC                | ? |
-| 43AD      | M43AD                | ? |
-| 43AE      | M43AE                | ? |
-| 43AF      | M43AF                | ? |
-| 43B0      | M43B0                | ? |
-| 43B1      | M43B1                | ? |
-| 43B2      | M43B2                | MSB of pointer to table T1C00 or T1D00 or T1F00 |
-| 43B3      | M43B3                | LSB of pointer to table T1C00 or T1D00 or T1F00 |
-| 43B4      | CounterB4            | 8 bit counter (stars scrolling down, aliens fade in time) |
-| 43B5      | M43B5                | ? |
-| 43B6      | M43B6                | ? |
-| 43B8      | LevelAndRound        | Bit0 - 3: game level, bit4 - 7: game round |
-| 43B9      | CounterB9            | 8 bit backwards counter |
-| 43BA      | AliensLeft           | Number of aliens left in wave (16 at new) |
-| 43BB      | BirdsLeft            | Number of birds left in wave (8 at new) |
-| 43BC      | M43BC                | ? |
-| 43BD      | M43BD                | ? |
-| 43BE      | BonusLivesAt         | Bonus lives (at 30K, 40K, 50K or 60K) from DIP switch settings |
-| 43BF      | M43BF                | ? |
+|      |       |     |
+|------|-------| ----------------- |
+| 4350 | M4350 | Alien behavior state (the state-machine variable, values 0–6) |
+| 4351 | M4351 | MSB of next closed loop pattern (into the `T2Exx` / `T3330` pattern tables) |
+| 4352 | M4352 | LSB of next closed loop pattern (into the `T2Exx` / `T3330` pattern tables) |
+| 4353 | M4353 | Number of aliens doing the closed loop pattern (how many attackers) |
+| 4354 | M4354 | LSB pointer to the currently selected lead attacking alien (`$4B50`/`$4B72` grid slot) |
+| 4355 | M4355 | Delay counter before the next attack is armed (→ behavior state 1) |
+| 4356 | M4356 | Rotating 0–15 "movement start" index (from `$4395`) used to sync aliens |
+| 4357 | M4357 | Attack-cycle/escalation counter (0–3); scales attacker count and difficulty |
+| 4358 | M4358 | Inter-step timer for the angry downward-push movement pattern |
+| 4359 | M4359 | Staggered group countdown timer 1 for phased alien launches |
+| 435A | M435A | Staggered group countdown timer 2 for phased alien launches |
+| 435B | M435B | Staggered group countdown timer 3 for phased alien launches |
+| 435C | M435C | Reserved/unused byte |
+| 435D | M435D | Reserved/unused byte |
+
+Flags and counter
+
+>>> memory
+
+|      |       |     |
+|------|-------| ----------------- |
+| 435E | M435E             | Flag for: 'AliensLeft < 5' ($FF) |
+| 435F | M435F             | 8 bit counter for alien movement |
+| 4360 | PlayerMoved       | Flag for: 'Player moved' ($FF) |
+| 4361 | BulletTriggered   | Flag for: 'Bullet triggered' ($30) and counter |
+| 4362 | M4362             | Flag for: 'Player shield active' and animation counter |
+| 4363 | ParticleExplosion | Flag for: 'Particle explosion start' and animation counter |
+| 4364 | M4364             | Flag for: 'Enemy hit detected' ($FF) and counter |
+| 4365 | M4365             | Reserved/unused byte |
+| 4366 | M4366             | Flag for: 'Mothership or bird wing hit detected' ($FF) |
+| 4367 | M4367             | Flag for: 'Mothership partially faded in' ($FF) |
+| 4368 | M4368             | Maturity of the birds. From 'egg' over 'no wings' to 'adult' ($01 to $0F) |
+| 4369 | M4369             | Flag for: 'Bonus explosion' ($FF) |
+| 436A | M436A             | Flag for: 'Bonus live added' ($FF) and counter |
+| 436B | M436B             | Flag for: 'Mother ship score display' ($FF) and counter |
+| 436C | M436C             | Reserved/unused byte |
+
+Shape of the next bird attack
+
+All three are recomputed by `L3560` each time a new bird group is dispatched.
+
+>>> memory
+
+|      |       |     |
+|------|-------| ----------------- |
+| 436D      | M436D               | Horizontal start position of the bird group |
+| 436E      | M436E               | Bird count / formation-size for the wave |
+| 436F      | M436F               | Per-wave random variation seed (keeps successive waves from being identical) |
+
+Explosion slots for animation
+
+>>> memory
+
+|      |       |     |
+|------|-------| ----------------- |
+| 4370      | M4370               | Explosion slot0 animation index |
+| 4371      | M4371               | Explosion slot0 BCD score value (last digit is ever 0) |
+| 4372      | M4372               | Explosion slot0 MSB screen ram |
+| 4373      | M4373               | Explosion slot0 LSB screen ram |
+| 4374      | M4374               | Explosion slot1 animation index |
+| 4375      | M4375               | Explosion slot1 BCD score value (last digit is ever 0) |
+| 4376      | M4376               | Explosion slot1 MSB screen ram |
+| 4377      | M4377               | Explosion slot1 LSB screen ram |
+| 4378      | M4378               | Bonus explosion slot0 animation index |
+| 4379      | M4379               | Bonus explosion slot0 BCD score value (last digit is ever 0) |
+| 437A      | M437A               | Bonus explosion slot0 MSB screen ram |
+| 437B      | M437B               | Bonus explosion slot0 LSB screen ram |
+| 437C      | M437C               | Bonus explosion slot1 animation index |
+| 437D      | M437D               | Bonus explosion slot1 BCD score value (last digit is ever 0) |
+| 437E      | M437E               | Bonus explosion slot1 MSB screen ram |
+| 437F      | M437F               | Bonus explosion slot1 LSB screen ram |
+
+For the score
+
+>>> memory
+
+|      |       |     |
+|------|-------| ----------------- |
+| 4380      | M4380               | Ever set to 0 (prevents overflow) |
+| 4381      | Score1high          | Player 1 score BCD (high) |
+| 4382      | Score1mid           | Player 1 score BCD (mid) |
+| 4383      | Score1low           | Player 1 score BCD (low) |
+| 4384      | M4384               | Ever set to 0 (prevents overflow) |
+| 4385      | Score2high          | Player 2 score BCD (high) |
+| 4386      | Score2mid           | Player 2 score BCD (mid) |
+| 4387      | Score2low           | Player 2 score BCD (low) |
+| 4388      | M4388               | Ever set to 0 (prevents overflow) |
+| 4389      | HiScorehigh         | Hi score BCD (high) |
+| 438A      | HiScoremid          | Hi score BCD (mid) |
+| 438B      | HiScorelow          | Hi score BCD (low) |
+
+For general purposes
+
+>>> memory
+
+|      |       |     |
+|------|-------| ----------------- |
+| 438C      | SoundControlA       | RAM copy of sound device control register A (0x6000) |
+| 438D      | SoundControlB       | RAM copy of sound device control register B (0x6800) |
+| 438E      | M438E               | Bird-wave background-sound phase (advances the melody, low bit drives SoundControlB) |
+| 438F      | CoinCount           | Number of coins inserted (max is 9) |
+| 4390      | Player1Lives        | Player 1 number of lives |
+| 4391      | Player2Lives        | Player 2 number of lives |
+| 4392      | M4392               | Ever set to 0 |
+| 4393      | Counter93           | Free running counter during playtime at game level 3 |
+| 4394      | M4394               | Start value list pointer for alien movement MSB |
+| 4395      | M4395               | Start value list pointer for alien movement LSB |
+| 4396      | M4396               | Bird-wave background-sound step timer (counts frames per tone vs `T3DE0` duration) |
+| 4397      | M4397               | Score "dirty" flag — `0` means score changed this frame -> redraw the digits |
+| 4398:4399 | Counter98           | 16 bit counter (MSB:LSB) actual index for slow print at intro splash |
+| 439A:439B | Counter9A           | 16 bit counter (MSB:LSB) and.. |
+| 439B      | M439B               | Next index for slow print at intro splash |
+| 439C      | M439C               | Spiral-fill animation step counter (level 4/6/8 inter-wave fade-in) |
+| 439D      | M439D               | Fist two digits of BCD score value for mothership explosion |
+| 439E      | M439E               | Mapped player ship position, left part: ($09 to $C0) |
+| 439F      | M439F               | Mapped player ship position, right part: ($17 to $C8) |
+| 43A0      | IN0Current          | Current value of IN0: bit0='coin', bit1='1 player', bit2='2 players', bit4='fire', bit5='right', bit6='left', bit7='shield' |
+| 43A1      | IN0Previous         | Previous value of IN0 |
+| 43A2      | GameOrAttract       | Attract mode=0, One player game mode=1, Two players game mode=2 |
+| 43A3      | GameAndDemoOrSplash | Game and demo for player 1=0, Game for player 2=1, Intro splash=2 |
+| 43A4      | GameState           | Game state=0 - 7 |
+| 43A5      | CounterA5           | 8 bit counter (e.g.: score flash time) |
+| 43A6      | ShieldCount         | Counts shield time and controls shield picture. Shields end at C0. |
+| 43A7      | AnimationCounter    | For mothership's antenna and the alien pilot animation |
+| 43A8      | M43A8               | Temporary storage (MSB of pointer to table $1860) |
+| 43A9      | M43A9               | Temporary storage (LSB of pointer to table $1860) |
+| 43AA      | M43AA               | Mothership-wave frame counter (times antenna/pilot animation and star scroll) |
+| 43AB      | M43AB               | Counter for planet trigger |
+| 43AC      | M43AC               | Planet vertical spacing increment (added to trigger `$43AB`) |
+| 43AD      | M43AD               | Planet X index -> `T1E60` (screen-RAM LSB), incremented per planet |
+| 43AE      | M43AE               | Planet X index -> `T1E20` (screen-RAM MSB), incremented per planet |
+| 43AF      | M43AF               | `CounterB9` trigger for the next galaxy |
+| 43B0      | M43B0               | Galaxy spacing decrement (subtracted from `$43AF`) |
+| 43B1      | M43B1               | Galaxy X index -> `T1E80`, incremented per galaxy |
+| 43B2      | M43B2               | MSB pointer into the background pattern tables `T1C00`/`T1D00`/`T1F00` |
+| 43B3      | M43B3               | LSB pointer into the background pattern tables `T1C00`/`T1D00`/`T1F00` |
+| 43B4      | CounterB4           | 8 bit counter (stars scrolling down, aliens fade in time) |
+| 43B5      | M43B5               | Reserved/unused byte |
+| 43B6      | M43B6               | End-of-wave countdown timer that advances the game to the next level/round |
+| 43B7      | M43B7               | Reserved/unused byte |
+| 43B8      | LevelAndRound       | Bit0 - 3: game level, bit4 - 7: game round |
+| 43B9      | CounterB9           | 8 bit backwards counter |
+| 43BA      | AliensLeft          | Number of aliens left in wave (16 at new) |
+| 43BB      | BirdsLeft           | Number of birds left in wave (8 at new) |
+| 43BC      | M43BC               | Reserved/unused byte |
+| 43BD      | M43BD               | Low byte of the bonus extra-life score threshold; rewritten (nibble-swapped `BonusLivesAt`) after a bonus is granted |
+| 43BE      | BonusLivesAt        | Middle byte of the threshold, set from DIP switches to `$30/$40/$50/$60` = 3000/4000/5000/6000 points |
+| 43BF      | M43BF               | High byte of the bonus extra-life score threshold |
 
 
 ## Player and player bullets, data structure (grid)
@@ -220,10 +269,10 @@ MAME cheat code "Infinite Shields": set $84 (%1000_0100) at $43C0
 | 43E5      | PlayerBulletLSB         | LSB screen ram: Player bullet |
 | 43E6      | AbovePlayerBulletMSB    | MSB screen ram: One character above player bullet |
 | 43E7      | AbovePlayerBulletLSB    | LSB screen ram: One character above player bullet |
-| 43E8      | M43E8                   | ? |
-| 43E9      | M43E9                   | ? |
-| 43EA      | M43EA                   | MSB screen ram: Left screen edge, one character above player ship |
-| 43EB      | M43EB                   | LSB screen ram: Left screen edge, one character above player ship |
+| 43E8      | M43E8                   | MSB of its previous position (erase pointer, refreshed by `L0886`) |
+| 43E9      | M43E9                   | LSB of its previous position (erase pointer, refreshed by `L0886`) |
+| 43EA      | M43EA                   | MSB of its current position (draw + collision pointer, recomputed each frame by `L09A0` from `$43CA:$43CB`) |
+| 43EB      | M43EB                   | LSB of its current position (draw + collision pointer, recomputed each frame by `L09A0` from `$43CA:$43CB`) |
 
 
 ## Alien and bird bullets, data structure (screen ram)
@@ -396,7 +445,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4B73      | B4B73                | Bird0 ?                             |
 | 4B74      | B4B74                | Bird0 ?                             |
 | 4B75      | B4B75                | Bird0 grid coordinate X ?           |
-| 4B76      | B4B76                | Bird0 ?                             |
+| 4B76      | B4B76                | Bird0 horizontal movement direction |
 | 4B77      | B4B77                | Bird0 grid coordinate Y ?           |
 | 4B78      | B4B78                | Bird1 index character block shape ? |
 | 4B79      | B4B79                | Bird1 MSB initial screen address ?  |
@@ -404,7 +453,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4B7B      | B4B7B                | Bird1 ?                             |
 | 4B7C      | B4B7C                | Bird1 ?                             |
 | 4B7D      | B4B7D                | Bird1 grid coordinate X ?           |
-| 4B7E      | B4B7E                | Bird1 ?                             |
+| 4B7E      | B4B7E                | Bird1 horizontal movement direction |
 | 4B7F      | B4B7F                | Bird1 grid coordinate Y ?           |
 | 4B80      | B4B80                | Bird2 index character block shape ? |
 | 4B81      | B4B81                | Bird2 MSB initial screen address ?  |
@@ -412,7 +461,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4B83      | B4B83                | Bird2 ?                             |
 | 4B84      | B4B84                | Bird2 ?                             |
 | 4B85      | B4B85                | Bird2 grid coordinate X ?           |
-| 4B86      | B4B86                | Bird2 ?                             |
+| 4B86      | B4B86                | Bird2 horizontal movement direction |
 | 4B87      | B4B87                | Bird2 grid coordinate Y ?           |
 | 4B88      | B4B88                | Bird3 index character block shape ? |
 | 4B89      | B4B89                | Bird3 MSB initial screen address ?  |
@@ -420,7 +469,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4B8B      | B4B8B                | Bird3 ?                             |
 | 4B8C      | B4B8C                | Bird3 ?                             |
 | 4B8D      | B4B8D                | Bird3 grid coordinate X ?           |
-| 4B8E      | B4B8E                | Bird3 ?                             |
+| 4B8E      | B4B8E                | Bird3 horizontal movement direction |
 | 4B8F      | B4B8F                | Bird3 grid coordinate Y ?           |
 | 4B90      | B4B90                | Bird4 index character block shape ? |
 | 4B91      | B4B91                | Bird4 MSB initial screen address ?  |
@@ -428,7 +477,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4B93      | B4B93                | Bird4 ?                             |
 | 4B94      | B4B94                | Bird4 ?                             |
 | 4B95      | B4B95                | Bird4 grid coordinate X ?           |
-| 4B96      | B4B96                | Bird4 ?                             |
+| 4B96      | B4B96                | Bird4 horizontal movement direction |
 | 4B97      | B4B97                | Bird4 grid coordinate Y ?           |
 | 4B98      | B4B98                | Bird5 index character block shape ? |
 | 4B99      | B4B99                | Bird5 MSB initial screen address ?  |
@@ -436,7 +485,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4B9B      | B4B9B                | Bird5 ?                             |
 | 4B9C      | B4B9C                | Bird5 ?                             |
 | 4B9D      | B4B9D                | Bird5 grid coordinate X ?           |
-| 4B9E      | B4B9E                | Bird5 ?                             |
+| 4B9E      | B4B9E                | Bird5 horizontal movement direction |
 | 4B9F      | B4B9F                | Bird5 grid coordinate Y ?           |
 | 4BA0      | B4BA0                | Bird6 index character block shape ? |
 | 4BA1      | B4BA1                | Bird6 MSB initial screen address ?  |
@@ -444,7 +493,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4BA3      | B4BA3                | Bird6 ?                             |
 | 4BA4      | B4BA4                | Bird6 ?                             |
 | 4BA5      | B4BA5                | Bird6 grid coordinate X ?           |
-| 4BA6      | B4BA6                | Bird6 ?                             |
+| 4BA6      | B4BA6                | Bird6 horizontal movement direction |
 | 4BA7      | B4BA7                | Bird6 grid coordinate Y ?           |
 | 4BA8      | B4BA8                | Bird7 index character block shape ? |
 | 4BA9      | B4BA9                | Bird7 MSB initial screen address ?  |
@@ -452,7 +501,7 @@ For the bird animation during intro splash, bird0 memory is used.
 | 4BAB      | B4BAB                | Bird7 ?                             |
 | 4BAC      | B4BAC                | Bird7 ?                             |
 | 4BAD      | B4BAD                | Bird7 grid coordinate X ?           |
-| 4BAE      | B4BAE                | Bird7 ?                             |
+| 4BAE      | B4BAE                | Bird7 horizontal movement direction |
 | 4BAF      | B4BAF                | Bird7 grid coordinate Y ?           |
 
 
@@ -530,7 +579,7 @@ For the bird animation during intro splash, bird0 memory is used.
 
 ## Bird extended storage 
 
-Used for all levels with the 8 birds.
+Scratch RAM used by the routine `L3980` (`$3980`), which runs during the bird/Phoenix waves to do an extended vertical collision sweep of the player's shot against the descending birds.
 
 >>> memory
 
@@ -545,9 +594,9 @@ Used for all levels with the 8 birds.
 | 4BD1      | B4BD1                | ? |
 | 4BD2      | B4BD2                | ? |
 | 4BD3      | B4BD3                | ? |
-| 4BD4      | B4BD4                | ? |
-| 4BD5      | B4BD5                | ? |
-| 4BD6      | B4BD6                | ? |
+| 4BD4      | B4BD4                | one of four attack variants |
+| 4BD5      | B4BD5                | descent step value |
+| 4BD6      | B4BD6                | formation scroll phase |
 | 4BD7      | B4BD7                | ? |
 | 4BED      | B4BED                | ? |
 | 4BEE      | B4BEE                | ? |

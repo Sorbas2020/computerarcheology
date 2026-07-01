@@ -22,6 +22,8 @@
 
 # Phoenix
 
+This code refers to the ROM set: Phoenix (Amstar, set 1).
+
 The CPU used for this game was a INTEL 8085 and variants (P8085AH-2).
 
 The Z80 microprocessor from ZILOG is a further development of the 8080 microprocessor,
