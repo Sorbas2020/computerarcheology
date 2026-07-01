@@ -59,11 +59,14 @@ L002D:
 003D: CA 46 00        JP      Z,$0046             ; {code.L0046} No credits ... continue splash
 0040: CD 88 02        CALL    $0288               ; {code.PromptForStartGame}
 0043: C3 1A 00        JP      $001A               ; {code.MainLoop} Back to top of main loop
-; 
+; Continue splash
 L0046:
 0046: CD E3 00        CALL    $00E3               ; {code.SplashAndDemo}
 0049: C3 1A 00        JP      $001A               ; {code.MainLoop} Back to top of main loop
-; Main loop end.
+;*****************************************************************************
+; Main loop end
+;*****************************************************************************
+
 ; not used
 004C: FF FF FF FF
 
@@ -266,8 +269,8 @@ ClearForeAndBackground:
 0164: E6 0C           AND     $0C                 ; mask out 0000_1100 the Bonus lives
 0166: 07              RLCA                        ; rotate left ..
 0167: 07              RLCA                        ; .. to 0011_0000
-0168: C6 30           ADD     $30                 ; $30, $40, $50, or $60
-016A: 77              LD      (HL),A              ; save to BonusLivesAt
+0168: C6 30           ADD     $30                 ; -> $30,$40,$50,$60
+016A: 77              LD      (HL),A              ; save to BonusLivesAt = 3000/4000/5000/6000 pts (BCD)
 016B: 26 58           LD      H,$58               ; 58xx scroll register
 016D: 36 00           LD      (HL),$00            ; init screen scrolling
 016F: CD 80 00        CALL    $0080               ; {code.WaitVBlankCoin}
@@ -641,11 +644,11 @@ L02E3:
 UpdateHiScore:
 02F0: 11 83 43        LD      DE,$4383            ; {+ram.Score1low} score of player 1
 02F3: 21 8B 43        LD      HL,$438B            ; {+ram.HiScorelow} current hi score
-02F6: CD 14 03        CALL    $0314               ; {code.L0314}
+02F6: CD 14 03        CALL    $0314               ; {code.L0314} 3 byte BCD compare
 02F9: D4 20 03        CALL    NC,$0320            ; {code.L0320}
 02FC: 1E 87           LD      E,$87               ; LSB of Score2low
 02FE: 2E 8B           LD      L,$8B               ; LSB of HiScorelow
-0300: CD 14 03        CALL    $0314               ; {code.L0314}
+0300: CD 14 03        CALL    $0314               ; {code.L0314} 3 byte BCD compare
 0303: D4 20 03        CALL    NC,$0320            ; {code.L0320}
 0306: 2E 8B           LD      L,$8B               ; LSB of HiScorelow
 0308: 11 41 41        LD      DE,$4141            ; High-score Screen coordinates (LSB)
@@ -654,7 +657,10 @@ UpdateHiScore:
 0310: C9              RET                         ; Done
 ;
 0311: FF FF FF
-;
+
+;*****************************************************************************
+;* Generic 3 byte BCD comparator
+;*****************************************************************************
 L0314:
 0314: 1A              LD      A,(DE)              ; 
 0315: 96              SUB     (HL)                ; 
@@ -5056,6 +5062,7 @@ L2476:
 2487: 86              ADD     A,(HL)              
 2488: 07              RLCA                        ; Multiply by 2
 2489: 47              LD      B,A                 
+; Attack timing / launch slot
 248A: 2E 6F           LD      L,$6F               ; $436F
 248C: 7E              LD      A,(HL)              
 248D: E6 1E           AND     $1E                 ; 0001_1110
@@ -5397,7 +5404,7 @@ L2650:
 
 ;
 L2668:
-2668: 3A 6E 43        LD      A,($436E)           ; {ram.M436E}
+2668: 3A 6E 43        LD      A,($436E)           ; {ram.M436E} base for descent-step calc (-> B4BD5)
 266B: 00              NOP                         
 266C: 47              LD      B,A                 
 266D: 3A 9A 43        LD      A,($439A)           ; {ram.Counter9A}
@@ -5457,10 +5464,11 @@ L26AE:
 26BC: 96              SUB     (HL)                
 26BD: 07              RLCA                        ; Multiply by 2
 26BE: 47              LD      B,A                 
+; Attack sub-pattern selector
 26BF: 3A 6F 43        LD      A,($436F)           ; {ram.M436F}
 26C2: E6 03           AND     $03                 ; 0000_0011
-26C4: 2E D4           LD      L,$D4               ; $4BD4
-26C6: 77              LD      (HL),A              
+26C4: 2E D4           LD      L,$D4               ; B4BD4
+26C6: 77              LD      (HL),A              ; set attack variant
 26C7: 2F              CPL                         
 26C8: E6 03           AND     $03                 ; 0000_0011
 26CA: 3C              INC     A                   
@@ -5573,9 +5581,19 @@ L2748:
 2764: C9              RET                         ; 
 ; 
 2765: FF FF FF
-; 
+
+;*****************************************************************************
+;* Score-display
+;* Together with `$43BE` (`BonusLivesAt`), these make a contiguous 3 byte BCD value
+;* (`$43BD` = low, `$43BE` = middle, `$43BF` = high).
+;* `$43BE` is loaded from the DIP switches to `$30/$40/$50/$60`,
+;* the "extra ship at 3000/4000/5000/6000 points" setting,
+;* and `$43BD`/`$43BF` are its companion digit bytes (zeroed at init).
+;* This 3-byte threshold is checked against the player's score,
+;* using the 3 byte BCD compare `L0314`.
+;*****************************************************************************
 L2768:
-2768: E5              PUSH    HL                  
+2768: E5              PUSH    HL                  ; 
 2769: 11 61 42        LD      DE,$4261            ; end of the screen area of player 1 score
 276C: 06 06           LD      B,$06               ; number of digits to print
 276E: 3A A3 43        LD      A,($43A3)           ; {ram.GameAndDemoOrSplash}
@@ -5583,34 +5601,34 @@ L2768:
 2772: CA 78 27        JP      Z,$2778             ; {} if GameAndDemoOrSplash is 'Game and demo for player 1'
 2775: 11 21 40        LD      DE,$4021            ; end of the screen area of player 2 score
 2778: CD C4 00        CALL    $00C4               ; {code.PrintNumber} update the score on screen
-277B: E1              POP     HL                  
-277C: 11 BD 43        LD      DE,$43BD            ; {+ram.M43BD}
-277F: EB              EX      DE,HL               
-2780: 7E              LD      A,(HL)              
-2781: 2C              INC     L                   
-2782: B6              OR      (HL)                
-2783: C8              RET     Z                   
-2784: 2C              INC     L                   
-2785: EB              EX      DE,HL               
-2786: CD 14 03        CALL    $0314               ; {code.L0314}
-2789: D0              RET     NC                  
+277B: E1              POP     HL                  ; 
+277C: 11 BD 43        LD      DE,$43BD            ; {+ram.M43BD} Low byte of the bonus extra-life score threshold
+277F: EB              EX      DE,HL               ; HL = $43BD
+2780: 7E              LD      A,(HL)              ; $43BD
+2781: 2C              INC     L                   ; 
+2782: B6              OR      (HL)                ; | $43BE Middle byte of the threshold
+2783: C8              RET     Z                   ; no bonus pending if both 0
+2784: 2C              INC     L                   ; -> $43BF High byte of the bonus extra-life score threshold
+2785: EB              EX      DE,HL               ; DE = $43BF (threshold high)
+2786: CD 14 03        CALL    $0314               ; {code.L0314} 3-byte BCD compare: threshold vs score
+2789: D0              RET     NC                  ; not reached yet -> return
 278A: 3A A3 43        LD      A,($43A3)           ; {ram.GameAndDemoOrSplash}
-278D: C6 90           ADD     $90                 
-278F: 6F              LD      L,A                 
-2790: 34              INC     (HL)                
+278D: C6 90           ADD     $90                 ; 
+278F: 6F              LD      L,A                 ; 
+2790: 34              INC     (HL)                ; +1 life
 2791: CD 67 03        CALL    $0367               ; {code.UpdateLivesScreen}
 2794: 3E FF           LD      A,$FF               ; set flag for
-2796: 32 6A 43        LD      ($436A),A           ; {ram.M436A} 'Bonus live added'
+2796: 32 6A 43        LD      ($436A),A           ; {ram.M436A} 'Bonus live added' (triggers the sound)
 2799: 2E BE           LD      L,$BE               ; BonusLivesAt
-279B: 7E              LD      A,(HL)              
-279C: 36 00           LD      (HL),$00            
-279E: 0F              RRCA                        
-279F: 0F              RRCA                        
-27A0: 0F              RRCA                        
-27A1: 0F              RRCA                        
-27A2: 2D              DEC     L                   ; $43BD
-27A3: 77              LD      (HL),A              
-27A4: C9              RET                         
+279B: 7E              LD      A,(HL)              ; 
+279C: 36 00           LD      (HL),$00            ; clear it
+279E: 0F              RRCA                        ; nibble swap
+279F: 0F              RRCA                        ; ..
+27A0: 0F              RRCA                        ; ..
+27A1: 0F              RRCA                        ; ..
+27A2: 2D              DEC     L                   ; $43BD Low byte of the bonus extra-life score threshold
+27A3: 77              LD      (HL),A              ; update threshold so it won't re-award
+27A4: C9              RET                         ; 
 
 27A5: FF FF FF
 
@@ -6753,50 +6771,55 @@ L3558:
 355D: C9              RET                         ; 
 ;
 355E: FF FF
-; 
+
+;*****************************************************************************
+;* Bird-launch setup:
+;* Decides the parameters of the next incoming bird group.
+;* They're then consumed by the bird movement/attack code.
+;*****************************************************************************
 L3560:
-3560: CD AA 30        CALL    $30AA               ; {code.GetRandomNumber}
+3560: CD AA 30        CALL    $30AA               ; {code.GetRandomNumber} A = random 0..15
 3563: 47              LD      B,A                 ; 
-3564: 07              RLCA                        ; Multiply by 4 ..
-3565: 07              RLCA                        ; ..
-3566: 4F              LD      C,A                 ; 
-3567: 07              RLCA                        ; Multiply by 4 ..
-3568: 07              RLCA                        ; ..
-3569: B0              OR      B                   
-356A: 32 6F 43        LD      ($436F),A           ; {ram.M436F}
+3564: 07              RLCA                        ; *2
+3565: 07              RLCA                        ; *4
+3566: 4F              LD      C,A                 ; C = random*4  (used for $436D jitter)
+3567: 07              RLCA                        ; *8
+3568: 07              RLCA                        ; *16
+3569: B0              OR      B                   ; 
+356A: 32 6F 43        LD      ($436F),A           ; {ram.M436F} $436F = (random<<4)|random
 356D: 3A B8 43        LD      A,($43B8)           ; {ram.LevelAndRound}
 3570: FE 40           CP      $40                 ; 
 3572: DA 77 35        JP      C,$3577             ; {code.L3577} if game round < 4
-3575: 3E 30           LD      A,$30               
+3575: 3E 30           LD      A,$30               ; 
 L3577:
 3577: E6 30           AND     $30                 ; 0011_0000
-3579: 0F              RRCA                        
-357A: 47              LD      B,A                 
+3579: 0F              RRCA                        ; 
+357A: 47              LD      B,A                 ; 
 357B: 3A BB 43        LD      A,($43BB)           ; {ram.BirdsLeft}
-357E: 3D              DEC     A                   
-357F: FE 04           CP      $04                 
+357E: 3D              DEC     A                   ; 
+357F: FE 04           CP      $04                 ; 
 3581: DA 86 35        JP      C,$3586             ; {code.L3586}
-3584: 3E 03           LD      A,$03               
+3584: 3E 03           LD      A,$03               ; 
 L3586:
 3586: 07              RLCA                        ; Multiply by 2
-3587: B0              OR      B                   
-3588: 47              LD      B,A                 
+3587: B0              OR      B                   ; 
+3588: 47              LD      B,A                 ; 
 3589: 3A 9A 43        LD      A,($439A)           ; {ram.Counter9A}
 358C: 07              RLCA                        ; Multiply by 4 ..
 358D: 07              RLCA                        ; ..
 358E: E6 20           AND     $20                 ; mask out 0010_0000
-3590: B0              OR      B                   
-3591: C6 80           ADD     $80                 
-3593: 6F              LD      L,A                 
-3594: 26 3E           LD      H,$3E               
+3590: B0              OR      B                   ; 
+3591: C6 80           ADD     $80                 ; 
+3593: 6F              LD      L,A                 ; 
+3594: 26 3E           LD      H,$3E               ; 
 3596: 7E              LD      A,(HL)              ; data from table T3E80
-3597: 32 6E 43        LD      ($436E),A           ; {ram.M436E}
-359A: 2C              INC     L                   
+3597: 32 6E 43        LD      ($436E),A           ; {ram.M436E} $436E = T3E80 byte0  (bird count/size)
+359A: 2C              INC     L                   ; 
 359B: 7E              LD      A,(HL)              ; data from table T3E80
-359C: 81              ADD     A,C                 
-359D: E6 F8           AND     $F8                 ; 1111_1000
-359F: 32 6D 43        LD      ($436D),A           ; {ram.M436D}
-35A2: C9              RET                         
+359C: 81              ADD     A,C                 ; + random jitter
+359D: E6 F8           AND     $F8                 ; 1111_1000 align to 8 px
+359F: 32 6D 43        LD      ($436D),A           ; {ram.M436D} $436D = T3E80 byte1 + jitter (start X)
+35A2: C9              RET                         ; 
 ; 
 35A3: FF FF FF FF FF FF FF FF FF FF FF FF FF
 ; 
@@ -6944,7 +6967,7 @@ L3648:
 3655: 3C              INC     A                   
 3656: 2D              DEC     L                   
 3657: DA 63 36        JP      C,$3663             ; {code.L3663}
-365A: 3A 6E 43        LD      A,($436E)           ; {ram.M436E}
+365A: 3A 6E 43        LD      A,($436E)           ; {ram.M436E} target bird count
 365D: B8              CP      B                   
 365E: CA 63 36        JP      Z,$3663             ; {code.L3663}
 3661: 78              LD      A,B                 
@@ -6979,9 +7002,9 @@ L3672:
 367C: D2 80 36        JP      NC,$3680            ; {code.L3680}
 367F: 47              LD      B,A                 
 L3680:
-3680: 3A 6D 43        LD      A,($436D)           ; {ram.M436D}
+3680: 3A 6D 43        LD      A,($436D)           ; {ram.M436D} current X for this bird
 3683: 4F              LD      C,A                 
-3684: C6 08           ADD     $08                 
+3684: C6 08           ADD     $08                 ; next bird 8 px over
 3686: 32 6D 43        LD      ($436D),A           ; {ram.M436D}
 3689: 78              LD      A,B                 
 368A: 91              SUB     C                   
@@ -7011,9 +7034,10 @@ L3695:
 36A6: B8              CP      B                   
 36A7: DA AB 36        JP      C,$36AB             ; {code.L36AB}
 36AA: 47              LD      B,A                 
+; for the mirrored launch direction.
 L36AB:
-36AB: 3A 6D 43        LD      A,($436D)           ; {ram.M436D}
-36AE: C6 08           ADD     $08                 
+36AB: 3A 6D 43        LD      A,($436D)           ; {ram.M436D} current X for this bird
+36AE: C6 08           ADD     $08                 ; next bird 8 px over
 36B0: 32 6D 43        LD      ($436D),A           ; {ram.M436D}
 36B3: 80              ADD     A,B                 
 36B4: 36 C8           LD      (HL),$C8            
@@ -7777,36 +7801,39 @@ L3ABF:
 3ACB: FF FF FF FF FF
 
 ;*****************************************************************************
-;* Background sound for the bird waves.
-;* Sound data from T3DE0.
+;* Background sound for the bird waves:
+;* Counts frames for the current tone;
+;* it's compared against a per-phase duration taken from `T3DE0`
+;* (indexed by the formation scroll phase `B4BD6`),
+;* and when the duration is reached it resets to 0, which advances `$438E` to the next note.
 ;*****************************************************************************
 L3AD0:
 3AD0: 21 8E 43        LD      HL,$438E            ; {+ram.M438E}
-3AD3: 7E              LD      A,(HL)              
-3AD4: E6 01           AND     $01                 ; 0000_0001
+3AD3: 7E              LD      A,(HL)              ; 
+3AD4: E6 01           AND     $01                 ; 0000_0001 phase bit
 3AD6: 07              RLCA                        ; Multiply by 4 ..
 3AD7: 07              RLCA                        ; ..
 3AD8: F6 20           OR      $20                 ; 0010_0000
-3ADA: 47              LD      B,A                 
-3ADB: 2D              DEC     L                   
+3ADA: 47              LD      B,A                 ; 
+3ADB: 2D              DEC     L                   ; 
 3ADC: 7E              LD      A,(HL)              ; $438D SoundControlB
 3ADD: E6 C0           AND     $C0                 ; 1100_0000
 3ADF: B0              OR      B                   ; set bits
 3AE0: 77              LD      (HL),A              ; at SoundControlB
-3AE1: 2E 96           LD      L,$96               ; $4396
-3AE3: 7E              LD      A,(HL)              
-3AE4: 34              INC     (HL)                
+3AE1: 2E 96           LD      L,$96               ; $4396 bird-wave background-sound step timer
+3AE3: 7E              LD      A,(HL)              ; 
+3AE4: 34              INC     (HL)                ; tick
 3AE5: A7              AND     A                   ; updates the zero flag
 3AE6: CA F8 3A        JP      Z,$3AF8             ; {code.L3AF8}
 3AE9: 3A D6 4B        LD      A,($4BD6)           ; {!ram.B4BD6}
-3AEC: C6 E0           ADD     $E0                 ; LSB of table T3DE0 Background sound data for the bird waves.
-3AEE: 5F              LD      E,A                 
-3AEF: 16 3D           LD      D,$3D               ; MSB of table T3DE0 Background sound data for the bird waves.
-3AF1: 1A              LD      A,(DE)              
-3AF2: BE              CP      (HL)                
-3AF3: D0              RET     NC                  
-3AF4: 36 00           LD      (HL),$00            
-3AF6: C9              RET                         
+3AEC: C6 E0           ADD     $E0                 ; LSB of T3DE0 (tone duration table)
+3AEE: 5F              LD      E,A                 ; 
+3AEF: 16 3D           LD      D,$3D               ; MSB of T3DE0 (tone duration table)
+3AF1: 1A              LD      A,(DE)              ; 
+3AF2: BE              CP      (HL)                ; reached this note's duration?
+3AF3: D0              RET     NC                  ; 
+3AF4: 36 00           LD      (HL),$00            ; reset -> advance tone phase
+3AF6: C9              RET                         ; 
 
 ; not used 
 3AF7: 5F              LD      E,A                 
@@ -7814,7 +7841,7 @@ L3AD0:
 ; 
 L3AF8:
 3AF8: 2E 8E           LD      L,$8E               ; $438E
-3AFA: 34              INC     (HL)                
+3AFA: 34              INC     (HL)                ; advance the tone phase
 3AFB: 2D              DEC     L                   ; SoundControlB
 3AFC: 7E              LD      A,(HL)              ; 
 3AFD: F6 10           OR      $10                 ; set 0001_0000
@@ -8223,7 +8250,7 @@ T3F00:
 ;..............:?
 ;.................:?
 ;....................:? grid coordinate x
-;.......................:?
+;.......................:horizontal movement direction
 ;..........................:? grid coordinate y
 T3F80:
 3F80: 01 48 EE 00 10 B0 10 20       ; 0
