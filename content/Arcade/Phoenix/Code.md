@@ -4627,29 +4627,40 @@ L21BA:
 
 ;*****************************************************************************
 ;* Handles the bird animation at intro.
+;* The driver is a single counter, `M4399` 
+;* (the "slow-print" timer that advances during the intro splash).
+;* Its bits are split into two roles:
+;* - `M4399 & 7` -> the bird's animation sub-phase 
+;*   (written to bird-object byte +3, `$4B73`).
+;*   This cycles the wing position 0–7 within the current shape.
+;* - `M4399 >> 3` -> the index into `T233A`, which yields the shape index 
+;*   (written to bird-object byte +0, `$4B70`).
+;* In other words, each entry in `T233A` is held for 8 timer ticks
+;* (one full pass of the low-3-bit phase) before the script advances to the next shape.
+;* `T233A` is therefore "the shape every 8 frames", and the low bits provide the in-between wing flapping.
 ;*****************************************************************************
 DrawIntroBirdAnimationFrame:
 21DC: 7E              LD      A,(HL)              ; {ram.M4399} Actual index for slow print at intro splash (starts with $300)
 21DD: 00              NOP                         ; 
-21DE: 47              LD      B,A                 ; save it
-21DF: 21 73 4B        LD      HL,$4B73            ; {!+ram.B4B73} used as temp memory
+21DE: 47              LD      B,A                 ; keep a copy
+21DF: 21 73 4B        LD      HL,$4B73            ; {!+ram.B4B73} used as temp memory for animation phase
 21E2: E6 07           AND     $07                 ; mask out 0000_0111 in order to count from 0 to 7
-21E4: 77              LD      (HL),A              ; save it
+21E4: 77              LD      (HL),A              ; animation sub-phase
 21E5: 2D              DEC     L                   ; 
 21E6: 36 EF           LD      (HL),$EF            ; use $4B72 for LSB of screen ram
 21E8: 2D              DEC     L                   ; 
 21E9: 36 49           LD      (HL),$49            ; use $4B71 for MSB of screen ram
 21EB: 2D              DEC     L                   ; $4B70 (bird0 index character block shape)
-21EC: 78              LD      A,B                 ; restore $4399
-21ED: E6 F8           AND     $F8                 ; mask out 1111_1000
-21EF: 0F              RRCA                        ; Divide by 8 ..
-21F0: 0F              RRCA                        ; ..
-21F1: 0F              RRCA                        ; ..
-21F2: C6 3A           ADD     $3A                 ; LSB of T233A
+21EC: 78              LD      A,B                 ; restore $4399 timer
+21ED: E6 F8           AND     $F8                 ; drop low 3 bits ...
+21EF: 0F              RRCA                        ; ... and >> 3
+21F0: 0F              RRCA                        ; 
+21F1: 0F              RRCA                        ; A = M4399 >> 3   (the T233A index)
+21F2: C6 3A           ADD     $3A                 ; + LSB of T233A
 21F4: 5F              LD      E,A                 ; 
-21F5: 16 23           LD      D,$23               ; MSB of T233A
-21F7: 1A              LD      A,(DE)              ; get data starting at T233A for animation frame index
-21F8: 77              LD      (HL),A              ; write to $4B70
+21F5: 16 23           LD      D,$23               ; DE = T233A + (M4399 >> 3)
+21F7: 1A              LD      A,(DE)              ; A = shape index from the script
+21F8: 77              LD      (HL),A              ; -> $4B70 (bird object shape index)
 21F9: CD C0 34        CALL    $34C0               ; {code.DrawBirdObject} draw the bird at intro
 21FC: C3 E0 1E        JP      $1EE0               ; {code.L1EE0}
 ; 
@@ -4895,12 +4906,26 @@ L2322:
 2331: 11 A6 49        LD      DE,$49A6            ; {+ram.BackgroundScreen+1A6} at the middle of the mothership
 2334: 01 02 04        LD      BC,$0402            ; images are 2x4
 2337: C3 D6 0A        JP      $0AD6               ; {code.DrawImageCbyB}
-;
-; Bird animation frame indexes at splash intro.
-; Mapping to:?
+
+; Intro-splash bird animation script table:
+; A list of bird shape indices that, played in order, make the attract-mode bird grow
+; from a twinkling star into a full flapping Phoenix and then shrink back.
+; Used at `DrawIntroBirdAnimationFrame` (`$21DC`).
+; The mapping is a two-level lookup:
+; M4399  --(>>3)-->  T233A[i] = shape index
+;                      |
+;                      +--(*8)--+--(+ M4399&7 phase)--> T3E08 entry --> bird tile-block address
+; So `T233A` is essentially a tiny animation timeline.
+; The index `M4399 >> 3` walks through it, each step lasting 8 ticks (during which `M4399 & 7` animates the wings),
+; turning the abstract growth/flap/shrink choreography into concrete shape indices that `DrawBirdObject` renders.
+; The trailing `FF` signals the end of the script (it's the sentinel the surrounding intro logic uses to know the sequence is finished).
 T233A:
-233A: 01 02 03 04 05 06 07 0A 07 0A 07 0A 07 0A 07 0A
-234A: 09 08 04 03 02 01 FF
+233A: 01 02 03 04                       ; star, small, medium, big, cluster (a twinkle appears and swells)
+233E: 05 06 07                          ; growing-up body stages (it sprouts into a bird)
+2341: 0A 07 0A 07 0A 07 0A 07 0A        ; wings down, wings up, ... (the bird flaps in place)
+234A: 09 08 04 03 02 01                 ; shrinking stages (the bird collapses back to a star)
+2350: FF                                ; end-of-sequence marker
+
 ; 
 L2351:
 2351: 1A              LD      A,(DE)              
@@ -5339,6 +5364,10 @@ L2596:
 25B4: 4F              LD      C,A                 
 25B5: 2D              DEC     L                   
 25B6: 46              LD      B,(HL)              
+; 
+; Finds a free enemy-bullet slot (max 3/4/5 depending on round) and,
+; if one exists, activates it at `(B,C)`; if all slots are busy
+; it returns up two stack levels (cancelling the scan for this frame).
 L25B7:
 25B7: 3A B8 43        LD      A,($43B8)           ; {ram.LevelAndRound}
 25BA: 16 03           LD      D,$03               ; 
@@ -5354,14 +5383,14 @@ L25CD:
 25CD: 7E              LD      A,(HL)              ; 
 25CE: E6 08           AND     $08                 ; mask out 0000_1000
 25D0: CA E0 25        JP      Z,$25E0             ; {code.L25E0}
-25D3: 7D              LD      A,L                 
-25D4: C6 04           ADD     $04                 
-25D6: 6F              LD      L,A                 
-25D7: 15              DEC     D                   
+25D3: 7D              LD      A,L                 ; 
+25D4: C6 04           ADD     $04                 ; 
+25D6: 6F              LD      L,A                 ; 
+25D7: 15              DEC     D                   ; 
 25D8: C2 CD 25        JP      NZ,$25CD            ; {code.L25CD}
-25DB: E1              POP     HL                  
-25DC: E1              POP     HL                  
-25DD: C9              RET                         
+25DB: E1              POP     HL                  ; 
+25DC: E1              POP     HL                  ; 
+25DD: C9              RET                         ; 
 
 25DE: FF FF
 
@@ -6743,7 +6772,7 @@ DrawBirdObject:
 34C0: 7E              LD      A,(HL)              ; HL=$4B70 (or $4B78,...)
 34C1: A7              AND     A                   ; updates the zero flag
 34C2: C8              RET     Z                   ; if 0
-34C3: 47              LD      B,A                 ; save it
+34C3: 47              LD      B,A                 ; save shape index
 34C4: C6 C0           ADD     $C0                 ; add to base for table T3EC0
 34C6: 5F              LD      E,A                 ; save it
 34C7: 16 3E           LD      D,$3E               ; MSB for T3EC0
@@ -6754,15 +6783,15 @@ DrawBirdObject:
 34CD: 2C              INC     L                   ; 
 34CE: 5E              LD      E,(HL)              ; get $4B72 LSB of screen ram
 34CF: 2C              INC     L                   ; 
-34D0: 78              LD      A,B                 ; restore it
-34D1: 07              RLCA                        ; Multiply by 8 ..
-34D2: 07              RLCA                        ; ..
-34D3: 07              RLCA                        ; ..
-34D4: 86              ADD     A,(HL)              ; and add to $4B73 alien0 screen coordinate Y
+34D0: 78              LD      A,B                 ; restore shape index
+34D1: 07              RLCA                        ;  *8  (each shape owns 8 bytes = 4 phase entries)
+34D2: 07              RLCA                        ; 
+34D3: 07              RLCA                        ; 
+34D4: 86              ADD     A,(HL)              ; and add to alien screen coordinate Y
 34D5: E6 7E           AND     $7E                 ; mask out 0111_1110
 34D7: 6F              LD      L,A                 ; 
-34D8: 26 3E           LD      H,$3E               ; 
-34DA: 7E              LD      A,(HL)              ; get MSB from address table for bird character block shapes (T3E08)
+34D8: 26 3E           LD      H,$3E               ; HL = $3E00 + shape*8 + phase  (within T3E08)
+34DA: 7E              LD      A,(HL)              ; MSB of the bird character-block address
 34DB: 2C              INC     L                   ; 
 34DC: 6E              LD      L,(HL)              ; get LSB
 34DD: 67              LD      H,A                 ; 
@@ -7619,8 +7648,10 @@ L391C:
 391F: D2 BC 38        JP      NC,$38BC            ; {code.L38BC} if >= $20
 3922: C9              RET                         
 
-; Trigger the melody chip for 'Elise',
-; if flag for: 'mother ship score display' is set.
+;*****************************************************************************
+;* Trigger the melody chip for 'Elise',
+;* if flag for: 'mother ship score display' is set.
+;*****************************************************************************
 L3923:
 3923: C8              RET     Z                   ; 
 3924: 35              DEC     (HL)                ; decrement $436B Counter for: 'mother ship score display'
@@ -7634,147 +7665,181 @@ L3923:
 392E: C9              RET                         
 ; 
 392F: FF
-; 
+
+;*****************************************************************************
+;* Bird bomb-drop dispatcher:
+;* For the birds currently in the active scroll band (from T3DC0),
+;* check which sit over the player and have them drop a bomb.
+;* The active-object window (start index + count) comes from `T3DC0`
+;* indexed by the scroll phase; the player danger window `(B,C)`
+;* is the player's mapped X position widened by `D` (from `L3A00`).
+;*****************************************************************************
 L3930:
-3930: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2} vertical scroll phase (0..31)
-3933: E6 1E           AND     $1E                 ; 0001_1110 keep even values 0,2,4,...,30
-3935: C6 C0           ADD     $C0                 ; LSB of table T3DC0
+3930: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2} A = formation vertical scroll phase (0..31)
+3933: E6 1E           AND     $1E                 ; 0001_1110 even -> 2-byte stride index into T3DC0
+3935: C6 C0           ADD     $C0                 ; + LSB of table T3DC0
 3937: 6F              LD      L,A                 ; 
-3938: 26 3D           LD      H,$3D               ; HL = $3DC0 + (B4BD2 & $1E)
-393A: 5E              LD      E,(HL)              ; E   = byte0 = object count
+3938: 26 3D           LD      H,$3D               ; HL = T3DC0 + (phase & $1E)
+393A: 5E              LD      E,(HL)              ; E = entry.byte0 = number of bird objects to scan
 393B: 2C              INC     L                   ; 
-393C: 6E              LD      L,(HL)              ; L   = byte1 = LSB of first object
-393D: 26 4B           LD      H,$4B               ; HL  = $4B00 + byte1  (enemy-object RAM)
-393F: CD 00 3A        CALL    $3A00               ; {code.L3A00}
-3942: 3A 9F 43        LD      A,($439F)           ; {ram.M439F}
+393C: 6E              LD      L,(HL)              ; L = entry.byte1 = LSB of first bird object
+393D: 26 4B           LD      H,$4B               ; HL -> first active bird object in $4B70 array
+393F: CD 00 3A        CALL    $3A00               ; {code.L3A00} gate: may abort L3930; otherwise D = danger half-width
+3942: 3A 9F 43        LD      A,($439F)           ; {ram.M439F} player mapped position (right edge)
 3945: 82              ADD     A,D                 ; 
-3946: 4F              LD      C,A                 ; 
-3947: 3A 9E 43        LD      A,($439E)           ; {ram.M439E}
+3946: 4F              LD      C,A                 ; C = right bound of player "danger" window
+3947: 3A 9E 43        LD      A,($439E)           ; {ram.M439E} player mapped position (left edge)
 394A: 92              SUB     D                   ; 
-394B: 47              LD      B,A                 ; 
+394B: 47              LD      B,A                 ; B = left bound of player "danger" window
 L394C:
 394C: E5              PUSH    HL                  ; 
-394D: CD 5C 39        CALL    $395C               ; {code.L395C} test this object vs player X-window
+394D: CD 5C 39        CALL    $395C               ; {code.L395C} test this bird; drop a bomb if it's over the player
 3950: E1              POP     HL                  ; 
 3951: 7D              LD      A,L                 ; 
-3952: C6 08           ADD     $08                 ; step to next object (8-byte stride)
+3952: C6 08           ADD     $08                 ; next bird object (8-byte stride)
 3954: 6F              LD      L,A                 ; 
-3955: 1D              DEC     E                   ; repeat 'count' times
+3955: 1D              DEC     E                   ; repeat for 'count' birds
 3956: C2 4C 39        JP      NZ,$394C            ; {code.L394C}
 3959: C9              RET                         ; 
 
 395A: FF FF
-; 
+
+;*****************************************************************************
+;* Per-bird bomb test:
+;* HL -> bird object.  B/C = player danger window (left/right).
+;*****************************************************************************
 L395C:
-395C: 7E              LD      A,(HL)              
-395D: FE 05           CP      $05                 
-395F: D8              RET     C                   
-3960: 7D              LD      A,L                 
-3961: C6 05           ADD     $05                 
-3963: 6F              LD      L,A                 
-3964: 7E              LD      A,(HL)              
-3965: B8              CP      B                   
-3966: D8              RET     C                   
-3967: B9              CP      C                   
-3968: D0              RET     NC                  
-3969: D6 04           SUB     $04                 
-396B: 47              LD      B,A                 
-396C: 2D              DEC     L                   
-396D: 2D              DEC     L                   
-396E: 2D              DEC     L                   
-396F: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2}
-3972: 86              ADD     A,(HL)              
+395C: 7E              LD      A,(HL)              ; +0 = bird shape / maturity index
+395D: FE 05           CP      $05                 ; 
+395F: D8              RET     C                   ; skip birds not fully grown (index < 5)
+3960: 7D              LD      A,L                 ; 
+3961: C6 05           ADD     $05                 ; 
+3963: 6F              LD      L,A                 ; HL -> object+5 (grid X)
+3964: 7E              LD      A,(HL)              ; A = bird grid X
+3965: B8              CP      B                   ; 
+3966: D8              RET     C                   ; bird left of the window -> no bomb
+3967: B9              CP      C                   ; 
+3968: D0              RET     NC                  ; bird right of the window -> no bomb   (so B <= X < C)
+3969: D6 04           SUB     $04                 ; center the drop under the bird
+396B: 47              LD      B,A                 ; B = bomb X
+396C: 2D              DEC     L                   ; 
+396D: 2D              DEC     L                   ; 
+396E: 2D              DEC     L                   ; HL -> object+2 (vertical/screen-row data)
+396F: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2} scroll phase
+3972: 86              ADD     A,(HL)              ; + bird's vertical data
 3973: E6 1F           AND     $1F                 ; 0001_1111
-3975: 07              RLCA                        ; Multiply by 8 ..
-3976: 07              RLCA                        ; ..
-3977: 07              RLCA                        ; ..
-3978: C6 08           ADD     $08                 
-397A: 4F              LD      C,A                 
-397B: C3 B7 25        JP      $25B7               ; {code.L25B7}
+3975: 07              RLCA                        ; *8 -> screen row
+3976: 07              RLCA                        ; 
+3977: 07              RLCA                        ; 
+3978: C6 08           ADD     $08                 ; 
+397A: 4F              LD      C,A                 ; C = bomb Y
+397B: C3 B7 25        JP      $25B7               ; {code.L25B7} spawn an enemy bullet (the bird drops a bomb)
 
 397E: FF FF
-; 
+
+;*****************************************************************************
+;* Player shield vs. bird collision sweep:
+;* Active while the formation is in a vertical band.
+;* Borrows the player-bullet vars to probe a column above the ship,
+;* destroying birds the shield touches, then ticks the shield timer.
+;*****************************************************************************
 L3980:
-3980: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2}
-3983: D6 0C           SUB     $0C                 
-3985: D8              RET     C                   
-3986: FE 10           CP      $10                 
-3988: D0              RET     NC                  
-3989: 21 C4 43        LD      HL,$43C4            ; {+ram.PlayerBulletState}
+3980: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2} scroll phase
+3983: D6 0C           SUB     $0C                 ; 
+3985: D8              RET     C                   ; only when phase is in $0C..$1B
+3986: FE 10           CP      $10                 ; 
+3988: D0              RET     NC                  ; 
+; --- save the real player bullet state into the $4BC0 buffer ---
+3989: 21 C4 43        LD      HL,$43C4            ; {+ram.PlayerBulletState} $43C4
 398C: 11 C0 4B        LD      DE,$4BC0            ; {!+ram.B4BC0}
-398F: 06 04           LD      B,$04               
-3991: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE}
+398F: 06 04           LD      B,$04               ; 
+3991: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE} $43C4..C7 -> $4BC0..C3
 3994: 2E E6           LD      L,$E6               ; AbovePlayerBulletMSB
-3996: 06 02           LD      B,$02               
-3998: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE}
+3996: 06 02           LD      B,$02               ; 
+3998: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE} $43E6..E7 -> $4BC4..C5
+; --- aim the probe at the player ship and force it "active" ---
 399B: 2E E2           LD      L,$E2               ; PlayerShipMSB
 399D: 11 E6 43        LD      DE,$43E6            ; {+ram.AbovePlayerBulletMSB}
-39A0: 06 02           LD      B,$02               
-39A2: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE}
+39A0: 06 02           LD      B,$02               ; 
+39A2: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE} probe address = ship position
 39A5: 2E C4           LD      L,$C4               ; PlayerBulletState
-39A7: 36 08           LD      (HL),$08            
+39A7: 36 08           LD      (HL),$08            ; PlayerBulletState = active
 39A9: 11 9E 43        LD      DE,$439E            ; {+ram.M439E}
 39AC: 3A 9B 43        LD      A,($439B)           ; {ram.Counter9A+1}
-39AF: 0F              RRCA                        
-39B0: DA BF 39        JP      C,$39BF             ; {code.L39BF}
-39B3: 1C              INC     E                   
+39AF: 0F              RRCA                        ; 
+39B0: DA BF 39        JP      C,$39BF             ; {code.L39BF} pick left/right column by frame parity
+39B3: 1C              INC     E                   ; use M439F (right) instead of M439E
 39B4: 2E E7           LD      L,$E7               ; AbovePlayerBulletLSB
-39B6: 7E              LD      A,(HL)              
-39B7: D6 20           SUB     $20                 
-39B9: 77              LD      (HL),A              
+39B6: 7E              LD      A,(HL)              ; 
+39B7: D6 20           SUB     $20                 ; nudge probe up one row
+39B9: 77              LD      (HL),A              ; 
 39BA: 2D              DEC     L                   ; AbovePlayerBulletMSB
-39BB: 7E              LD      A,(HL)              
-39BC: DE 00           SBC     $00                 
-39BE: 77              LD      (HL),A              
+39BB: 7E              LD      A,(HL)              ; 
+39BC: DE 00           SBC     $00                 ; 
+39BE: 77              LD      (HL),A              ; 
 L39BF:
-39BF: 1A              LD      A,(DE)              
-39C0: 32 C6 43        LD      ($43C6),A           ; {ram.PlayerBulletX}
+39BF: 1A              LD      A,(DE)              ; 
+39C0: 32 C6 43        LD      ($43C6),A           ; {ram.PlayerBulletX} probe X = player mapped position
 L39C3:
-39C3: CD 00 38        CALL    $3800               ; {code.L3800} Collision detection for birds
+39C3: CD 00 38        CALL    $3800               ; {code.L3800} bird collision check at this row
 39C6: 21 C4 43        LD      HL,$43C4            ; {+ram.PlayerBulletState}
-39C9: 7E              LD      A,(HL)              
+39C9: 7E              LD      A,(HL)              ; 
 39CA: E6 08           AND     $08                 ; 0000_1000
-39CC: CA F0 39        JP      Z,$39F0             ; {code.L39F0}
+39CC: CA F0 39        JP      Z,$39F0             ; {code.L39F0} bullet consumed (bird hit) -> shield upkeep
 39CF: 21 E7 43        LD      HL,$43E7            ; {+ram.AbovePlayerBulletLSB}
-39D2: 34              INC     (HL)                
-39D3: 7E              LD      A,(HL)              
+39D2: 34              INC     (HL)                ; 
+39D3: 7E              LD      A,(HL)              ; 
 39D4: E6 1F           AND     $1F                 ; 0001_1111
-39D6: FE 1D           CP      $1D                 
-39D8: DA C3 39        JP      C,$39C3             ; {code.L39C3}
+39D6: FE 1D           CP      $1D                 ; 
+39D8: DA C3 39        JP      C,$39C3             ; {code.L39C3} step down a row, repeat (~29 rows)
 L39DB:
-39DB: 21 C0 4B        LD      HL,$4BC0            ; {!+ram.B4BC0}
+39DB: 21 C0 4B        LD      HL,$4BC0            ; {!+ram.B4BC0} restore the saved player bullet state
 39DE: 11 C4 43        LD      DE,$43C4            ; {+ram.PlayerBulletState}
-39E1: 06 04           LD      B,$04               
-39E3: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE}
-39E6: 1E E6           LD      E,$E6               
-39E8: 06 02           LD      B,$02               
-39EA: C3 E0 05        JP      $05E0               ; {code.CopyBbytesHLtoDE}
+39E1: 06 04           LD      B,$04               ; 
+39E3: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE} $4BC0..C3 -> $43C4..C7
+39E6: 1E E6           LD      E,$E6               ; 
+39E8: 06 02           LD      B,$02               ; 
+39EA: C3 E0 05        JP      $05E0               ; {code.CopyBbytesHLtoDE} $4BC4..C5 -> $43E6..E7 (and return)
 
 39ED: FF FF FF
-; 
+
+;*****************************************************************************
+;* Shield timer upkeep (entered on a hit):
+;*****************************************************************************
 L39F0:
-39F0: 2E A6           LD      L,$A6               ; ShieldCount
-39F2: 7E              LD      A,(HL)              
-39F3: FE C0           CP      $C0                 ; end of shield time
-39F5: DA C4 0C        JP      C,$0CC4             ; {code.L0CC4}
-39F8: D6 01           SUB     $01                 
-39FA: 77              LD      (HL),A              
-39FB: C3 DB 39        JP      $39DB               ; {code.L39DB}
+39F0: 2E A6           LD      L,$A6               ; ShieldCount ($43A6)
+39F2: 7E              LD      A,(HL)              ; 
+39F3: FE C0           CP      $C0                 ; shield still has time?
+39F5: DA C4 0C        JP      C,$0CC4             ; {code.L0CC4} no -> hand off (shield expired handling)
+39F8: D6 01           SUB     $01                 ; 
+39FA: 77              LD      (HL),A              ; spend one unit of shield time
+39FB: C3 DB 39        JP      $39DB               ; {code.L39DB} restore player bullet state and return
 
 39FE: FF FF
-; 
+
+;*****************************************************************************
+;* Frame gate + danger-window width:
+;* Returns D = half-width of the player "danger" window
+;* (wider when fewer birds remain -> more aggressive bombing).
+;* On alternate frames, pops L3930's return address so the
+;* whole bomb scan is skipped this frame (throttles bombing).
+;* The `POP HL` / `RET` trick at `$3A0E` is the key detail:
+;* when the gate "fails", it removes `L3930`'s own continuation (`$3942`)
+;* from the stack and returns one level higher, so on those frames `L3930`
+;* performs no bomb-drop scan at all.
+;*****************************************************************************
 L3A00:
 3A00: 3A BB 43        LD      A,($43BB)           ; {ram.BirdsLeft}
-3A03: D6 0C           SUB     $0C                 
-3A05: 2F              CPL                         
-3A06: 3C              INC     A                   
-3A07: 57              LD      D,A                 
+3A03: D6 0C           SUB     $0C                 ; 
+3A05: 2F              CPL                         ; 
+3A06: 3C              INC     A                   ; A = $0C - BirdsLeft  (two's-complement negate)
+3A07: 57              LD      D,A                 ; D = danger-window half width
 3A08: 3A 9B 43        LD      A,($439B)           ; {ram.Counter9A+1}
-3A0B: 0F              RRCA                        
-3A0C: 0F              RRCA                        
-3A0D: D8              RET     C                   
-3A0E: E1              POP     HL                  
-3A0F: C9              RET                         
+3A0B: 0F              RRCA                        ; 
+3A0C: 0F              RRCA                        ; test a timing bit
+3A0D: D8              RET     C                   ; bit set  -> return to L3930, continue the scan
+3A0E: E1              POP     HL                  ; bit clear-> discard L3930's return address...
+3A0F: C9              RET                         ; ...returning to L3930's caller, skipping the scan
 
 ;*****************************************************************************
 ;* Update all synth sounds and melody trigger data.
