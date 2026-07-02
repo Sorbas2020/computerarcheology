@@ -585,12 +585,12 @@ Scratch RAM used by the routine `L3980` (`$3980`), which runs during the bird/Ph
 
 |    |     |     |
 | -------- | ------- | ----------------- |
-| 4BC0      | B4BC0                | ? |
-| 4BC1      | B4BC1                | ? |
-| 4BC2      | B4BC2                | ? |
-| 4BC3      | B4BC3                | ? |
-| 4BC4      | B4BC4                | ? |
-| 4BC5      | B4BC5                | ? |
+| 4BC0      | B4BC0                | buffer for real bullet/aim values while routine L39F0 hijacks them (copied back via L39DB) |
+| 4BC1      | B4BC1                | buffer ... |
+| 4BC2      | B4BC2                | buffer ... |
+| 4BC3      | B4BC3                | buffer ... |
+| 4BC4      | B4BC4                | buffer ... |
+| 4BC5      | B4BC5                | buffer ... |
 | 4BD1      | B4BD1                | ? |
 | 4BD2      | B4BD2                | vertical scroll phase (0..31) |
 | 4BD3      | B4BD3                | ? |
