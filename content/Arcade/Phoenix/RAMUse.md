@@ -439,70 +439,70 @@ For the bird animation during intro splash, bird0 memory is used.
 
 |    |     |     |
 | -------- | ------- | ----------------- |
-| 4B70      | B4B70                | Bird0 index character block shape ? |
-| 4B71      | B4B71                | Bird0 MSB initial screen address ?  |
-| 4B72      | B4B72                | Bird0 LSB initial screen address ?  |
+| 4B70      | B4B70                | Bird0 index character block shape   |
+| 4B71      | B4B71                | Bird0 MSB initial screen address    |
+| 4B72      | B4B72                | Bird0 LSB initial screen address    |
 | 4B73      | B4B73                | Bird0 ?                             |
 | 4B74      | B4B74                | Bird0 ?                             |
-| 4B75      | B4B75                | Bird0 grid coordinate X ?           |
+| 4B75      | B4B75                | Bird0 grid coordinate X             |
 | 4B76      | B4B76                | Bird0 horizontal movement direction |
-| 4B77      | B4B77                | Bird0 grid coordinate Y ?           |
-| 4B78      | B4B78                | Bird1 index character block shape ? |
-| 4B79      | B4B79                | Bird1 MSB initial screen address ?  |
-| 4B7A      | B4B7A                | Bird1 LSB initial screen address ?  |
+| 4B77      | B4B77                | Bird0 grid coordinate Y             |
+| 4B78      | B4B78                | Bird1 index character block shape   |
+| 4B79      | B4B79                | Bird1 MSB initial screen address    |
+| 4B7A      | B4B7A                | Bird1 LSB initial screen address    |
 | 4B7B      | B4B7B                | Bird1 ?                             |
 | 4B7C      | B4B7C                | Bird1 ?                             |
-| 4B7D      | B4B7D                | Bird1 grid coordinate X ?           |
+| 4B7D      | B4B7D                | Bird1 grid coordinate X             |
 | 4B7E      | B4B7E                | Bird1 horizontal movement direction |
-| 4B7F      | B4B7F                | Bird1 grid coordinate Y ?           |
-| 4B80      | B4B80                | Bird2 index character block shape ? |
-| 4B81      | B4B81                | Bird2 MSB initial screen address ?  |
-| 4B82      | B4B82                | Bird2 LSB initial screen address ?  |
+| 4B7F      | B4B7F                | Bird1 grid coordinate Y             |
+| 4B80      | B4B80                | Bird2 index character block shape   |
+| 4B81      | B4B81                | Bird2 MSB initial screen address    |
+| 4B82      | B4B82                | Bird2 LSB initial screen address    |
 | 4B83      | B4B83                | Bird2 ?                             |
 | 4B84      | B4B84                | Bird2 ?                             |
-| 4B85      | B4B85                | Bird2 grid coordinate X ?           |
+| 4B85      | B4B85                | Bird2 grid coordinate X             |
 | 4B86      | B4B86                | Bird2 horizontal movement direction |
-| 4B87      | B4B87                | Bird2 grid coordinate Y ?           |
-| 4B88      | B4B88                | Bird3 index character block shape ? |
-| 4B89      | B4B89                | Bird3 MSB initial screen address ?  |
-| 4B8A      | B4B8A                | Bird3 LSB initial screen address ?  |
+| 4B87      | B4B87                | Bird2 grid coordinate Y             |
+| 4B88      | B4B88                | Bird3 index character block shape   |
+| 4B89      | B4B89                | Bird3 MSB initial screen address    |
+| 4B8A      | B4B8A                | Bird3 LSB initial screen address    |
 | 4B8B      | B4B8B                | Bird3 ?                             |
 | 4B8C      | B4B8C                | Bird3 ?                             |
-| 4B8D      | B4B8D                | Bird3 grid coordinate X ?           |
+| 4B8D      | B4B8D                | Bird3 grid coordinate X             |
 | 4B8E      | B4B8E                | Bird3 horizontal movement direction |
-| 4B8F      | B4B8F                | Bird3 grid coordinate Y ?           |
-| 4B90      | B4B90                | Bird4 index character block shape ? |
-| 4B91      | B4B91                | Bird4 MSB initial screen address ?  |
-| 4B92      | B4B92                | Bird4 LSB initial screen address ?  |
+| 4B8F      | B4B8F                | Bird3 grid coordinate Y             |
+| 4B90      | B4B90                | Bird4 index character block shape   |
+| 4B91      | B4B91                | Bird4 MSB initial screen address    |
+| 4B92      | B4B92                | Bird4 LSB initial screen address    |
 | 4B93      | B4B93                | Bird4 ?                             |
 | 4B94      | B4B94                | Bird4 ?                             |
-| 4B95      | B4B95                | Bird4 grid coordinate X ?           |
+| 4B95      | B4B95                | Bird4 grid coordinate X             |
 | 4B96      | B4B96                | Bird4 horizontal movement direction |
-| 4B97      | B4B97                | Bird4 grid coordinate Y ?           |
-| 4B98      | B4B98                | Bird5 index character block shape ? |
-| 4B99      | B4B99                | Bird5 MSB initial screen address ?  |
-| 4B9A      | B4B9A                | Bird5 LSB initial screen address ?  |
+| 4B97      | B4B97                | Bird4 grid coordinate Y             |
+| 4B98      | B4B98                | Bird5 index character block shape   |
+| 4B99      | B4B99                | Bird5 MSB initial screen address    |
+| 4B9A      | B4B9A                | Bird5 LSB initial screen address    |
 | 4B9B      | B4B9B                | Bird5 ?                             |
 | 4B9C      | B4B9C                | Bird5 ?                             |
-| 4B9D      | B4B9D                | Bird5 grid coordinate X ?           |
+| 4B9D      | B4B9D                | Bird5 grid coordinate X             |
 | 4B9E      | B4B9E                | Bird5 horizontal movement direction |
-| 4B9F      | B4B9F                | Bird5 grid coordinate Y ?           |
-| 4BA0      | B4BA0                | Bird6 index character block shape ? |
-| 4BA1      | B4BA1                | Bird6 MSB initial screen address ?  |
-| 4BA2      | B4BA2                | Bird6 LSB initial screen address ?  |
+| 4B9F      | B4B9F                | Bird5 grid coordinate Y             |
+| 4BA0      | B4BA0                | Bird6 index character block shape   |
+| 4BA1      | B4BA1                | Bird6 MSB initial screen address    |
+| 4BA2      | B4BA2                | Bird6 LSB initial screen address    |
 | 4BA3      | B4BA3                | Bird6 ?                             |
 | 4BA4      | B4BA4                | Bird6 ?                             |
-| 4BA5      | B4BA5                | Bird6 grid coordinate X ?           |
+| 4BA5      | B4BA5                | Bird6 grid coordinate X             |
 | 4BA6      | B4BA6                | Bird6 horizontal movement direction |
-| 4BA7      | B4BA7                | Bird6 grid coordinate Y ?           |
-| 4BA8      | B4BA8                | Bird7 index character block shape ? |
-| 4BA9      | B4BA9                | Bird7 MSB initial screen address ?  |
-| 4BAA      | B4BAA                | Bird7 LSB initial screen address ?  |
+| 4BA7      | B4BA7                | Bird6 grid coordinate Y             |
+| 4BA8      | B4BA8                | Bird7 index character block shape   |
+| 4BA9      | B4BA9                | Bird7 MSB initial screen address    |
+| 4BAA      | B4BAA                | Bird7 LSB initial screen address    |
 | 4BAB      | B4BAB                | Bird7 ?                             |
 | 4BAC      | B4BAC                | Bird7 ?                             |
-| 4BAD      | B4BAD                | Bird7 grid coordinate X ?           |
+| 4BAD      | B4BAD                | Bird7 grid coordinate X             |
 | 4BAE      | B4BAE                | Bird7 horizontal movement direction |
-| 4BAF      | B4BAF                | Bird7 grid coordinate Y ?           |
+| 4BAF      | B4BAF                | Bird7 grid coordinate Y             |
 
 
 ## Alien data structure (screen ram)
@@ -592,7 +592,7 @@ Scratch RAM used by the routine `L3980` (`$3980`), which runs during the bird/Ph
 | 4BC4      | B4BC4                | ? |
 | 4BC5      | B4BC5                | ? |
 | 4BD1      | B4BD1                | ? |
-| 4BD2      | B4BD2                | ? |
+| 4BD2      | B4BD2                | vertical scroll phase (0..31) |
 | 4BD3      | B4BD3                | ? |
 | 4BD4      | B4BD4                | one of four attack variants |
 | 4BD5      | B4BD5                | descent step value |

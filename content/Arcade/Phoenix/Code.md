@@ -15,6 +15,29 @@
 [RAM Usage](RAMUse.md)
 
 ```code
+;*****************************************************************************
+;*                                                                           *
+;* PHOENIX (AMSTAR, SET 1).                                                  *
+;*                                                                           *
+;*****************************************************************************
+;* This code refers to the "maincpu" section of the ROM region from ROM set. *
+;*                                                                           *
+;* ROM region offsets:                                                       *
+;*  ic45        $0000-$07FF                                                  *
+;*  ic46        $0800-$0FFF                                                  *
+;*  ic47        $1000-$17FF                                                  *
+;*  ic48        $1800-$1FFF                                                  *
+;*  h5-ic49.5a  $2000-$27FF                                                  *
+;*  h6-ic50.6a  $2800-$2FFF                                                  *
+;*  h7-ic51.7a  $3000-$37FF                                                  *
+;*  h8-ic52.8a  $3800-$3FFF                                                  *
+;*                                                                           *
+;*****************************************************************************
+
+;*****************************************************************************
+; ic45
+;*****************************************************************************
+
 L0000:
 0000: 00              NOP                         ; Start/restart and interrupts end up at 0008
 0001: 00              NOP                         ; 
@@ -1748,6 +1771,10 @@ L07F0:
 07FC: FF FF FF FF
 
 ;*****************************************************************************
+; ic46
+;*****************************************************************************
+
+;*****************************************************************************
 ;* Game state 3.
 ;* Normal game play.
 ;*****************************************************************************
@@ -2853,21 +2880,21 @@ L0E10:
 0E1D: D8              RET     C                   ; if no character.
 0E1E: FE 68           CP      $68                 ; is alien out of formation ($68 - $BF) ?
 0E20: D2 39 0E        JP      NC,$0E39            ; {code.L0E39} if yes
-0E23: E6 07           AND     $07                 ; mask out 0000_0111
-0E25: 07              RLCA                        ; Multiply by 4 ..
-0E26: 07              RLCA                        ; ..to get a 4 byte offset
+0E23: E6 07           AND     $07                 ; mask out 0000_0111 tile type 0..7 (low 3 bits of char code)
+0E25: 07              RLCA                        ; x2
+0E26: 07              RLCA                        ; x4  -> 4-byte stride
 0E27: C6 40           ADD     $40                 ; 
 0E29: 6F              LD      L,A                 ; 
-0E2A: 26 17           LD      H,$17               ; T1740
+0E2A: 26 17           LD      H,$17               ; HL = $1740 + type*4
 0E2C: 03              INC     BC                  ; 
 0E2D: 03              INC     BC                  ; 
 0E2E: 0A              LD      A,(BC)              ; get player bullet, coordinate X
-0E2F: E6 07           AND     $07                 ; 0000_0111
-0E31: BE              CP      (HL)                ; 
-0E32: D0              RET     NC                  ; 
+0E2F: E6 07           AND     $07                 ; 0000_0111 pixel column within the tile
+0E31: BE              CP      (HL)                ; vs byte0  (max)
+0E32: D0              RET     NC                  ; outside -> no hit
 0E33: 23              INC     HL                  ; 2nd byte at T1740
-0E34: BE              CP      (HL)                ; 
-0E35: D8              RET     C                   ; 
+0E34: BE              CP      (HL)                ; vs byte1  (min)
+0E35: D8              RET     C                   ; outside -> no hit
 0E36: C3 70 0E        JP      $0E70               ; {code.L0E70}
 
 ; 
@@ -2918,11 +2945,11 @@ L0E58:
 0E6E: FF FF
 ; 
 L0E70:
-0E70: 23              INC     HL                  ; 3nd byte at T1740
+0E70: 23              INC     HL                  ; -> byte2 at T1740
 0E71: 0A              LD      A,(BC)              ; get player bullet, coordinate X
-0E72: E6 F8           AND     $F8                 ; 1111_1000
-0E74: 86              ADD     A,(HL)              ; 
-0E75: 57              LD      D,A                 ; save it in D
+0E72: E6 F8           AND     $F8                 ; 1111_1000 cell-aligned X
+0E74: 86              ADD     A,(HL)              ; + byte2 (signed: $F8=-8, $FA=-6, $02=+2, ...)
+0E75: 57              LD      D,A                 ; target X for the alien-table search
 0E76: 03              INC     BC                  ; 
 0E77: 0A              LD      A,(BC)              ; get player bullet, coordinate Y
 0E78: E6 F8           AND     $F8                 ; 1111_1000
@@ -2939,7 +2966,7 @@ L0E7E:
 0E88: 3E B0           LD      A,$B0               ; 
 0E8A: BD              CP      L                   ; 
 0E8B: C2 7E 0E        JP      NZ,$0E7E            ; {code.L0E7E} loop over alien data structure.
-0E8E: C9              RET                         
+0E8E: C9              RET                         ; 
 ; 
 0E8F: FF
 ; 
@@ -3200,6 +3227,10 @@ L0FD8:
 0FF8: 3E 05           LD      A,$05               
 0FFA: 32 96 43        LD      ($4396),A           ; {ram.M4396}
 0FFD: C3 A4 0E        JP      $0EA4               ; {code.L0EA4}
+
+;*****************************************************************************
+; ic47
+;*****************************************************************************
 
 ; Pointer table to alien movement list (T1700):
 ; Value * 2 ==> LSB of T1700
@@ -3828,16 +3859,33 @@ T1700:
 173C: 04 04                   ; X+4, Y+4
 173E: 04 FC                   ; X+4, Y-4
 
-;?
+; Per-tile hit-window + X-offset table for in-formation aliens:
+; Lookup table used in the player-bullet vs. alien collision routine `L0E10`,
+; specifically for aliens that are still sitting in the base formation.
+; Indexed by the alien tile's character type.
+; How the index is formed:
+; In `L0E10`, the code reads the character drawn under the bullet.
+; After rejecting explosion parts (`≥$C0`), empty cells (`<$60`), and out-of-formation aliens (`≥$68` -> handled by `L0E39`),
+; it's left with in-formation foreground tiles `$60`–`$67`.
+; Meaning of the 4 bytes:
+; Byte 0 — upper bound of the horizontal hit window (`$0E31`): `bulletX & 7` must be < byte 0, else `RET NC` (miss).
+; Byte 1 — lower bound of the hit window (`$0E34`): `bulletX & 7` must be >= byte 1, else `RET C` (miss).
+;          So bytes 0/1 define the `[byte1, byte0)` pixel-column range inside that 8-pixel tile where the alien graphic is actually solid.
+;          (E.g. type 0 = full width `[0,8)`; type 1 = only column 0; type 2 = columns `[1,8)`.)
+; Byte 2 — signed X correction (`$0E70`/`L0E70`): added to the bullet's cell-aligned X to reconstruct the screen X of the hit target,
+;          which is then used to locate the matching alien object in the alien control table at `M4B70`.
+;          Because a formation alien is drawn from several tiles, byte 2 shifts the coordinate from the tile that was hit
+;          back to the alien's anchor X, so the correct alien object is found and killed.
+; Byte 3 — `$FF`, unused padding.
 T1740:
-1740: 08 00 00 FF ; 
-1744: 01 00 F8 FF ; 
-1748: 08 01 02 FF ; 
-174C: 04 00 FA FF ; 
-1750: 08 01 04 FF ; 
-1754: 08 00 FC FF ; 
-1758: 08 05 06 FF ; 
-175C: 08 00 FE FF ; 
+1740: 08 00 00 FF ; type 0 for foreground tile $60
+1744: 01 00 F8 FF ; type 1 for foreground tile $61
+1748: 08 01 02 FF ; type 2 for foreground tile $62
+174C: 04 00 FA FF ; type 3 for foreground tile $63
+1750: 08 01 04 FF ; type 4 for foreground tile $64
+1754: 08 00 FC FF ; type 5 for foreground tile $65
+1758: 08 05 06 FF ; type 6 for foreground tile $66
+175C: 08 00 FE FF ; type 7 for foreground tile $67
 
 ; Parity table and initial number of aliens/birds for levels:
 ; odd, odd, even (P), even (P), odd, odd, odd, odd
@@ -3884,6 +3932,10 @@ CoinChecking:
 ; and Alien explosion frame #5
 FourByFourEmpty:
 17F0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+;*****************************************************************************
+; ic48
+;*****************************************************************************
 
 ; Screen ram adresses and static texts using setA
 T1800:
@@ -4252,6 +4304,10 @@ T1F00:
 1FF0: 00 04 00 05 00 00 00 00 00 01 00 00 00 00 02 00 
 
 ;*****************************************************************************
+; h5-ic49.5a
+;*****************************************************************************
+
+;*****************************************************************************
 ;* Game level 1, 3 and B:
 ;* 'player alife' with aliens, after 'fade in'
 ;*****************************************************************************
@@ -4600,11 +4656,11 @@ DrawIntroBirdAnimationFrame:
 21FF: FF FF FF FF FF
 ; 
 L2204:
-2204: 21 B6 43        LD      HL,$43B6            ; {+ram.M43B6}
+2204: 21 B6 43        LD      HL,$43B6            ; {+ram.M43B6} End-of-wave countdown timer
 2207: 35              DEC     (HL)                ; 
 2208: 7E              LD      A,(HL)              ; 
-2209: FE A0           CP      $A0                 ; 
-220B: D0              RET     NC                  ; 
+2209: FE A0           CP      $A0                 ; (~96 frames later)
+220B: D0              RET     NC                  ; keep waiting
 220C: 2E A4           LD      L,$A4               ; GameState
 220E: 36 02           LD      (HL),$02            ; set GameState to: 'initialization of game and level data'
 2210: 2E A6           LD      L,$A6               ; ShieldCount
@@ -4633,17 +4689,20 @@ L222A:
 
 ;*****************************************************************************
 ;* Game level 4, 6 and 8:
-;* Do the 'spiral fill' animation.
+;* Drives the spiral fade-in animation between waves.
+;* The animation step counter is incremented every frame,
+;* its value indexes the spiral drawing progress,
+;* and when the spiral is complete it advances to the next level.
 ;*****************************************************************************
 L2230:
 2230: 21 9C 43        LD      HL,$439C            ; {+ram.M439C}
 2233: 7E              LD      A,(HL)              ; 
-2234: 34              INC     (HL)                ; 
+2234: 34              INC     (HL)                ; advance animation
 2235: 00              NOP                         ; 
 2236: 0F              RRCA                        ; 
 2237: E6 3F           AND     $3F                 ; mask out 0011_1111
 2239: FE 0D           CP      $0D                 ; 
-223B: CA 92 22        JP      Z,$2292             ; {+code.L2292}
+223B: CA 92 22        JP      Z,$2292             ; {+code.L2292} spiral step
 223E: 06 1F           LD      B,$1F               ; The asterisk character
 2240: DA 60 22        JP      C,$2260             ; {+code.L2260}
 2243: 06 00           LD      B,$00               ; The space character
@@ -4709,7 +4768,7 @@ L227B:
 228D: 1D              DEC     E                   ; All columns done?
 228E: C2 7A 22        JP      NZ,$227A            ; {+code.L227A} no ... do all columns
 2291: C9              RET                         ; Done
-; 
+; spiral step
 L2292:
 2292: 21 B8 43        LD      HL,$43B8            ; {+ram.LevelAndRound}
 2295: 7E              LD      A,(HL)              ; 
@@ -5112,7 +5171,7 @@ L24C4:
 24C9: FE 08           CP      $08                 ; 
 24CB: DA F0 06        JP      C,$06F0             ; {code.L06F0} update scroll register and fill background if game level < 8
 24CE: CD E0 24        CALL    $24E0               ; {code.L24E0}
-24D1: 21 AA 43        LD      HL,$43AA            ; {+ram.M43AA}
+24D1: 21 AA 43        LD      HL,$43AA            ; {+ram.M43AA} Mothership-wave frame counter
 24D4: 34              INC     (HL)                ; 
 24D5: 7E              LD      A,(HL)              ; 
 24D6: E6 03           AND     $03                 ; mask out 0000_0011
@@ -5125,12 +5184,12 @@ L24C4:
 
 ; 
 L24E0:
-24E0: 3A AA 43        LD      A,($43AA)           ; {ram.M43AA}
+24E0: 3A AA 43        LD      A,($43AA)           ; {ram.M43AA} Mothership-wave frame counter
 24E3: E6 0F           AND     $0F                 ; 0000_1111
 24E5: C0              RET     NZ                  
 24E6: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
 24E9: FE A0           CP      $A0                 
-24EB: D8              RET     C                   
+24EB: D8              RET     C                   ; gate stars-scroll
 24EC: C3 7A 06        JP      $067A               ; {code.StarsScrollDown}
 
 ; not used 
@@ -5344,40 +5403,40 @@ L2600:
 2603: 00              NOP                         ; ..
 2604: 00              NOP                         ; ..
 2605: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
-2608: 2F              CPL                         
-2609: 0F              RRCA                        
-260A: 0F              RRCA                        
-260B: 0F              RRCA                        
+2608: 2F              CPL                         ; 
+2609: 0F              RRCA                        ; 
+260A: 0F              RRCA                        ; 
+260B: 0F              RRCA                        ; 
 260C: E6 1F           AND     $1F                 ; 0001_1111
 260E: 21 D2 4B        LD      HL,$4BD2            ; {!+ram.B4BD2}
-2611: 77              LD      (HL),A              
-2612: 2C              INC     L                   
+2611: 77              LD      (HL),A              ; 
+2612: 2C              INC     L                   ; 
 2613: 3A D1 4B        LD      A,($4BD1)           ; {!ram.B4BD1}
-2616: BE              CP      (HL)                
+2616: BE              CP      (HL)                ; 
 2617: DA 50 26        JP      C,$2650             ; {code.L2650}
-261A: 3A D5 4B        LD      A,($4BD5)           ; {!ram.B4BD5}
-261D: 57              LD      D,A                 
-261E: E6 03           AND     $03                 ; 0000_0011
-2620: 5F              LD      E,A                 
+261A: 3A D5 4B        LD      A,($4BD5)           ; {!ram.B4BD5} D = descent-step value
+261D: 57              LD      D,A                 ; 
+261E: E6 03           AND     $03                 ; E = B4BD5 & 3   -> sub-phase (column 0..3)
+2620: 5F              LD      E,A                 ; 
 2621: 3A 9B 43        LD      A,($439B)           ; {ram.Counter9A+1}
 2624: 07              RLCA                        ; Multiply by 4 ..
 2625: 07              RLCA                        ; ..
-2626: E6 0C           AND     $0C                 ; 0000_1100
-2628: 83              ADD     A,E                 
-2629: C6 D0           ADD     $D0                 
-262B: 6F              LD      L,A                 
-262C: 26 3E           LD      H,$3E               
-262E: 7A              LD      A,D                 
-262F: 0F              RRCA                        
-2630: 0F              RRCA                        
-2631: E6 07           AND     $07                 ; 0000_0111
-2633: 86              ADD     A,(HL)              
-2634: 57              LD      D,A                 
+2626: E6 0C           AND     $0C                 ; 0000_1100 animation-frame row -> 0,4,8,12
+2628: 83              ADD     A,E                 ; + sub-phase
+2629: C6 D0           ADD     $D0                 ; 
+262B: 6F              LD      L,A                 ; 
+262C: 26 3E           LD      H,$3E               ; HL = $3ED0 + row + column
+262E: 7A              LD      A,D                 ; 
+262F: 0F              RRCA                        ; B4BD5 >> 2
+2630: 0F              RRCA                        ; 
+2631: E6 07           AND     $07                 ; 0000_0111 coarse speed 0..7
+2633: 86              ADD     A,(HL)              ; + 0/1 dither bit from table
+2634: 57              LD      D,A                 ; total vertical step this frame
 2635: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
-2638: 92              SUB     D                   
+2638: 92              SUB     D                   ; 
 L2639:
 2639: 32 B9 43        LD      ($43B9),A           ; {ram.CounterB9}
-263C: 32 00 58        LD      ($5800),A           ; {hard.scrollRegister} 58xx scroll register
+263C: 32 00 58        LD      ($5800),A           ; {hard.scrollRegister} $5800 vertical scroll register
 263F: 3A 9B 43        LD      A,($439B)           ; {ram.Counter9A+1}
 2642: 0F              RRCA                        
 2643: D2 D0 26        JP      NC,$26D0            ; {code.L26D0}
@@ -5424,11 +5483,11 @@ L2685:
 2685: 3A D6 4B        LD      A,($4BD6)           ; {!ram.B4BD6}
 2688: C6 E0           ADD     $E0                 
 268A: 6F              LD      L,A                 
-268B: 26 3E           LD      H,$3E               
-268D: 78              LD      A,B                 
+268B: 26 3E           LD      H,$3E               ; HL = $3EE0 + B4BD6
+268D: 78              LD      A,B                 ; B = candidate step (from M436E, wave timer, AliensLeft)
 268E: BE              CP      (HL)                
-268F: DA 93 26        JP      C,$2693             ; {code.L2693}
-2692: 7E              LD      A,(HL)              
+268F: DA 93 26        JP      C,$2693             ; {code.L2693} keep B if B < limit
+2692: 7E              LD      A,(HL)              ; else clamp to table limit
 L2693:
 2693: 57              LD      D,A                 
 2694: 3A BB 43        LD      A,($43BB)           ; {ram.BirdsLeft}
@@ -5440,9 +5499,9 @@ L269D:
 269F: D2 A3 26        JP      NC,$26A3            ; {code.L26A3} if >= $02
 26A2: 14              INC     D                   
 L26A3:
-26A3: 7A              LD      A,D                 
-26A4: 32 D5 4B        LD      ($4BD5),A           ; {!ram.B4BD5}
-26A7: C9              RET                         
+26A3: 7A              LD      A,D                 ; D further nudged by BirdsLeft, then:
+26A4: 32 D5 4B        LD      ($4BD5),A           ; {!ram.B4BD5} -> B4BD5 (feeds Part 1 above)
+26A7: C9              RET                         ; 
 ; not used
 26A8: 00              NOP                         
 26A9: 58              LD      E,B                 
@@ -5526,7 +5585,7 @@ UpdateScoresAndSound:
 270C: C6 83           ADD     $83                 ; 
 270E: 6F              LD      L,A                 ; 
 270F: 3E FF           LD      A,$FF               ; 
-2711: 32 97 43        LD      ($4397),A           ; {ram.M4397}
+2711: 32 97 43        LD      ($4397),A           ; {ram.M4397} assume "no change"
 2714: 11 70 43        LD      DE,$4370            ; {+ram.M4370}
 L2717:
 2717: CD 48 27        CALL    $2748               ; {code.L2748} add score values for all enemies hit.
@@ -5550,7 +5609,7 @@ L2717:
 L2739:
 2739: 3A 97 43        LD      A,($4397)           ; {ram.M4397}
 273C: A7              AND     A                   ; updates the zero flag
-273D: CC 68 27        CALL    Z,$2768             ; {code.L2768} if $4397 is 0.
+273D: CC 68 27        CALL    Z,$2768             ; {code.L2768} redraw score if it changed
 2740: CD A8 27        CALL    $27A8               ; {code.UpdateSoundControlHW}
 2743: C3 10 3A        JP      $3A10               ; {code.UpdateSounds}
 
@@ -5576,8 +5635,8 @@ L2748:
 275B: 47              LD      B,A                 ; 
 275C: CD 20 02        CALL    $0220               ; {code.AddToScore}
 275F: AF              XOR     A                   ; Clear A Reg.
-2760: 12              LD      (DE),A              ; clear the temp. score storage and ...
-2761: 32 97 43        LD      ($4397),A           ; {ram.M4397} ... the first two digits of BCD score value
+2760: 12              LD      (DE),A              ; clear temp score storage and ...
+2761: 32 97 43        LD      ($4397),A           ; {ram.M4397} mark score as changed (0)
 2764: C9              RET                         ; 
 ; 
 2765: FF FF FF
@@ -5696,6 +5755,10 @@ L27E9:
 27EE: C9              RET                         ; 
 
 27EF: FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+
+;*****************************************************************************
+; h6-ic50.6a
+;*****************************************************************************
 
 ;foreground tiles of the player ship particles explosion
 T2800:
@@ -5893,11 +5956,17 @@ T2FA0:
 2FF0: 05 05 02 02 02 05 1C 08 08 07 07 08 08 08 00 FF
 
 ;*****************************************************************************
+; h7-ic51.7a
+;*****************************************************************************
+
+;*****************************************************************************
 ;* AlienBehaviorUpdate.
 ;* This is the 'core of the matter'!
-;* It handles all attack patterns of the aliens 
-;* and the randomization of selection.
-;* The selected patterns do always fit on the screen, 
+;* The 'core of the matter': drives every alien attack pattern and the
+;* randomized selection. One sub-task runs per frame, chosen round-robin by
+;* Counter93 (0-7) via jump table T3018. The sub-tasks cooperate through the
+;* behavior state machine at $4350 and the control block $4350-$435B.
+;* The selected patterns do always fit on the screen,
 ;* even if the alien formation is further down. (phase 1, 2, 3)
 ;*****************************************************************************
 AlienBehaviorUpdate:
@@ -5913,56 +5982,62 @@ AlienBehaviorUpdate:
 300E: 23              INC     HL                  ; 
 300F: 6E              LD      L,(HL)              ; get LSB from jump table
 3010: 67              LD      H,A                 ; 
-3011: E9              JP      (HL)                ; jump to the corresponding function
-; from jump table T3018 if Counter93 is 7
+3011: E9              JP      (HL)                ; dispatch to sub-task
+
+;*****************************************************************************
+;* Sub-task 7: Do nothing.
+;*****************************************************************************
 L3012:
 3012: C9              RET                         ; 
 ; 
 3013: FF FF FF FF FF
-; 
-T3018:
-3018: 32 64 ; if Counter93 is 0
-301A: 30 28 ; if Counter93 is 1 - do the 'Angry movement pattern A/B' (pattern 26/28)
-301C: 30 BA ; if Counter93 is 2
-301E: 31 24 ; if Counter93 is 3 - calculate the number of aliens in formation flying
-3020: 31 5A ; if Counter93 is 4
-3022: 31 B4 ; if Counter93 is 5 - get the next closed loop pattern.
-3024: 32 2C ; if Counter93 is 6
-3026: 30 12 ; if Counter93 is 7 - do nothing
 
-; from jump table T3018 if Counter93 is 1.
-; Do the 'Angry movement pattern A/B' (pattern 26/28).
-; After that, the alien formation is further down on the screen.
+; Jump table for AlienBehaviorUpdate sub-tasks (by Counter93).
+T3018:
+3018: 32 64         ; 0 -> L3264  install chosen pattern / rotate start pointer
+301A: 30 28         ; 1 -> L3028  'Angry movement A/B' (push formation down)
+301C: 30 BA         ; 2 -> L30BA  tick attack-delay + group timers
+301E: 31 24         ; 3 -> L3124  decide how many aliens attack
+3020: 31 5A         ; 4 -> L315A  pick a random alien to attack
+3022: 31 B4         ; 5 -> L31B4  choose the closed-loop swoop pattern
+3024: 32 2C         ; 6 -> L322C  confirm pattern start across the grid
+3026: 30 12         ; 7 -> L3012  (nop)
+
+;*****************************************************************************
+;* Sub-task 1: 'Angry movement pattern A/B' (pattern 26/28).
+;* Every $4358 frames, escalate $4357 and re-arm the downward-push pattern
+;* (T2E00/T2E40), so the formation creeps further down the screen.
+;*****************************************************************************
 L3028:
 3028: 21 57 43        LD      HL,$4357            ; {+ram.M4357}
-302B: 7E              LD      A,(HL)              ; 
+302B: 7E              LD      A,(HL)              ; escalation counter
 302C: FE 03           CP      $03                 ; 
-302E: D0              RET     NC                  ; if >= 3
+302E: D0              RET     NC                  ; stop after 3 angry cycles
 302F: 2E 50           LD      L,$50               ; 
 3031: 7E              LD      A,(HL)              ; get $4350 Alien behavior state
 3032: FE 04           CP      $04                 ; 
-3034: D0              RET     NC                  ; if >= 4
+3034: D0              RET     NC                  ; only act in state < 4
 3035: 2E 58           LD      L,$58               ; 
-3037: 7E              LD      A,(HL)              ; get $4358
+3037: 7E              LD      A,(HL)              ; get $4358 angry-interval timer
 3038: A7              AND     A                   ; updates the zero flag
-3039: CA 5C 30        JP      Z,$305C             ; {code.L305C}
-303C: 35              DEC     (HL)                ; $4358
+3039: CA 5C 30        JP      Z,$305C             ; {code.L305C} expired -> compute next interval
+303C: 35              DEC     (HL)                ; tick $4358 timer
 303D: C0              RET     NZ                  ; 
 303E: 2D              DEC     L                   ; 
-303F: 34              INC     (HL)                ; $4357
+303F: 34              INC     (HL)                ; $4357++  (advance a cycle)
 3040: 2E 50           LD      L,$50               ; 
 3042: 36 04           LD      (HL),$04            ; set $4350 next alien behavior state to 4
 3044: 2E 53           LD      L,$53               ; 
 3046: 36 10           LD      (HL),$10            ; set $4353 Number of aliens doing the closed loop pattern
 3048: 2C              INC     L                   ; 
-3049: 36 50           LD      (HL),$50            ; set $4354
+3049: 36 50           LD      (HL),$50            ; $4354 = $50
 304B: 2E 51           LD      L,$51               ; 
-304D: 36 2E           LD      (HL),$2E            ; set $4351 for T2Exx
+304D: 36 2E           LD      (HL),$2E            ; $4351 = pattern page T2Exx
 304F: 2C              INC     L                   ; 
 3050: 36 00           LD      (HL),$00            ; set $4352 for T2E00
 3052: 3A C2 43        LD      A,($43C2)           ; {ram.PlayerShipX}
 3055: 0F              RRCA                        ; 
-3056: D8              RET     C                   ; if result is odd number
+3056: D8              RET     C                   ; player X odd -> keep T2E00
 3057: 36 40           LD      (HL),$40            ; set $4352 for T2E40
 3059: C9              RET                         ; 
 ; 
@@ -5970,7 +6045,7 @@ L3028:
 ; 
 ; End of movement pattern reached. Get the next start pointer.
 L305C:
-305C: CD 74 30        CALL    $3074               ; {code.L3074}
+305C: CD 74 30        CALL    $3074               ; {code.L3074} C = scaled random magnitude
 305F: 21 57 43        LD      HL,$4357            ; {+ram.M4357}
 3062: 7E              LD      A,(HL)              ; get $4357
 3063: 07              RLCA                        ; Multiply by 4 ..
@@ -5980,48 +6055,52 @@ L305C:
 3067: 81              ADD     A,C                 ; 
 3068: C6 07           ADD     $07                 ; 
 306A: 2E 58           LD      L,$58               ; 
-306C: 77              LD      (HL),A              ; store to $4358
+306C: 77              LD      (HL),A              ; $4358 = new interval
 306D: C9              RET                         ; 
 ; 
 306E: FF FF FF FF FF FF
-; 
+
+;*****************************************************************************
+;* Build a scaled random magnitude in C from round, level, aliens-left and
+;* a random number. Used to size timer spans and attacker counts.
+;*****************************************************************************
 L3074:
 3074: 21 B8 43        LD      HL,$43B8            ; {+ram.LevelAndRound}
-3077: 7E              LD      A,(HL)              
-3078: 0F              RRCA                        
-3079: 00              NOP                         
-307A: E6 07           AND     $07                 ; 0000_0111
-307C: 47              LD      B,A                 
-307D: 3E 07           LD      A,$07               
-307F: 90              SUB     B                   
-3080: 4F              LD      C,A                 
+3077: 7E              LD      A,(HL)              ; 
+3078: 0F              RRCA                        ; 
+3079: 00              NOP                         ; 
+307A: E6 07           AND     $07                 ; 0000_0111 game round 0..7
+307C: 47              LD      B,A                 ; 
+307D: 3E 07           LD      A,$07               ; 
+307F: 90              SUB     B                   ; C = 7 - round
+3080: 4F              LD      C,A                 ; 
 3081: 7E              LD      A,(HL)              ; get LevelAndRound
-3082: FE 80           CP      $80                 
+3082: FE 80           CP      $80                 ; 
 3084: DA 89 30        JP      C,$3089             ; {code.L3089}
-3087: 3E 70           LD      A,$70               
+3087: 3E 70           LD      A,$70               ; clamp high levels
 L3089:
-3089: 0F              RRCA                        
-308A: 0F              RRCA                        
-308B: 0F              RRCA                        
-308C: 0F              RRCA                        
-308D: E6 07           AND     $07                 ; 0000_0111
-308F: 47              LD      B,A                 
-3090: 3E 07           LD      A,$07               
-3092: 90              SUB     B                   
-3093: 81              ADD     A,C                 
-3094: 4F              LD      C,A                 
+3089: 0F              RRCA                        ; 
+308A: 0F              RRCA                        ; 
+308B: 0F              RRCA                        ; 
+308C: 0F              RRCA                        ; 
+308D: E6 07           AND     $07                 ; 0000_0111 game level 0..7
+308F: 47              LD      B,A                 ; 
+3090: 3E 07           LD      A,$07               ; 
+3092: 90              SUB     B                   ; 7 - level
+3093: 81              ADD     A,C                 ; 
+3094: 4F              LD      C,A                 ; 
 3095: 3A BA 43        LD      A,($43BA)           ; {ram.AliensLeft}
-3098: D6 05           SUB     $05                 
-309A: D2 9F 30        JP      NC,$309F            ; {code.L309F}
-309D: 3E 10           LD      A,$10               
+3098: D6 05           SUB     $05                 ; 
+309A: D2 9F 30        JP      NC,$309F            ; {code.L309F} if AliensLeft >= 5
+309D: 3E 10           LD      A,$10               ; else add a bonus
 L309F:
-309F: 81              ADD     A,C                 
-30A0: 4F              LD      C,A                 
+309F: 81              ADD     A,C                 ; 
+30A0: 4F              LD      C,A                 ; 
 30A1: CD AA 30        CALL    $30AA               ; {code.GetRandomNumber}
 30A4: E6 07           AND     $07                 ; 0000_0111  for 0 to 7
-30A6: 81              ADD     A,C                 
-30A7: 4F              LD      C,A                 
-30A8: C9              RET                         
+30A6: 81              ADD     A,C                 ; 
+30A7: 4F              LD      C,A                 ; C = final magnitude
+30A8: C9              RET                         ; 
 ; 
 30A9: FF
 
@@ -6045,101 +6124,108 @@ GetRandomNumber:
 ; not used 
 30B9: C0              RET     NZ                  
 
-; from jump table T3018 if Counter93 is 2
+;*****************************************************************************
+;* Sub-task 2: tick the three staggered group timers and the attack delay.
+;* When the delay $4355 expires (in state 0) begin a new attack (state 1).
+;*****************************************************************************
 L30BA:
 30BA: 21 58 43        LD      HL,$4358            ; {+ram.M4358}
-30BD: CD DA 30        CALL    $30DA               ; {code.L30DA} for $4359
-30C0: CD DA 30        CALL    $30DA               ; {code.L30DA} for $435A
-30C3: CD DA 30        CALL    $30DA               ; {code.L30DA} for $435B
+30BD: CD DA 30        CALL    $30DA               ; {code.L30DA} tick $4359
+30C0: CD DA 30        CALL    $30DA               ; {code.L30DA} tick $435A
+30C3: CD DA 30        CALL    $30DA               ; {code.L30DA} tick $435B
 30C6: 2E 50           LD      L,$50               ; 
 30C8: 7E              LD      A,(HL)              ; get $4350 Alien behavior state
 30C9: A7              AND     A                   ; updates the zero flag
-30CA: C0              RET     NZ                  ; if <> 0
+30CA: C0              RET     NZ                  ; only when state == 0
 30CB: 2E 55           LD      L,$55               ; 
-30CD: 7E              LD      A,(HL)              ; get $4355
+30CD: 7E              LD      A,(HL)              ; $4355 attack delay
 30CE: A7              AND     A                   ; updates the zero flag
-30CF: CA E4 30        JP      Z,$30E4             ; {code.L30E4} if 0
-30D2: 35              DEC     (HL)                
-30D3: C0              RET     NZ                  
-30D4: 2E 50           LD      L,$50               ; $4350 next alien behavior state to 1
-30D6: 36 01           LD      (HL),$01            ; 
+30CF: CA E4 30        JP      Z,$30E4             ; {code.L30E4} expired -> recompute delay
+30D2: 35              DEC     (HL)                ; else count down
+30D3: C0              RET     NZ                  ; 
+30D4: 2E 50           LD      L,$50               ; 
+30D6: 36 01           LD      (HL),$01            ; $4350 next alien behavior state to 1  (begin a new attack)
 30D8: C9              RET                         ; 
 
 ; not used 
 30D9: FE                                          
 
-; 
+; Tick one timer (does not go below 0).
 L30DA:
-30DA: 2C              INC     L                   
-30DB: 7E              LD      A,(HL)              
+30DA: 2C              INC     L                   ; 
+30DB: 7E              LD      A,(HL)              ; 
 30DC: A7              AND     A                   ; updates the zero flag
-30DD: C8              RET     Z                   ; if 4359, 435A, 435B = 0
-30DE: 35              DEC     (HL)                
-30DF: C9              RET                         
+30DD: C8              RET     Z                   ; already 0 -> nothing
+30DE: 35              DEC     (HL)                ; else count down
+30DF: C9              RET                         ; 
 
 ; not used 
 30E0: 7E              LD      A,(HL)              
 30E1: FE 01           CP      $01                 
 30E3: D0              RET     NC                  
 
+; Recompute the attack delay $4355 and reload the 3 group timers.
 L30E4:
-30E4: CD 74 30        CALL    $3074               ; {code.L3074}
+30E4: CD 74 30        CALL    $3074               ; {code.L3074} C = magnitude
 30E7: 21 9A 43        LD      HL,$439A            ; {+ram.Counter9A}
-30EA: 7E              LD      A,(HL)              
-30EB: FE 10           CP      $10                 
+30EA: 7E              LD      A,(HL)              ; 
+30EB: FE 10           CP      $10                 ; 
 30ED: DA F2 30        JP      C,$30F2             ; {code.L30F2}
-30F0: 3E 0F           LD      A,$0F               
+30F0: 3E 0F           LD      A,$0F               ; 
 L30F2:
-30F2: 47              LD      B,A                 
-30F3: 3E 0F           LD      A,$0F               
-30F5: 90              SUB     B                   
-30F6: 81              ADD     A,C                 
-30F7: 4F              LD      C,A                 
-30F8: 06 01           LD      B,$01               
+30F2: 47              LD      B,A                 ; 
+30F3: 3E 0F           LD      A,$0F               ; 
+30F5: 90              SUB     B                   ; 
+30F6: 81              ADD     A,C                 ; 
+30F7: 4F              LD      C,A                 ; 
+30F8: 06 01           LD      B,$01               ; 
 30FA: 2E 58           LD      L,$58               ; $4358
-30FC: CD 12 31        CALL    $3112               ; {code.L3112} for $4359
-30FF: CD 12 31        CALL    $3112               ; {code.L3112} for $435A
-3102: CD 12 31        CALL    $3112               ; {code.L3112} for $435B
-3105: 79              LD      A,C                 
-3106: 0F              RRCA                        
-3107: 0F              RRCA                        
+30FC: CD 12 31        CALL    $3112               ; {code.L3112} reload $4359
+30FF: CD 12 31        CALL    $3112               ; {code.L3112} reload $435A
+3102: CD 12 31        CALL    $3112               ; {code.L3112} reload $435B
+3105: 79              LD      A,C                 ; 
+3106: 0F              RRCA                        ; 
+3107: 0F              RRCA                        ; 
 3108: E6 3F           AND     $3F                 ; 0011_1111
-310A: C6 01           ADD     $01                 
-310C: 2E 55           LD      L,$55               
-310E: 77              LD      (HL),A              ; set $4355
-310F: C9              RET                         
+310A: C6 01           ADD     $01                 ; 
+310C: 2E 55           LD      L,$55               ; 
+310E: 77              LD      (HL),A              ; $4355 = new attack delay
+310F: C9              RET                         ; 
 
 ; not used
 3110: 21 50                                       
 
-;
+; Reload one group timer (only if it is currently 0).
 L3112:
-3112: 2C              INC     L                   
-3113: 7E              LD      A,(HL)              
+3112: 2C              INC     L                   ; 
+3113: 7E              LD      A,(HL)              ; 
 3114: A7              AND     A                   ; updates the zero flag
 3115: C0              RET     NZ                  ; if <> 0
-3116: 79              LD      A,C                 
-3117: 0F              RRCA                        
+3116: 79              LD      A,C                 ; 
+3117: 0F              RRCA                        ; 
 3118: E6 7F           AND     $7F                 ; 0111_1111
-311A: 4F              LD      C,A                 
-311B: 78              LD      A,B                 
+311A: 4F              LD      C,A                 ; 
+311B: 78              LD      A,B                 ; 
 311C: A7              AND     A                   ; updates the zero flag
-311D: C8              RET     Z                   
-311E: 05              DEC     B                   
-311F: 36 0C           LD      (HL),$0C            
-3121: C9              RET                         
+311D: C8              RET     Z                   ; 
+311E: 05              DEC     B                   ; 
+311F: 36 0C           LD      (HL),$0C            ; 
+3121: C9              RET                         ; 
 
 ; not used 
 3122: 86              ADD     A,(HL)              
 3123: 47              LD      B,A                 
 
-; from jump table T3018 if Counter93 is 3
-; Calculate the number of aliens in formation flying.
+;*****************************************************************************
+;* Sub-task 3: in state 1, advance to state 2 and compute the number of
+;* aliens that will fly the swoop ($4353), from round + random, reduced as
+;* the escalation counter $4357 grows.
+;*****************************************************************************
 L3124:
 3124: 21 50 43        LD      HL,$4350            ; {+ram.M4350}
 3127: 7E              LD      A,(HL)              ; get alien behavior state
 3128: FE 01           CP      $01                 ; 
-312A: C0              RET     NZ                  ; if $4350 <> 1
+312A: C0              RET     NZ                  ; only in state 1
 312B: 36 02           LD      (HL),$02            ; set $4350 next alien behavior state to 2
 312D: 2E B8           LD      L,$B8               ; 
 312F: 7E              LD      A,(HL)              ; get LevelAndRound
@@ -6148,99 +6234,108 @@ L3124:
 3132: E6 0F           AND     $0F                 ; 0000_1111 (bit 0,1 game round / bit 2,3 game level)
 3134: C6 05           ADD     $05                 ; 
 3136: FE 11           CP      $11                 ; 
-3138: DA 3D 31        JP      C,$313D             ; {code.L313D} if game round < 4
+3138: DA 3D 31        JP      C,$313D             ; {code.L313D} cap when round >= 4
 313B: 3E 05           LD      A,$05               ; 
 L313D:
 313D: 2E 57           LD      L,$57               ; $4357
-313F: 96              SUB     (HL)                ; 
+313F: 96              SUB     (HL)                ; minus $4357 (escalation)
 3140: 47              LD      B,A                 ; 
 3141: CD AA 30        CALL    $30AA               ; {code.GetRandomNumber}
-3144: 3C              INC     A                   ; from $01 to $10
+3144: 3C              INC     A                   ; 1..16
 3145: B8              CP      B                   ; 
 3146: DA 4B 31        JP      C,$314B             ; {code.L314B}
-3149: 3E 01           LD      A,$01               ; only one alien
+3149: 3E 01           LD      A,$01               ; at least one alien
 L314B:
 314B: 2E 53           LD      L,$53               ; $4353
-314D: 77              LD      (HL),A              ; set $4353 Number of aliens doing the closed loop pattern
+314D: 77              LD      (HL),A              ; set $4353 = attacker count
 314E: C9              RET                         ; 
 
 ; not used 
 314F: 0A 0C 0B 0C 0B 0E 0F 0E 0F FF FF
 
-; from jump table T3018 if Counter93 is 4
+;*****************************************************************************
+;* Sub-task 4: in state 2, scan the 16-alien grid from a random offset for
+;* an active alien whose control bytes match the current start pointer.
+;* The first match is recorded in $4354 and state advances to 3.
+;*****************************************************************************
 L315A:
 315A: 21 50 43        LD      HL,$4350            ; {+ram.M4350}
 315D: 7E              LD      A,(HL)              ; get alien behavior state
-315E: FE 02           CP      $02                 
-3160: C0              RET     NZ                  ; if <> 2
-3161: CD AA 30        CALL    $30AA               ; {code.GetRandomNumber}
-3164: 00              NOP                         
-3165: 47              LD      B,A                 
+315E: FE 02           CP      $02                 ; 
+3160: C0              RET     NZ                  ; only in state 2
+3161: CD AA 30        CALL    $30AA               ; {code.GetRandomNumber} random start index
+3164: 00              NOP                         ; 
+3165: 47              LD      B,A                 ; 
 3166: 07              RLCA                        ; Multiply by 2
-3167: C6 50           ADD     $50                 
-3169: 6F              LD      L,A                 
-316A: 26 4B           LD      H,$4B               ; $4B50
-316C: 78              LD      A,B                 
+3167: C6 50           ADD     $50                 ; 
+3169: 6F              LD      L,A                 ; 
+316A: 26 4B           LD      H,$4B               ;HL = $4B50 + rand*2 (pattern ptr)
+316C: 78              LD      A,B                 ; 
 316D: 07              RLCA                        ; Multiply by 4 ..
 316E: 07              RLCA                        ; 
-316F: C6 70           ADD     $70                 
-3171: 5F              LD      E,A                 
-3172: 16 4B           LD      D,$4B               ; $4B70
-3174: 0E 10           LD      C,$10               ; for all 16 aliens
-3176: 79              LD      A,C                 
-3177: 90              SUB     B                   
-3178: 47              LD      B,A                 
+316F: C6 70           ADD     $70                 ; 
+3171: 5F              LD      E,A                 ; 
+3172: 16 4B           LD      D,$4B               ; DE = $4B70 + rand*4 (grid)
+3174: 0E 10           LD      C,$10               ; scan all 16 aliens
+3176: 79              LD      A,C                 ; 
+3177: 90              SUB     B                   ; 
+3178: 47              LD      B,A                 ; 
 L3179:
-3179: CD 92 31        CALL    $3192               ; {code.L3192}
-317C: 13              INC     DE                  
-317D: 13              INC     DE                  
-317E: 13              INC     DE                  
-317F: 13              INC     DE                  
-3180: 23              INC     HL                  
-3181: 23              INC     HL                  
-3182: 05              DEC     B                   
+3179: CD 92 31        CALL    $3192               ; {code.L3192} test this alien
+317C: 13              INC     DE                  ; 
+317D: 13              INC     DE                  ; 
+317E: 13              INC     DE                  ; 
+317F: 13              INC     DE                  ; next grid entry (+4)
+3180: 23              INC     HL                  ; 
+3181: 23              INC     HL                  ; next pattern ptr (+2)
+3182: 05              DEC     B                   ; 
 3183: C2 8A 31        JP      NZ,$318A            ; {code.L318A}
-3186: 1E 70           LD      E,$70               
-3188: 2E 50           LD      L,$50               ; $4350
+3186: 1E 70           LD      E,$70               ; wrap grid pointer
+3188: 2E 50           LD      L,$50               ; wrap pattern pointer
 L318A:
-318A: 0D              DEC     C                   
+318A: 0D              DEC     C                   ; 
 318B: C2 79 31        JP      NZ,$3179            ; {code.L3179} loop for all 16 aliens
-318E: C9              RET                         
+318E: C9              RET                         ; 
 ; 
 318F: FF FF FF
-; 
+
+; Match test: active alien whose control bytes equal the start pointer.
 L3192:
-3192: 1A              LD      A,(DE)              
-3193: E6 08           AND     $08                 ; 0000_1000
-3195: C8              RET     Z                   
-3196: 3A 94 43        LD      A,($4394)           ; {ram.M4394} get start value list pointer for alien movement MSB
-3199: BE              CP      (HL)                
-319A: C0              RET     NZ                  
-319B: 3A 56 43        LD      A,($4356)           ; {ram.M4356}
-319E: 2C              INC     L                   
-319F: 46              LD      B,(HL)              
-31A0: 2D              DEC     L                   
-31A1: B8              CP      B                   
-31A2: C0              RET     NZ                  
-31A3: 7D              LD      A,L                 
-31A4: 32 54 43        LD      ($4354),A           ; {ram.M4354}
-31A7: 3E 03           LD      A,$03               
+3192: 1A              LD      A,(DE)              ; 
+3193: E6 08           AND     $08                 ; 0000_1000 alien active?
+3195: C8              RET     Z                   ; 
+3196: 3A 94 43        LD      A,($4394)           ; {ram.M4394} start ptr MSB
+3199: BE              CP      (HL)                ; 
+319A: C0              RET     NZ                  ; control-A must match
+319B: 3A 56 43        LD      A,($4356)           ; {ram.M4356} start ptr LSB
+319E: 2C              INC     L                   ; 
+319F: 46              LD      B,(HL)              ; 
+31A0: 2D              DEC     L                   ; 
+31A1: B8              CP      B                   ; 
+31A2: C0              RET     NZ                  ; control-B must match
+31A3: 7D              LD      A,L                 ; 
+31A4: 32 54 43        LD      ($4354),A           ; {ram.M4354} remember this alien's slot
+31A7: 3E 03           LD      A,$03               ; 
 31A9: 32 50 43        LD      ($4350),A           ; {ram.M4350} set next alien behavior state to 3
-31AC: E1              POP     HL                  
-31AD: C9              RET                         
+31AC: E1              POP     HL                  ; abort the scan loop
+31AD: C9              RET                         ; 
 ; 
 31AE: FF FF FF FF FF FF
 
-; from jump table T3018 if Counter93 is 5
-; Get the next closed loop pattern.
+;*****************************************************************************
+;* Sub-task 5: in state 3, choose the closed-loop swoop pattern for the
+;* selected alien based on its position relative to the player (T3300),
+;* its row/phase (L3210 + T3310) and a random pick (T3330). Pattern pointer
+;* is stored at $4351/$4352 and state advances to 5.
+;*****************************************************************************
 L31B4:
 31B4: 3A 50 43        LD      A,($4350)           ; {ram.M4350} get alien behavior state
 31B7: FE 03           CP      $03                 ; 
-31B9: C0              RET     NZ                  ; if <> 3
-31BA: 3A 54 43        LD      A,($4354)           ; {ram.M4354}
+31B9: C0              RET     NZ                  ; only in state 3
+31BA: 3A 54 43        LD      A,($4354)           ; {ram.M4354} chosen alien slot
 31BD: D6 50           SUB     $50                 ; 
 31BF: 07              RLCA                        ; Multiply by 2 to get 2 byte offset
-31C0: C6 72           ADD     $72                 ; base for alien data structure (grid)
+31C0: C6 72           ADD     $72                 ; -> $4B72 + idx*2 (grid coords)
 31C2: 6F              LD      L,A                 ; 
 31C3: 26 4B           LD      H,$4B               ; 
 31C5: 46              LD      B,(HL)              ; get alien screen coordinate X
@@ -6255,7 +6350,7 @@ L31B4:
 31D3: 41              LD      B,C                 ; 
 31D4: 0E 00           LD      C,$00               ; 
 L31D6:
-31D6: 90              SUB     B                   ; 
+31D6: 90              SUB     B                   ; distance to player
 31D7: 07              RLCA                        ; Multiply by 8 ..
 31D8: 07              RLCA                        ; ..
 31D9: 07              RLCA                        ; ..
@@ -6263,7 +6358,7 @@ L31D6:
 31DC: C6 00           ADD     $00                 ; LSB for table T3300
 31DE: 6F              LD      L,A                 ; 
 31DF: 26 33           LD      H,$33               ; get MSB for table T3300
-31E1: 7E              LD      A,(HL)              ; get data from T3300
+31E1: 7E              LD      A,(HL)              ; T3300 group
 31E2: 81              ADD     A,C                 ; 
 31E3: 07              RLCA                        ; Multiply by 4 ..
 31E4: 07              RLCA                        ; ..
@@ -6273,7 +6368,7 @@ L31D6:
 31E8: 00              NOP                         ; 
 31E9: 3A 57 43        LD      A,($4357)           ; {ram.M4357}
 31EC: 47              LD      B,A                 ; 
-31ED: CD 10 32        CALL    $3210               ; {code.L3210} get the attack phase at B
+31ED: CD 10 32        CALL    $3210               ; {code.L3210} attack phase from alien Y
 31F0: 79              LD      A,C                 ; 
 31F1: 80              ADD     A,B                 ; 
 31F2: C6 10           ADD     $10                 ; LSB for table T3310
@@ -6285,9 +6380,9 @@ L31D6:
 31FD: 81              ADD     A,C                 ; 
 31FE: 6F              LD      L,A                 ; 
 31FF: 26 33           LD      H,$33               ; get MSB for table T3330 (base adresses of closed loop pattern tables for aliens)
-3201: 7E              LD      A,(HL)              ; 
+3201: 7E              LD      A,(HL)              ; pattern MSB
 3202: 2C              INC     L                   ; 
-3203: 46              LD      B,(HL)              ; 
+3203: 46              LD      B,(HL)              ; pattern LSB
 3204: 21 50 43        LD      HL,$4350            ; {+ram.M4350}
 3207: 36 05           LD      (HL),$05            ; set $4350 next alien behavior state to 5
 3209: 2C              INC     L                   ; 
@@ -6300,120 +6395,139 @@ L31D6:
 320E: 81              ADD     A,C                 
 320F: 6F              LD      L,A                 
 
-; Get the attack phase at B. 
-; Depending on alien screen coordinate Y.
+; Get the attack phase at Reg. B (0..3) from the alien Y (only when one attacker).
 L3210:
 3210: 3A 53 43        LD      A,($4353)           ; {ram.M4353} Number of aliens doing the closed loop pattern
 3213: FE 01           CP      $01                 ; 
-3215: C0              RET     NZ                  ; if $4353 <> 1
+3215: C0              RET     NZ                  ; only meaningful for 1
 3216: 7A              LD      A,D                 ; alien screen coordinate Y
-3217: 06 00           LD      B,$00               ; return B = 0
+3217: 06 00           LD      B,$00               ; return B = phase 0
 3219: FE 58           CP      $58                 ; 
 321B: D8              RET     C                   ; if alien screen coordinate Y < $58
-321C: 06 01           LD      B,$01               ; return B = 1
+321C: 06 01           LD      B,$01               ; return B = phase 1
 321E: FE 78           CP      $78                 ; 
 3220: D8              RET     C                   ; if alien screen coordinate Y < $78
-3221: 06 02           LD      B,$02               ; return B = 2
+3221: 06 02           LD      B,$02               ; return B = phase 2
 3223: FE 98           CP      $98                 ; 
 3225: D8              RET     C                   ; if alien screen coordinate Y < $98
-3226: 06 03           LD      B,$03               ; return B = 3
+3226: 06 03           LD      B,$03               ; return B = phase 3
 3228: C9              RET                         ; 
 
 ; not used 
 3229: C0 21 50                                    
 
-; from jump table T3018 if Counter93 is 6
+;*****************************************************************************
+;* Sub-task 6: in state 4 (angry path), verify all active aliens carry the
+;* start pointer, then advance to state 6.
+;*****************************************************************************
 L322C:
 322C: 3A 50 43        LD      A,($4350)           ; {ram.M4350} get alien behavior state
-322F: FE 04           CP      $04                 
-3231: C0              RET     NZ                  ; if <> 4
+322F: FE 04           CP      $04                 ; 
+3231: C0              RET     NZ                  ; only in state 4
 3232: 21 50 4B        LD      HL,$4B50            ; {+ram.M4B50} Pointer to alien movement pattern
 3235: 11 70 4B        LD      DE,$4B70            ; {+ram.M4B70} Alien data structure (grid)
 3238: 3A 56 43        LD      A,($4356)           ; {ram.M4356}
-323B: 4F              LD      C,A                 
+323B: 4F              LD      C,A                 ; start ptr LSB
 323C: 3A 94 43        LD      A,($4394)           ; {ram.M4394} get start value list pointer for alien movement MSB
-323F: 47              LD      B,A                 
+323F: 47              LD      B,A                 ; start ptr MSB
 L3240:
-3240: 1A              LD      A,(DE)              
-3241: E6 08           AND     $08                 ; 0000_1000
+3240: 1A              LD      A,(DE)              ; 
+3241: E6 08           AND     $08                 ; 0000_1000 alien active?
 3243: CA 4E 32        JP      Z,$324E             ; {code.L324E}
-3246: 7E              LD      A,(HL)              
-3247: B8              CP      B                   
-3248: C0              RET     NZ                  
-3249: 2C              INC     L                   
-324A: 7E              LD      A,(HL)              
-324B: 2D              DEC     L                   
-324C: B9              CP      C                   
-324D: C0              RET     NZ                  
+3246: 7E              LD      A,(HL)              ; 
+3247: B8              CP      B                   ; 
+3248: C0              RET     NZ                  ; control-A must match
+3249: 2C              INC     L                   ; 
+324A: 7E              LD      A,(HL)              ; 
+324B: 2D              DEC     L                   ; 
+324C: B9              CP      C                   ; 
+324D: C0              RET     NZ                  ; control-B must match
 L324E:
-324E: 2C              INC     L                   
-324F: 2C              INC     L                   
-3250: 7B              LD      A,E                 
-3251: C6 04           ADD     $04                 
-3253: 5F              LD      E,A                 
-3254: FE B0           CP      $B0                 
+324E: 2C              INC     L                   ; 
+324F: 2C              INC     L                   ; 
+3250: 7B              LD      A,E                 ; 
+3251: C6 04           ADD     $04                 ; next grid entry
+3253: 5F              LD      E,A                 ; 
+3254: FE B0           CP      $B0                 ; 
 3256: C2 40 32        JP      NZ,$3240            ; {code.L3240} loop over alien data structure
-3259: 3E 06           LD      A,$06               
+3259: 3E 06           LD      A,$06               ; 
 325B: 32 50 43        LD      ($4350),A           ; {ram.M4350} set next alien behavior state to 6
-325E: C9              RET                         
+325E: C9              RET                         ; 
 
 ; not used 
 325F: 3C E6 0F 77 2E                              
 
-; from jump table T3018 if Counter93 is 0 
+;*****************************************************************************
+;* Sub-task 0: rotate the 'start value list' pointer $4356 (0-15). If a
+;* pattern is fully prepared (state >= 5), reset to state 0 and write the
+;* chosen closed-loop pattern pointer into the movement slots ($4B50) of the
+;* matching aliens - launching the actual swoop.
+;*****************************************************************************
 L3264:
-3264: 21 95 43        LD      HL,$4395            ; {+ram.M4395}
+3264: 21 95 43        LD      HL,$4395            ; {+ram.M4395} start-value list pointer LSB
 3267: 7E              LD      A,(HL)              ; get start value list pointer for alien movement LSB
 3268: 32 56 43        LD      ($4356),A           ; {ram.M4356}
-326B: 3C              INC     A                   
-326C: E6 0F           AND     $0F                 ; 0000_1111
-326E: 77              LD      (HL),A              
-326F: 2E 50           LD      L,$50               
+326B: 3C              INC     A                   ; 
+326C: E6 0F           AND     $0F                 ; 0000_1111 wrap 0..15
+326E: 77              LD      (HL),A              ; 
+326F: 2E 50           LD      L,$50               ; 
 3271: 7E              LD      A,(HL)              ; get $4350 Alien behavior state
-3272: FE 05           CP      $05                 
-3274: D8              RET     C                   ; if < 5
+3272: FE 05           CP      $05                 ; 
+3274: D8              RET     C                   ; nothing prepared yet
 3275: 36 00           LD      (HL),$00            ; set $4350 next alien behavior state to 0
-3277: 2E 53           LD      L,$53               
+3277: 2E 53           LD      L,$53               ; 
 3279: 4E              LD      C,(HL)              ; get $4353 Number of aliens doing the closed loop pattern
-327A: 2C              INC     L                   
-327B: 6E              LD      L,(HL)              ; get $4354
-327C: 26 4B           LD      H,$4B               
+327A: 2C              INC     L                   ; 
+327B: 6E              LD      L,(HL)              ; get $4354 lead alien slot
+327C: 26 4B           LD      H,$4B               ; 
 327E: 3A 56 43        LD      A,($4356)           ; {ram.M4356}
-3281: 57              LD      D,A                 
+3281: 57              LD      D,A                 ; D = start ptr LSB
 3282: 3A 94 43        LD      A,($4394)           ; {ram.M4394} get start value list pointer for alien movement MSB
-3285: 5F              LD      E,A                 
-3286: 7D              LD      A,L                 
-3287: D6 50           SUB     $50                 
-3289: 0F              RRCA                        
-328A: 47              LD      B,A                 
-328B: 3E 10           LD      A,$10               
-328D: 90              SUB     B                   
-328E: 47              LD      B,A                 
+3285: 5F              LD      E,A                 ; E = start ptr MSB
+3286: 7D              LD      A,L                 ; 
+3287: D6 50           SUB     $50                 ; 
+3289: 0F              RRCA                        ; 
+328A: 47              LD      B,A                 ; 
+328B: 3E 10           LD      A,$10               ; 
+328D: 90              SUB     B                   ; 
+328E: 47              LD      B,A                 ; entries left to scan
 L328F:
-328F: 7E              LD      A,(HL)              
-3290: 2C              INC     L                   
-3291: BB              CP      E                   
-3292: C2 A4 32        JP      NZ,$32A4            ; {code.L32A4}
-3295: 7E              LD      A,(HL)              
-3296: BA              CP      D                   
-3297: C2 A4 32        JP      NZ,$32A4            ; {code.L32A4}
-329A: 2D              DEC     L                   
+328F: 7E              LD      A,(HL)              ; 
+3290: 2C              INC     L                   ; 
+3291: BB              CP      E                   ; 
+3292: C2 A4 32        JP      NZ,$32A4            ; {code.L32A4} control-A match?
+3295: 7E              LD      A,(HL)              ; 
+3296: BA              CP      D                   ; 
+3297: C2 A4 32        JP      NZ,$32A4            ; {code.L32A4} control-B match?
+329A: 2D              DEC     L                   ; 
 329B: 3A 51 43        LD      A,($4351)           ; {ram.M4351} get MSB of next closed loop pattern
-329E: 77              LD      (HL),A              
-329F: 2C              INC     L                   
+329E: 77              LD      (HL),A              ; 
+329F: 2C              INC     L                   ; 
 32A0: 3A 52 43        LD      A,($4352)           ; {ram.M4352} get LSB of next closed loop pattern
-32A3: 77              LD      (HL),A              
+32A3: 77              LD      (HL),A              ; alien now flies the swoop
 L32A4:
-32A4: 2C              INC     L                   
-32A5: 05              DEC     B                   
+32A4: 2C              INC     L                   ; 
+32A5: 05              DEC     B                   ; 
 32A6: C2 AB 32        JP      NZ,$32AB            ; {code.L32AB}
-32A9: 2E 50           LD      L,$50               ; $4350
+32A9: 2E 50           LD      L,$50               ; wrap to $4B50
 L32AB:
-32AB: 0D              DEC     C                   
+32AB: 0D              DEC     C                   ; 
 32AC: C2 8F 32        JP      NZ,$328F            ; {code.L328F} loop for Number of aliens doing the closed loop pattern
-32AF: C9              RET                         
+32AF: C9              RET                         ; 
 
-; 
+;*****************************************************************************
+;* Bird-level init:
+;* First clears `$4B70`–`$4BAF`, then copies `BirdsLeft × 8` bytes from table T3F80
+;* into the object array, choosing the source block by level.
+;* So when a full wave starts (`BirdsLeft = 8`, `C = $40`),
+;* the source LSB resolves to `$80` -> it copies the whole table starting at `$3F80` into `$4B70`,
+;* meaning `$3F80`–`$3F87` becomes the live control block of bird #0 at `$4B70`.
+;* (If fewer birds are present, both source and destination are offset toward the end of their respective arrays,
+;* so the remaining birds are taken from the tail of the table.)
+;* The `LevelAndRound` bit test redirects the source to `$3FC0` for levels 4/9.
+;* After the copy, these objects are driven by the bird routines — e.g. `DrawFirst4BirdObjects`/`DrawSecond4BirdObjects`
+;* and `L35B0`, all of which iterate the array in 8 byte steps (`ADD $08`) over `$4B70`–`$4BAF`, confirming the 8 byte-per-bird structure.
+;*****************************************************************************
 L32B0:
 32B0: 21 50 43        LD      HL,$4350            ; {+ram.M4350}
 32B3: 06 30           LD      B,$30               ; 4350 to 437F
@@ -6423,30 +6537,30 @@ L32B0:
 32BC: CD D8 05        CALL    $05D8               ; {code.ClearBbytesAtHL}
 32BF: 3A BB 43        LD      A,($43BB)           ; {ram.BirdsLeft}
 32C2: A7              AND     A                   ; updates the zero flag
-32C3: C8              RET     Z                   ; if no BirdsLeft
-32C4: 07              RLCA                        ; Multiply by 8 ..
+32C3: C8              RET     Z                   ; not a bird level -> done
+32C4: 07              RLCA                        ; BirdsLeft * 8 (record size)
 32C5: 07              RLCA                        ; ..
 32C6: 07              RLCA                        ; ..
-32C7: 4F              LD      C,A                 
+32C7: 4F              LD      C,A                 ; 
 32C8: 21 70 4B        LD      HL,$4B70            ; {+ram.M4B70}
-32CB: 06 40           LD      B,$40               
-32CD: CD D8 05        CALL    $05D8               ; {code.ClearBbytesAtHL}
-32D0: 16 4B           LD      D,$4B               
-32D2: 26 3F           LD      H,$3F               
-32D4: 3E 40           LD      A,$40               
-32D6: 91              SUB     C                   
-32D7: C6 70           ADD     $70                 
-32D9: 5F              LD      E,A                 
-32DA: C6 10           ADD     $10                 
-32DC: 6F              LD      L,A                 
-32DD: 41              LD      B,C                 
+32CB: 06 40           LD      B,$40               ; 
+32CD: CD D8 05        CALL    $05D8               ; {code.ClearBbytesAtHL} clear $4B70-$4BAF
+32D0: 16 4B           LD      D,$4B               ; 
+32D2: 26 3F           LD      H,$3F               ; source page (T3F80/T3FC0)
+32D4: 3E 40           LD      A,$40               ; 
+32D6: 91              SUB     C                   ; 
+32D7: C6 70           ADD     $70                 ; 
+32D9: 5F              LD      E,A                 ; dest LSB  = $4B70 + ($40 - BirdsLeft*8)
+32DA: C6 10           ADD     $10                 ; 
+32DC: 6F              LD      L,A                 ; src  LSB  = $80  + ($40 - BirdsLeft*8)
+32DD: 41              LD      B,C                 ; bytes = BirdsLeft*8
 32DE: 3A B8 43        LD      A,($43B8)           ; {ram.LevelAndRound}
-32E1: 0F              RRCA                        
-32E2: 0F              RRCA                        
-32E3: D2 E0 05        JP      NC,$05E0            ; {code.CopyBbytesHLtoDE}
-32E6: 7D              LD      A,L                 
-32E7: C6 40           ADD     $40                 
-32E9: 6F              LD      L,A                 
+32E1: 0F              RRCA                        ; 
+32E2: 0F              RRCA                        ; 
+32E3: D2 E0 05        JP      NC,$05E0            ; {code.CopyBbytesHLtoDE} levels 3/8 -> copy from $3F80 block
+32E6: 7D              LD      A,L                 ; 
+32E7: C6 40           ADD     $40                 ; levels 4/9 -> source += $40 ($3FC0 block)
+32E9: 6F              LD      L,A                 ; 
 32EA: C3 E0 05        JP      $05E0               ; {code.CopyBbytesHLtoDE}
 
 ; not used
@@ -6455,7 +6569,7 @@ L32B0:
 ; 
 32F3: FF FF FF FF FF FF FF FF FF FF FF FF FF
 
-; Mapping table for T3310.
+; Maps "distance from player" -> T3310 group.
 T3300:
 3300: 00 01 02 02 03 03 03 03
 ; not used
@@ -6476,7 +6590,8 @@ T3310:
 3328: C8 D0 D8 E0
 332C: C8 E8 F0 F8
 
-; Base adresses of closed loop pattern tables for aliens.
+; Base adresses of closed loop pattern tables for aliens:
+; The actual flight paths the aliens follow.
 ; T1130, T2C00, T2FA0...
 T3330:
 3330: 11 30 2C 00 2F A0 2C 00 2E C4 2F A0 2F 34 2F A0
@@ -6775,6 +6890,13 @@ L3558:
 ;*****************************************************************************
 ;* Bird-launch setup:
 ;* Decides the parameters of the next incoming bird group.
+;* Builds a random horizontal jitter, then composes an index from the current game state.
+;* The index is `bit5(timing) | round(bits 3 4) | (BirdsLeft 1)(bits 1 2)`,
+;* which spans `$00`–`$3E` in steps of 2 -> addresses `$3E80`–`$3EBE`.
+;* So the table is 32 two byte entries, selected by:
+;* - Game round (`LevelAndRound`, clamped at round 4) -> one of 4 difficulty groups
+;* - Birds remaining (`BirdsLeft 1`, clamped to 0–3) -> entry within the group
+;* - A timing bit from `Counter9A` -> alternates between the two halves of the table
 ;* They're then consumed by the bird movement/attack code.
 ;*****************************************************************************
 L3560:
@@ -6789,35 +6911,35 @@ L3560:
 356A: 32 6F 43        LD      ($436F),A           ; {ram.M436F} $436F = (random<<4)|random
 356D: 3A B8 43        LD      A,($43B8)           ; {ram.LevelAndRound}
 3570: FE 40           CP      $40                 ; 
-3572: DA 77 35        JP      C,$3577             ; {code.L3577} if game round < 4
-3575: 3E 30           LD      A,$30               ; 
+3572: DA 77 35        JP      C,$3577             ; {code.L3577} round < 4 -> use as is
+3575: 3E 30           LD      A,$30               ; round >= 4 -> clamp
 L3577:
-3577: E6 30           AND     $30                 ; 0011_0000
-3579: 0F              RRCA                        ; 
+3577: E6 30           AND     $30                 ; 0011_0000 round selector
+3579: 0F              RRCA                        ; -> bits 3-4 : 0,8,$10,$18
 357A: 47              LD      B,A                 ; 
 357B: 3A BB 43        LD      A,($43BB)           ; {ram.BirdsLeft}
 357E: 3D              DEC     A                   ; 
 357F: FE 04           CP      $04                 ; 
 3581: DA 86 35        JP      C,$3586             ; {code.L3586}
-3584: 3E 03           LD      A,$03               ; 
+3584: 3E 03           LD      A,$03               ; clamp BirdsLeft-1 to 3
 L3586:
-3586: 07              RLCA                        ; Multiply by 2
+3586: 07              RLCA                        ; *2 -> bits 1-2
 3587: B0              OR      B                   ; 
 3588: 47              LD      B,A                 ; 
 3589: 3A 9A 43        LD      A,($439A)           ; {ram.Counter9A}
 358C: 07              RLCA                        ; Multiply by 4 ..
 358D: 07              RLCA                        ; ..
-358E: E6 20           AND     $20                 ; mask out 0010_0000
+358E: E6 20           AND     $20                 ; timing bit -> bit 5
 3590: B0              OR      B                   ; 
-3591: C6 80           ADD     $80                 ; 
+3591: C6 80           ADD     $80                 ; LSB of $3E80
 3593: 6F              LD      L,A                 ; 
-3594: 26 3E           LD      H,$3E               ; 
-3596: 7E              LD      A,(HL)              ; data from table T3E80
+3594: 26 3E           LD      H,$3E               ; HL = $3E80 + index
+3596: 7E              LD      A,(HL)              ; byte0
 3597: 32 6E 43        LD      ($436E),A           ; {ram.M436E} $436E = T3E80 byte0  (bird count/size)
 359A: 2C              INC     L                   ; 
-359B: 7E              LD      A,(HL)              ; data from table T3E80
-359C: 81              ADD     A,C                 ; + random jitter
-359D: E6 F8           AND     $F8                 ; 1111_1000 align to 8 px
+359B: 7E              LD      A,(HL)              ; byte1
+359C: 81              ADD     A,C                 ; + random jitter (random<<2)
+359D: E6 F8           AND     $F8                 ; 1111_1000 align to 8-pixel grid
 359F: 32 6D 43        LD      ($436D),A           ; {ram.M436D} $436D = T3E80 byte1 + jitter (start X)
 35A2: C9              RET                         ; 
 ; 
@@ -6917,7 +7039,7 @@ L3604:
 3619: 3C              INC     A                   
 361A: 77              LD      (HL),A              
 361B: D8              RET     C                   
-361C: 3A 6E 43        LD      A,($436E)           ; {ram.M436E}
+361C: 3A 6E 43        LD      A,($436E)           ; {ram.M436E} target count
 361F: 77              LD      (HL),A              
 3620: B8              CP      B                   
 3621: C8              RET     Z                   
@@ -7004,7 +7126,7 @@ L3672:
 L3680:
 3680: 3A 6D 43        LD      A,($436D)           ; {ram.M436D} current X for this bird
 3683: 4F              LD      C,A                 
-3684: C6 08           ADD     $08                 ; next bird 8 px over
+3684: C6 08           ADD     $08                 ; next bird is 8 px over
 3686: 32 6D 43        LD      ($436D),A           ; {ram.M436D}
 3689: 78              LD      A,B                 
 368A: 91              SUB     C                   
@@ -7292,6 +7414,10 @@ L37DD:
 37E6: FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
 
 ;*****************************************************************************
+; h8-ic52.8a
+;*****************************************************************************
+
+;*****************************************************************************
 ;* Collision detection for birds.
 ;*****************************************************************************
 L3800:
@@ -7320,7 +7446,7 @@ L3800:
 3827: E6 07           AND     $07                 ; 0000_0111
 3829: C6 00           ADD     $00                 
 382B: 6F              LD      L,A                 
-382C: 26 3E           LD      H,$3E               
+382C: 26 3E           LD      H,$3E               ; T3E00
 382E: 4E              LD      C,(HL)              
 382F: 7B              LD      A,E                 
 3830: E6 0E           AND     $0E                 ; 0000_1110
@@ -7338,12 +7464,12 @@ L3800:
 
 ; A bird has been hit
 L3844:
-3844: C6 60           ADD     $60                 ; LSB of table T3B60
-3846: 6F              LD      L,A                 
-3847: 26 3B           LD      H,$3B               ; MSB of table T3B60
-3849: 7E              LD      A,(HL)              
-384A: A1              AND     C                   
-384B: C8              RET     Z                   
+3844: C6 60           ADD     $60                 ; index = (birdChar - $90), table base $3B60
+3846: 6F              LD      L,A                 ; 
+3847: 26 3B           LD      H,$3B               ; HL = $3B60 + (birdChar - $90)
+3849: 7E              LD      A,(HL)              ; A = solid-pixel column mask for this tile
+384A: A1              AND     C                   ; C = bullet's pixel-column bit
+384B: C8              RET     Z                   ; no solid pixel in that column -> bullet missed
 384C: CD A1 38        CALL    $38A1               ; {code.L38A1}
 384F: EB              EX      DE,HL               
 3850: 7E              LD      A,(HL)              
@@ -7510,32 +7636,32 @@ L3923:
 392F: FF
 ; 
 L3930:
-3930: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2}
-3933: E6 1E           AND     $1E                 ; 0001_1110
+3930: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2} vertical scroll phase (0..31)
+3933: E6 1E           AND     $1E                 ; 0001_1110 keep even values 0,2,4,...,30
 3935: C6 C0           ADD     $C0                 ; LSB of table T3DC0
-3937: 6F              LD      L,A                 
-3938: 26 3D           LD      H,$3D               ; MSB of table T3DC0
-393A: 5E              LD      E,(HL)              
-393B: 2C              INC     L                   
-393C: 6E              LD      L,(HL)              
-393D: 26 4B           LD      H,$4B               
+3937: 6F              LD      L,A                 ; 
+3938: 26 3D           LD      H,$3D               ; HL = $3DC0 + (B4BD2 & $1E)
+393A: 5E              LD      E,(HL)              ; E   = byte0 = object count
+393B: 2C              INC     L                   ; 
+393C: 6E              LD      L,(HL)              ; L   = byte1 = LSB of first object
+393D: 26 4B           LD      H,$4B               ; HL  = $4B00 + byte1  (enemy-object RAM)
 393F: CD 00 3A        CALL    $3A00               ; {code.L3A00}
 3942: 3A 9F 43        LD      A,($439F)           ; {ram.M439F}
-3945: 82              ADD     A,D                 
-3946: 4F              LD      C,A                 
+3945: 82              ADD     A,D                 ; 
+3946: 4F              LD      C,A                 ; 
 3947: 3A 9E 43        LD      A,($439E)           ; {ram.M439E}
-394A: 92              SUB     D                   
-394B: 47              LD      B,A                 
+394A: 92              SUB     D                   ; 
+394B: 47              LD      B,A                 ; 
 L394C:
-394C: E5              PUSH    HL                  
-394D: CD 5C 39        CALL    $395C               ; {code.L395C}
-3950: E1              POP     HL                  
-3951: 7D              LD      A,L                 
-3952: C6 08           ADD     $08                 
-3954: 6F              LD      L,A                 
-3955: 1D              DEC     E                   
+394C: E5              PUSH    HL                  ; 
+394D: CD 5C 39        CALL    $395C               ; {code.L395C} test this object vs player X-window
+3950: E1              POP     HL                  ; 
+3951: 7D              LD      A,L                 ; 
+3952: C6 08           ADD     $08                 ; step to next object (8-byte stride)
+3954: 6F              LD      L,A                 ; 
+3955: 1D              DEC     E                   ; repeat 'count' times
 3956: C2 4C 39        JP      NZ,$394C            ; {code.L394C}
-3959: C9              RET                         
+3959: C9              RET                         ; 
 
 395A: FF FF
 ; 
@@ -7930,20 +8056,23 @@ L3B43:
 3B5B: C3 90 3A        JP      $3A90               ; {code.L3A90} Trigger melody
 ;
 3B5E: FF FF
-;
-;? used at $3844
+
+;Per-character horizontal hit-mask table for bird collision used at $3844.
+;It's the lookup that lets the player's bullet hit a bird only
+;where the bird's graphic tile actually has solid pixels, rather than treating the whole 8-pixel character cell as solid.
 T3B60:
-3B60: 1F 7C F0 01 C0
-3B65: 07 7F FC F0 07 C0 1F FF FC 03 F0
-3B70: 0F C0 3F FC 1F F0 07 FE 3F F8 0F FF FF FC 1F FF
-3B80: FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0 FF 01 00 FF
-3B90: 07 00 FF 07 FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0
-3BA0: FF 01 00 FF 07 FF 07 FC 1F F8 0F F0 C0 03 FF FF
-3BB0: 03 E0 03 E0 0F 80 0F 00 3C 00 1E 3F 00 FC F0 00
-3BC0: 7F FE 00 F0 03 E0 00 00 0F 80 00 00 3F 00 FE 30
-3BD0: 00 06 FF 00 F8 00 00 03 E0 00 E0 08 20 04 C0 01
-3BE0: E0 03 F8 0F 07 E0 3F 03 FF FF FF 3F FC FF F8 FF
-3BF0: FF 07 E0 1F F0 FF FC FF 07 1E FC 1F 1F 7F FF FF
+3B60: 1F 7C F0 01 C0 07 7F FC F0 07 C0 1F FF FC 03 F0   ; for bird background tiles 90 - 9F
+3B70: 0F C0 3F FC 1F F0 07 FE 3F F8 0F FF FF FC 1F FF   ; for bird background tiles A0 - AF
+3B80: FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0 FF 01 00 FF   ; for bird background tiles B0 - BF
+3B90: 07 00 FF 07 FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0   ; for bird background tiles C0 - CF
+3BA0: FF 01 00 FF 07 FF 07 FC 1F F8 0F F0 C0 03 FF FF   ; for bird background tiles D0 - DF
+3BB0: 03 E0 03 E0 0F 80 0F 00 3C 00 1E 3F 00 FC F0 00   ; for bird background tiles E0 - EF
+3BC0: 7F FE 00 F0 03 E0 00 00 0F 80 00 00 3F 00 FE 30   ; for bird background tiles F0 - FF
+
+;?
+3BD0: 00 06 FF 00 F8 00 00 03 E0 00 E0 08 20 04 C0 01   ; 
+3BE0: E0 03 F8 0F 07 E0 3F 03 FF FF FF 3F FC FF F8 FF   ; 
+3BF0: FF 07 E0 1F F0 FF FC FF 07 1E FC 1F 1F 7F FF FF   ; 
 
 ;bird character block shapes table (using character set B)
 T3C00:
@@ -7996,33 +8125,42 @@ T3C00:
 3DB4: 00 00 0B 00 0C 0C 0E FF                         ;group of stars [Object 3DB4](bgtiles.html#object-3db4)
 3DBC: 0D 0E 0D FF                                     ;group of stars [Object 3DBC](bgtiles.html#object-3dbc)
 
-; ?
+; Scroll-phase -> active-object-window table for the bird wave.
+; Used by `L3930`, which runs every frame during the bird attack waves (it's called from the wave loop at `$3431` and `$3448`).
+; It defines a sliding, resizing window over the column of bird objects as a function of how far the wave has scrolled down.
+; - Phases 0–8: the window starts at the top object (`$4B70`) and grows `6 -> 7 -> 8` as more rows enter the play field.
+; - Phases 10–22: the start pointer slides down one object at a time (`$4B78 -> $4B80 -> ... -> $4BA8`),
+;                 while the count shrinks `7 -> 6 -> ... -> 1`, modeling the top rows scrolling out / fewer rows remaining active.
+; - Phases 24–30: it wraps back to the top (`$4B70`) and grows again `2 -> 3 -> 4 -> 5`.
 T3DC0:
-3DC0: 06 70
-3DC2: 07 70
-3DC4: 08 70
-3DC6: 08 70
-3DC8: 08 70
-3DCA: 07 78
-3DCC: 06 80
-3DCE: 05 88
-3DD0: 04 90
-3DD2: 03 98
-3DD4: 02 A0
-3DD6: 01 A8
-3DD8: 02 70
-3DDA: 03 70
-3DDC: 04 70
-3DDE: 05 70
+3DC0: 06 70         ; phase  0 : count=6, ptr=$4B70
+3DC2: 07 70         ; phase  2 : count=7, ptr=$4B70
+3DC4: 08 70         ; phase  4 : count=8, ptr=$4B70
+3DC6: 08 70         ; phase  6 : count=8, ptr=$4B70
+3DC8: 08 70         ; phase  8 : count=8, ptr=$4B70
+3DCA: 07 78         ; phase 10 : count=7, ptr=$4B78
+3DCC: 06 80         ; phase 12 : count=6, ptr=$4B80
+3DCE: 05 88         ; phase 14 : count=5, ptr=$4B88
+3DD0: 04 90         ; phase 16 : count=4, ptr=$4B90
+3DD2: 03 98         ; phase 18 : count=3, ptr=$4B98
+3DD4: 02 A0         ; phase 20 : count=2, ptr=$4BA0
+3DD6: 01 A8         ; phase 22 : count=1, ptr=$4BA8
+3DD8: 02 70         ; phase 24 : count=2, ptr=$4B70
+3DDA: 03 70         ; phase 26 : count=3, ptr=$4B70
+3DDC: 04 70         ; phase 28 : count=4, ptr=$4B70
+3DDE: 05 70         ; phase 30 : count=5, ptr=$4B70
 
 ; Background sound data for the bird waves.
 ; Slowly ascending and descending tones.
 T3DE0:
 3DE0: 40 40 40 40 40 40 40 34 2C 26 20 1C 18 14 12 0F
 3DF0: 0D 0B 09 08 07 06 05 04 03 02 02 02 02 02 02 02
+
+; Column bit `C` look up table for `PlayerBulletX & 7`
+T3E00:
 3E00: 01 02 04 08 10 20 40 80
 
-;address table for bird character block shapes (grouped by animation pattern)
+; Address table for bird character block shapes (grouped by animation pattern)
 T3E08:
 3E08: 3D A8 ;like small star                  2x2
 3E0A: 3D AC ;like medium star                 2x2
@@ -8108,44 +8246,49 @@ T3E08:
 3E7C: 3C D8 ;#26                              6x2
 3E7E: 3C E4 ;#27                              6x2
 
-;for birds
-;copy to $436E,(+10) $436D
+; Bird-wave launch/spawn configuration table:
+; It's read by `L3560`, the routine that sets up a new diving bird group.
+; Byte 0:   -> $436E Bird count / formation-size for this dive (values `4`–`8`).
+;           It's later used as a target/limit when the bird objects are populated and stepped.
+; Byte 1:   (+ random, grid aligned) -> $436D Horizontal start position of the bird group.
+;           (base values `$10`–`$60`). As each bird in the group is launched, the code reads $436D,
+;           uses it as the X position, and advances it by 8 for the next bird.
 T3E80:
 3E80: 05 40 
 3E82: 05 20 
 3E84: 04 30 
 3E86: 04 10 
-;not used?
+;
 3E88: 06 48 
 3E8A: 06 28 
 3E8C: 05 38 
 3E8E: 05 18 
-;not used?
+;
 3E90: 07 50 
 3E92: 07 30 
 3E94: 06 40 
 3E96: 06 20 
-;not used?
+;
 3E98: 08 58 
 3E9A: 08 38 
 3E9C: 07 48 
 3E9E: 07 28 
-;copy to $436E,(+10) $436D
+;
 3EA0: 06 10 
 3EA2: 05 20 
 3EA4: 05 30 
 3EA6: 05 40 
-;not used?
+;
 3EA8: 08 18 
 3EAA: 07 28 
 3EAC: 07 38 
 3EAE: 06 48 
-;not used?
+;
 3EB0: 08 20 
 3EB2: 07 30 
 3EB4: 07 40 
 3EB6: 07 50 
-;not used?
+;
 3EB8: 08 30 
 3EBA: 08 40 
 3EBC: 08 50 
@@ -8158,13 +8301,32 @@ T3EC0:
 3EC0: FF
 3EC1: 48 40 40 40 38 30 28 38 30 28 20 30 20 30 28
 
-;big birds related. offsets for movement ?
+; Vertical scrolling/descent motion of the birds attack formation.
+; Consumed by the bird vertical-movement routine `L2600` and its helper `L2668`.
+; Dithered vertical-scroll increment table:
+; Used to generate fractional (sub-pixel) scroll speeds for the formation's descent. In `L2600`.
+; - The index is `row + column`, where the *row* (`0/4/8/12`) is the animation-frame parity from `Counter9A+1`,
+;   and the column (`0–3`) is the descent sub-phase `B4BD5 & 3`.
+; - The value (only ever `0` or `1`) is added to the coarse speed `(B4BD5>>2)&7`
+;   to form the per-frame scroll delta, which is then subtracted from `CounterB9` and written to the hardware scroll register `$5800`.
+; This lets the game realise non-integer average descent rates (e.g. an effective 3 1/2 px/frame) by alternating between `n` and `n+1` across frames/sub-phases,
+; giving smooth variable-speed scrolling. (The alternate path `L2650` reuses the same table but adds to `CounterB9` for the return/upward motion.)
 T3ED0:
-3ED0: 01 01 01 01
-3ED4: 00 00 01 01
-3ED8: 00 01 01 01
-3EDC: 00 00 00 01
+3ED0: 01 01 01 01           ; dither patterns: `1 1 1 1` (always +1)
+3ED4: 00 00 01 01           ; dither patterns: `0 0 1 1` (+1 half the time)
+3ED8: 00 01 01 01           ; dither patterns: `0 1 1 1` (3/4)
+3EDC: 00 00 00 01           ; dither patterns: `0 0 0 1` (1/4)
 
+; Descent-speed clamp curve table:
+; This 32-byte block is indexed by `B4BD6` (a 0–31 value) and acts as a per-position speed limit on the computed descent step in `L2668`.
+; `B4BD6` is computed in `L26D0`/`$26EE` as `(B4BD2 + D + E) & $1F` after scanning the live bird objects (`M4BA8…`).
+; So it encodes the formation's current vertical scroll phase combined with how many birds remain and where they are.
+; The table value caps `B` (a step candidate derived from `M436E`, the wave timer `Counter9A`, and `AliensLeft`),
+; and the clamped result becomes `B4BD5` — which is exactly the value Part 1 uses to pick the scroll increment.
+; The values trace a speed envelope across the descent: `5->4->3->2->1->0`, a flat `0` hold, 
+; then a gradual rise `1->2->...->8` and back to `6`.
+; In effect it makes the swooping formation decelerate to a stop, pause, then accelerate again as it moves through the screen.
+T3EE0:
 3EE0: 05 04 03 02 01 00
 3EE6: 00 00 00 00 01 01
 3EEC: 01 01 02 02
@@ -8242,16 +8404,17 @@ T3F00:
 3F7E: 35 E0         ;address
 
 ;
-;level 3 and 8 initial data for the 8 birds.
-;data will be copied to $4B70-$4BAF
+; Level 3 and 8 initial-state record for the 8 birds.
+; Data will be copied to bird/enemy object array at $4B70-$4BAF.
+; Copy is done by the bird-level init routine at `$32B0`.
 ;.....:index to first character block shape
 ;........:MSB of initial screen address
 ;...........:LSB of the initial screen address
-;..............:?
-;.................:?
-;....................:? grid coordinate x
+;..............:movement/animation state ?
+;.................:movement/animation state ?
+;....................:grid coordinate x
 ;.......................:horizontal movement direction
-;..........................:? grid coordinate y
+;..........................:grid coordinate y
 T3F80:
 3F80: 01 48 EE 00 10 B0 10 20       ; 0
 3F88: 01 49 2C 00 10 A0 00 B0       ; 1
@@ -8262,7 +8425,8 @@ T3F80:
 3FB0: 01 4A 62 00 10 50 00 C8       ; 6
 3FB8: 01 4A A0 00 10 40 00 C8       ; 7
 
-;level 4 and 9 initial data for the 8 birds.
+; Level 4 and 9 initial data for the 8 birds.
+T3FC0:
 3FC0: 01 4A CE 00 10 38 00 B0       ; 0
 3FC8: 01 48 CC 00 10 B8 10 20       ; 1
 3FD0: 01 4A CA 00 10 38 00 B8       ; 2
