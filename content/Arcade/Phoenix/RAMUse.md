@@ -429,79 +429,88 @@ During 'fade in' phase, the alien control state B is holding the character code!
 | 4BAE      | M4BAE                | AlienF screen coordinate X |
 | 4BAF      | M4BAF                | AlienF screen coordinate Y |
 
-## Bird data structure 
+## Bird object data structure 
 
 Used for all levels with the 8 birds.
 Level: 3, 4, 8, 9.
-For the bird animation during intro splash, bird0 memory is used.
+
+For each bird object in `$4B70`–`$4BAF`:
+
+(+3) — Animation phase / current shape frame: Selects which frame of the bird's wing-flap/animation group is drawn. 
+It's advanced by the movement step each update (see below), wrapping mod 8, which cycles the animation. 
+At the intro it's borrowed as scratch — `$4B70`–`$4B73` are reused to draw a single bird frame, with `$4B73 = index & 7`, the animation phase: `$21DF` "used as temp memory".
+
+(+4) — Movement-step countdown timer: On each bird update (`L35B0`), the code steps to +4 and decrements it (unless already 0).
+
+(+6) — horizontal movement step (velocity): Added each update to the grid X position (`$4B75`) and to the animation phase (`$4B73`); `≥ $10` triggers special wing-handling.
 
 >>> memory
 
 |    |     |     |
 | -------- | ------- | ----------------- |
-| 4B70      | B4B70                | Bird0 index character block shape   |
-| 4B71      | B4B71                | Bird0 MSB initial screen address    |
-| 4B72      | B4B72                | Bird0 LSB initial screen address    |
-| 4B73      | B4B73                | Bird0 ?                             |
-| 4B74      | B4B74                | Bird0 ?                             |
+| 4B70      | B4B70                | Bird0 character-block shape index   |
+| 4B71      | B4B71                | Bird0 screen-RAM address MSB    |
+| 4B72      | B4B72                | Bird0 screen-RAM address LSB    |
+| 4B73      | B4B73                | Bird0 animation phase / current shape frame |
+| 4B74      | B4B74                | Bird0 movement-step countdown timer |
 | 4B75      | B4B75                | Bird0 grid coordinate X             |
-| 4B76      | B4B76                | Bird0 horizontal movement direction |
+| 4B76      | B4B76                | Bird0 horizontal movement step (velocity) |
 | 4B77      | B4B77                | Bird0 grid coordinate Y             |
-| 4B78      | B4B78                | Bird1 index character block shape   |
-| 4B79      | B4B79                | Bird1 MSB initial screen address    |
-| 4B7A      | B4B7A                | Bird1 LSB initial screen address    |
-| 4B7B      | B4B7B                | Bird1 ?                             |
-| 4B7C      | B4B7C                | Bird1 ?                             |
+| 4B78      | B4B78                | Bird1 character-block shape index   |
+| 4B79      | B4B79                | Bird1 screen-RAM address MSB    |
+| 4B7A      | B4B7A                | Bird1 screen-RAM address LSB    |
+| 4B7B      | B4B7B                | Bird1 animation phase / current shape frame |
+| 4B7C      | B4B7C                | Bird1 movement-step countdown timer |
 | 4B7D      | B4B7D                | Bird1 grid coordinate X             |
-| 4B7E      | B4B7E                | Bird1 horizontal movement direction |
+| 4B7E      | B4B7E                | Bird1 horizontal movement step (velocity) |
 | 4B7F      | B4B7F                | Bird1 grid coordinate Y             |
-| 4B80      | B4B80                | Bird2 index character block shape   |
-| 4B81      | B4B81                | Bird2 MSB initial screen address    |
-| 4B82      | B4B82                | Bird2 LSB initial screen address    |
-| 4B83      | B4B83                | Bird2 ?                             |
-| 4B84      | B4B84                | Bird2 ?                             |
+| 4B80      | B4B80                | Bird2 character-block shape index   |
+| 4B81      | B4B81                | Bird2 screen-RAM address MSB    |
+| 4B82      | B4B82                | Bird2 screen-RAM address LSB    |
+| 4B83      | B4B83                | Bird2 animation phase / current shape frame |
+| 4B84      | B4B84                | Bird2 movement-step countdown timer |
 | 4B85      | B4B85                | Bird2 grid coordinate X             |
-| 4B86      | B4B86                | Bird2 horizontal movement direction |
+| 4B86      | B4B86                | Bird2 horizontal movement step (velocity) |
 | 4B87      | B4B87                | Bird2 grid coordinate Y             |
-| 4B88      | B4B88                | Bird3 index character block shape   |
-| 4B89      | B4B89                | Bird3 MSB initial screen address    |
-| 4B8A      | B4B8A                | Bird3 LSB initial screen address    |
-| 4B8B      | B4B8B                | Bird3 ?                             |
-| 4B8C      | B4B8C                | Bird3 ?                             |
+| 4B88      | B4B88                | Bird3 character-block shape index   |
+| 4B89      | B4B89                | Bird3 screen-RAM address MSB    |
+| 4B8A      | B4B8A                | Bird3 screen-RAM address LSB    |
+| 4B8B      | B4B8B                | Bird3 animation phase / current shape frame |
+| 4B8C      | B4B8C                | Bird3 movement-step countdown timer |
 | 4B8D      | B4B8D                | Bird3 grid coordinate X             |
-| 4B8E      | B4B8E                | Bird3 horizontal movement direction |
+| 4B8E      | B4B8E                | Bird3 horizontal movement step (velocity) |
 | 4B8F      | B4B8F                | Bird3 grid coordinate Y             |
-| 4B90      | B4B90                | Bird4 index character block shape   |
-| 4B91      | B4B91                | Bird4 MSB initial screen address    |
-| 4B92      | B4B92                | Bird4 LSB initial screen address    |
-| 4B93      | B4B93                | Bird4 ?                             |
-| 4B94      | B4B94                | Bird4 ?                             |
+| 4B90      | B4B90                | Bird4 character-block shape index   |
+| 4B91      | B4B91                | Bird4 screen-RAM address MSB    |
+| 4B92      | B4B92                | Bird4 screen-RAM address LSB    |
+| 4B93      | B4B93                | Bird4 animation phase / current shape frame |
+| 4B94      | B4B94                | Bird4 movement-step countdown timer |
 | 4B95      | B4B95                | Bird4 grid coordinate X             |
-| 4B96      | B4B96                | Bird4 horizontal movement direction |
+| 4B96      | B4B96                | Bird4 horizontal movement step (velocity) |
 | 4B97      | B4B97                | Bird4 grid coordinate Y             |
-| 4B98      | B4B98                | Bird5 index character block shape   |
-| 4B99      | B4B99                | Bird5 MSB initial screen address    |
-| 4B9A      | B4B9A                | Bird5 LSB initial screen address    |
-| 4B9B      | B4B9B                | Bird5 ?                             |
-| 4B9C      | B4B9C                | Bird5 ?                             |
+| 4B98      | B4B98                | Bird5 character-block shape index   |
+| 4B99      | B4B99                | Bird5 screen-RAM address MSB    |
+| 4B9A      | B4B9A                | Bird5 screen-RAM address LSB    |
+| 4B9B      | B4B9B                | Bird5 animation phase / current shape frame |
+| 4B9C      | B4B9C                | Bird5 movement-step countdown timer |
 | 4B9D      | B4B9D                | Bird5 grid coordinate X             |
-| 4B9E      | B4B9E                | Bird5 horizontal movement direction |
+| 4B9E      | B4B9E                | Bird5 horizontal movement step (velocity) |
 | 4B9F      | B4B9F                | Bird5 grid coordinate Y             |
-| 4BA0      | B4BA0                | Bird6 index character block shape   |
-| 4BA1      | B4BA1                | Bird6 MSB initial screen address    |
-| 4BA2      | B4BA2                | Bird6 LSB initial screen address    |
-| 4BA3      | B4BA3                | Bird6 ?                             |
-| 4BA4      | B4BA4                | Bird6 ?                             |
+| 4BA0      | B4BA0                | Bird6 character-block shape index   |
+| 4BA1      | B4BA1                | Bird6 screen-RAM address MSB    |
+| 4BA2      | B4BA2                | Bird6 screen-RAM address LSB    |
+| 4BA3      | B4BA3                | Bird6 animation phase / current shape frame |
+| 4BA4      | B4BA4                | Bird6 movement-step countdown timer |
 | 4BA5      | B4BA5                | Bird6 grid coordinate X             |
-| 4BA6      | B4BA6                | Bird6 horizontal movement direction |
+| 4BA6      | B4BA6                | Bird6 horizontal movement step (velocity) |
 | 4BA7      | B4BA7                | Bird6 grid coordinate Y             |
-| 4BA8      | B4BA8                | Bird7 index character block shape   |
-| 4BA9      | B4BA9                | Bird7 MSB initial screen address    |
-| 4BAA      | B4BAA                | Bird7 LSB initial screen address    |
-| 4BAB      | B4BAB                | Bird7 ?                             |
-| 4BAC      | B4BAC                | Bird7 ?                             |
+| 4BA8      | B4BA8                | Bird7 character-block shape index   |
+| 4BA9      | B4BA9                | Bird7 screen-RAM address MSB    |
+| 4BAA      | B4BAA                | Bird7 screen-RAM address LSB    |
+| 4BAB      | B4BAB                | Bird7 animation phase / current shape frame |
+| 4BAC      | B4BAC                | Bird7 movement-step countdown timer |
 | 4BAD      | B4BAD                | Bird7 grid coordinate X             |
-| 4BAE      | B4BAE                | Bird7 horizontal movement direction |
+| 4BAE      | B4BAE                | Bird7 horizontal movement step (velocity) |
 | 4BAF      | B4BAF                | Bird7 grid coordinate Y             |
 
 
@@ -581,26 +590,68 @@ For the bird animation during intro splash, bird0 memory is used.
 
 Scratch RAM used by the routine `L3980` (`$3980`), which runs during the bird/Phoenix waves to do an extended vertical collision sweep of the player's shot against the descending birds.
 
+Buffer for real bullet/aim values while routine `L39F0` hijacks them (copied back via `L39DB`).
+
+The routine works by hijacking the real player-bullet variables, sweeping them down through several screen rows running the bird collision check at each row, and then putting the originals back. `$4BC0`–`$4BC5` hold the saved originals during that sweep.
+
 >>> memory
 
 |    |     |     |
 | -------- | ------- | ----------------- |
-| 4BC0      | B4BC0                | buffer for real bullet/aim values while routine L39F0 hijacks them (copied back via L39DB) |
-| 4BC1      | B4BC1                | buffer ... |
-| 4BC2      | B4BC2                | buffer ... |
-| 4BC3      | B4BC3                | buffer ... |
-| 4BC4      | B4BC4                | buffer ... |
-| 4BC5      | B4BC5                | buffer ... |
-| 4BD1      | B4BD1                | ? |
-| 4BD2      | B4BD2                | vertical scroll phase (0..31) |
-| 4BD3      | B4BD3                | ? |
-| 4BD4      | B4BD4                | one of four attack variants |
-| 4BD5      | B4BD5                | descent step value |
-| 4BD6      | B4BD6                | formation scroll phase |
-| 4BD7      | B4BD7                | ? |
-| 4BED      | B4BED                | ? |
-| 4BEE      | B4BEE                | ? |
-| 4BEF      | B4BEF                | ? |
+| 4BC0      | B4BC0                | saved PlayerBulletState |
+| 4BC1      | B4BC1                | saved PlayerBulletShape |
+| 4BC2      | B4BC2                | saved PlayerBulletX |
+| 4BC3      | B4BC3                | saved PlayerBulletY |
+| 4BC4      | B4BC4                | saved AbovePlayerBulletMSB |
+| 4BC5      | B4BC5                | saved AbovePlayerBulletLSB |
+
+Bird-wave descent/attack control variables:
+
+They all live in the enemy work-RAM block that's cleared at each level start (`$4B50`–`$4BEF`, `$0535`). The `$4BD0` group is the heart of the swooping-formation logic during the bird (Phoenix) waves.
+
+`$4BD1` — Descent turnaround threshold (max depth):
+
+Computed in `L2476` from remaining birds, the wave timer, and the random seed `$436F`. The formation keeps descending until the scroll phase `$4BD2` passes this value, at which point the motion routine switches to the return/up path.
+
+`$4BD2` — Vertical scroll phase of the bird formation (the master index):
+
+Recomputed every frame from the scroll counter `CounterB9`. It's a 0–31 value representing how far the formation has scrolled down, and it's the index used all over the bird code (collision tables, the `T3ED0` scroll-increment table, the `T3DC0` active-object window, etc.).
+
+`$4BD3` — Countdown timer between bird attacks ("bird extended storage"):
+
+Loaded in `L2476` and decremented each cycle in `L26AA`; when it hits 0 the next attack/movement pattern is armed.
+
+`$4BD4` — Attack sub-pattern selector (0–3):
+
+Set from the low 2 bits of the random seed `$436F`; picks one of four bird attack variants.
+
+`$4BD5` — Descent step / speed value:
+
+Computed in `L2668` (base `$436E`, clamped by the `$3EE0` speed curve and tweaked by `BirdsLeft`), then consumed by the scroll routine: its low 2 bits index the `$3ED0` dither table and `bits>>2` give the coarse pixels-per-frame.
+
+`$4BD6` — Combined scroll-phase + active-bird center index (0–31):
+
+Built in `L26D0` by scanning the live bird objects (tracking the first and last active rows `D`/`E`) and adding them to the scroll phase. It indexes the `$3EE0` clamp curve, the `T3DE0` background-tone-duration table, and the bird-count clamp at `$2685`.
+
+`$4BD7` — Vertical spread of the active birds (computed, effectively unused):
+
+Also produced by `L26D0` as `lastRow − firstRow`. It is written at $26FA but not read anywhere else in the ROM — a leftover/vestigial value (the formation span is computed but only `$4BD6` is actually used downstream).
+
+>>> memory
+
+|      |       |     |
+|------|-------| ----------------- |
+| 4BD0      | B4BD0                | Unused RAM (cleared at level init, never referenced) |
+| 4BD1      | B4BD1                | Descent turnaround depth threshold (formation reverses when `$4BD2` passes it) |
+| 4BD2      | B4BD2                | Vertical scroll phase 0–31 of the bird formation (derived from `CounterB9`; master index) (0..31) |
+| 4BD3      | B4BD3                | Countdown timer between bird attack launches |
+| 4BD4      | B4BD4                | Attack sub-pattern selector (0–3, from random `$436F`) for one of four attack variants |
+| 4BD5      | B4BD5                | Descent step/speed value (feeds the `$3ED0` dither scroll rate) |
+| 4BD6      | B4BD6                | Combined scroll-phase + active-bird center index (indexes `$3EE0` curve & `T3DE0` sound) |
+| 4BD7      | B4BD7                | Active-bird vertical spread — computed but not consumed (vestigial) |
+| 4BED      | B4BED                | Unused RAM (cleared at level init, never referenced) |
+| 4BEE      | B4BEE                | Unused RAM (cleared at level init, never referenced) |
+| 4BEF      | B4BEF                | Unused RAM (cleared at level init, never referenced) |
 
 
 ## Stack 

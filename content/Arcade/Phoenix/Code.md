@@ -1194,16 +1194,16 @@ T0598:
 ; e.g.:counter values, timer values, T1C00, T1D00, T1F00, ..
 ; Data copied to $43AB-$43B6
 T05A8:
-05A8: 80 7F 00 00 40 3F 00 1C 00 FF FF FF
+05A8: 80 7F 00 00 40 3F 00 1C 00 FF FF FF           ; alien waves
 ;
 T05B4:
-05B4: 60 5F 01 02 30 2F 00 1C 00 C0 FF FF
+05B4: 60 5F 01 02 30 2F 00 1C 00 C0 FF FF           ; mothership
 ;
 T05C0:
-05C0: 80 7F 03 04 40 3F 00 1F 00 A0 FF FF
+05C0: 80 7F 03 04 40 3F 00 1F 00 A0 FF FF           ; alien wave 2
 ;
 T05CC:
-05CC: 60 60 05 06 50 30 00 1D 00 48 FF FF
+05CC: 60 60 05 06 50 30 00 1D 00 48 FF FF           ; mothership
 
 ;*****************************************************************************
 ;* Clears B memories starting at HL.
@@ -1399,20 +1399,20 @@ AddPlanetsToBackground:
 06B3: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
 06B6: 4F              LD      C,A                 ; 
 06B7: BE              CP      (HL)                ; 
-06B8: C0              RET     NZ                  ; 
+06B8: C0              RET     NZ                  ; only when CounterB9 == $43AB
 ;
 06B9: 7E              LD      A,(HL)              ; 
-06BA: 2C              INC     L                   ; 
-06BB: 86              ADD     A,(HL)              ; 
+06BA: 2C              INC     L                   ; -> $43AC
+06BB: 86              ADD     A,(HL)              ; + $43AC
 06BC: 2D              DEC     L                   ; 
-06BD: 77              LD      (HL),A              ; 
+06BD: 77              LD      (HL),A              ; $43AB += $43AC  (schedule next planet row)
 06BE: 2C              INC     L                   ; 
-06BF: 2C              INC     L                   ; 
-06C0: 34              INC     (HL)                ; 
-06C1: 46              LD      B,(HL)              ; 
-06C2: 2C              INC     L                   ; 
-06C3: 34              INC     (HL)                ; 
-06C4: 7E              LD      A,(HL)              ; 
+06BF: 2C              INC     L                   ; -> $43AD
+06C0: 34              INC     (HL)                ; $43AD++
+06C1: 46              LD      B,(HL)              ; B = $43AD  (planet X, LSB table)
+06C2: 2C              INC     L                   ; -> $43AE
+06C3: 34              INC     (HL)                ; $43AE++
+06C4: 7E              LD      A,(HL)              ; A = $43AE  (planet X, MSB table)
 06C5: 21 20 1E        LD      HL,$1E20            ; {+code.T1E20} MSB's of screen ram for planets
 06C8: E6 1F           AND     $1F                 ; 0001_1111
 06CA: 85              ADD     A,L                 ; 
@@ -1864,7 +1864,7 @@ GetAnimationChrs:
 ; Updates the player ship, player bullet and the shield.
 ;*****************************************************************************
 PlayerUpdate:
-0876: CD 00 07        CALL    $0700               ; {code.PlayerDataController}
+0876: CD 00 07        CALL    $0700               ; {code.PlayerDataController} draw new / delete old objects
 0879: CD 86 08        CALL    $0886               ; {code.L0886} copy current player data to old player data
 087C: CD A0 08        CALL    $08A0               ; {code.L08A0} update player position, bullet and shield
 087F: CD A0 09        CALL    $09A0               ; {code.L09A0} get screen ram adress for player ship position
@@ -3902,7 +3902,7 @@ T1770:
 17A0: 00 00 00 00 00 E4 E6 00 00 E5 E7 00 00 00 00 00 ; [Object 17A0](fgtiles.html#object-17a0) Green ship, no shields
 
 ;
-17B0: F0 CA C4 BE B8 BE B8 BE ; LSB's of the Alien explosion frame sequence (#5,#4,#3,#2,#1,#2,#1,#2) why wrong order?
+17B0: F0 CA C4 BE B8 BE B8 BE ; LSB's of the Alien explosion display timeline (#5,#4,#3,#2,#1,#2,#1,#2).
 ;
 17B8: C8 D8 C9 D9 CA DA ; [Object 17B8](fgtiles.html#object-17b8) 3x2 Alien explosion frame #1
 17BE: CB DB CC DC CD DD ; [Object 17BE](fgtiles.html#object-17be) 3x2 Alien explosion frame #2
@@ -4350,20 +4350,20 @@ L2030:
 ;* Add 1x1 small galaxies to background.
 ;*****************************************************************************
 AddGalaxiesToBackground:
-2040: 21 AF 43        LD      HL,$43AF            ; {+ram.M43AF}
+2040: 21 AF 43        LD      HL,$43AF            ; {+ram.M43AF} $43AF = next-galaxy trigger (CounterB9 value)
 2043: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
 2046: 4F              LD      C,A                 ; 
 2047: BE              CP      (HL)                ; 
 2048: C0              RET     NZ                  ; 
 2049: 7E              LD      A,(HL)              ; 
-204A: 2C              INC     L                   ; 
-204B: 96              SUB     (HL)                ; 
+204A: 2C              INC     L                   ; -> $43B0
+204B: 96              SUB     (HL)                ; - $43B0
 204C: 2D              DEC     L                   ; 
-204D: 77              LD      (HL),A              ; 
+204D: 77              LD      (HL),A              ; $43AF -= $43B0  (schedule next galaxy)
 204E: 2C              INC     L                   ; 
-204F: 2C              INC     L                   ; 
-2050: 34              INC     (HL)                ; 
-2051: 7E              LD      A,(HL)              ; 
+204F: 2C              INC     L                   ; -> $43B1
+2050: 34              INC     (HL)                ; $43B1++
+2051: 7E              LD      A,(HL)              ; A = $43B1  (galaxy position index)
 2052: 21 80 1E        LD      HL,$1E80            ; {+code.T1E80} data for the 16 (1x1) small galaxies from setB
 2055: E6 1F           AND     $1F                 ; 0001_1111
 2057: 85              ADD     A,L                 ; 
@@ -5136,7 +5136,7 @@ L2476:
 2476: 78              LD      A,B                 
 2477: 81              ADD     A,C                 
 2478: CD 95 24        CALL    $2495               ; {code.L2495}
-247B: 2E D3           LD      L,$D3               ; $4BD3 (bird extended storage)
+247B: 2E D3           LD      L,$D3               ; $4BD3 countdown timer between bird attacks ("bird extended storage")
 247D: 77              LD      (HL),A              
 247E: 21 BB 43        LD      HL,$43BB            ; {+ram.BirdsLeft}
 2481: 3E 08           LD      A,$08               ; number of birds
@@ -5147,12 +5147,12 @@ L2476:
 2488: 07              RLCA                        ; Multiply by 2
 2489: 47              LD      B,A                 
 ; Attack timing / launch slot
-248A: 2E 6F           LD      L,$6F               ; $436F
-248C: 7E              LD      A,(HL)              
+248A: 2E 6F           LD      L,$6F               ; $436F (random)
+248C: 7E              LD      A,(HL)              ; 
 248D: E6 1E           AND     $1E                 ; 0001_1110
-248F: 80              ADD     A,B                 
-2490: 32 D1 4B        LD      ($4BD1),A           ; {!ram.B4BD1}
-2493: C9              RET                         
+248F: 80              ADD     A,B                 ; B from (8-BirdsLeft) & Counter9A
+2490: 32 D1 4B        LD      ($4BD1),A           ; {!ram.B4BD1} descent turnaround threshold (max depth)
+2493: C9              RET                         ; 
 
 ; not used.
 2494: 1F              RRA                         
@@ -5435,14 +5435,14 @@ L2600:
 2608: 2F              CPL                         ; 
 2609: 0F              RRCA                        ; 
 260A: 0F              RRCA                        ; 
-260B: 0F              RRCA                        ; 
-260C: E6 1F           AND     $1F                 ; 0001_1111
-260E: 21 D2 4B        LD      HL,$4BD2            ; {!+ram.B4BD2}
+260B: 0F              RRCA                        ; >> 3
+260C: E6 1F           AND     $1F                 ; 0001_1111 0..31
+260E: 21 D2 4B        LD      HL,$4BD2            ; {!+ram.B4BD2} vertical scroll phase of the bird formation (the master index)
 2611: 77              LD      (HL),A              ; 
 2612: 2C              INC     L                   ; 
-2613: 3A D1 4B        LD      A,($4BD1)           ; {!ram.B4BD1}
-2616: BE              CP      (HL)                ; 
-2617: DA 50 26        JP      C,$2650             ; {code.L2650}
+2613: 3A D1 4B        LD      A,($4BD1)           ; {!ram.B4BD1} descent turnaround threshold (max depth)
+2616: BE              CP      (HL)                ; vs $4BD2 (scroll phase)
+2617: DA 50 26        JP      C,$2650             ; {code.L2650} phase passed threshold -> reverse
 261A: 3A D5 4B        LD      A,($4BD5)           ; {!ram.B4BD5} D = descent-step value
 261D: 57              LD      D,A                 ; 
 261E: E6 03           AND     $03                 ; E = B4BD5 & 3   -> sub-phase (column 0..3)
@@ -5456,8 +5456,8 @@ L2600:
 262B: 6F              LD      L,A                 ; 
 262C: 26 3E           LD      H,$3E               ; HL = $3ED0 + row + column
 262E: 7A              LD      A,D                 ; 
-262F: 0F              RRCA                        ; B4BD5 >> 2
-2630: 0F              RRCA                        ; 
+262F: 0F              RRCA                        ; 
+2630: 0F              RRCA                        ; B4BD5 >> 2 -> coarse speed
 2631: E6 07           AND     $07                 ; 0000_0111 coarse speed 0..7
 2633: 86              ADD     A,(HL)              ; + 0/1 dither bit from table
 2634: 57              LD      D,A                 ; total vertical step this frame
@@ -5467,7 +5467,7 @@ L2639:
 2639: 32 B9 43        LD      ($43B9),A           ; {ram.CounterB9}
 263C: 32 00 58        LD      ($5800),A           ; {hard.scrollRegister} $5800 vertical scroll register
 263F: 3A 9B 43        LD      A,($439B)           ; {ram.Counter9A+1}
-2642: 0F              RRCA                        
+2642: 0F              RRCA                        ; 
 2643: D2 D0 26        JP      NC,$26D0            ; {code.L26D0}
 2646: CD 68 26        CALL    $2668               ; {code.L2668}
 2649: C3 AA 26        JP      $26AA               ; {code.L26AA}
@@ -5481,120 +5481,120 @@ L2650:
 2654: 07              RLCA                        ; Multiply by 4 ..
 2655: 07              RLCA                        ; ..
 2656: E6 0C           AND     $0C                 ; 0000_1100
-2658: 86              ADD     A,(HL)              
-2659: C6 D0           ADD     $D0                 
-265B: 6F              LD      L,A                 
-265C: 26 3E           LD      H,$3E               
+2658: 86              ADD     A,(HL)              ; 
+2659: C6 D0           ADD     $D0                 ; 
+265B: 6F              LD      L,A                 ; 
+265C: 26 3E           LD      H,$3E               ; 
 265E: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
-2661: 86              ADD     A,(HL)              
+2661: 86              ADD     A,(HL)              ; 
 2662: C3 39 26        JP      $2639               ; {code.L2639}
 2665: D2 AE 26        JP      NC,$26AE            ; {code.L26AE}
 
 ;
 L2668:
 2668: 3A 6E 43        LD      A,($436E)           ; {ram.M436E} base for descent-step calc (-> B4BD5)
-266B: 00              NOP                         
-266C: 47              LD      B,A                 
+266B: 00              NOP                         ; 
+266C: 47              LD      B,A                 ; 
 266D: 3A 9A 43        LD      A,($439A)           ; {ram.Counter9A}
-2670: FE 18           CP      $18                 
+2670: FE 18           CP      $18                 ; 
 2672: DA 76 26        JP      C,$2676             ; {code.L2676}
-2675: 04              INC     B                   
+2675: 04              INC     B                   ; 
 L2676:
-2676: FE 10           CP      $10                 
+2676: FE 10           CP      $10                 ; 
 2678: DA 7C 26        JP      C,$267C             ; {code.L267C}
-267B: 04              INC     B                   
+267B: 04              INC     B                   ; 
 L267C:
 267C: 3A BA 43        LD      A,($43BA)           ; {ram.AliensLeft}
-267F: FE 03           CP      $03                 
+267F: FE 03           CP      $03                 ; 
 2681: D2 85 26        JP      NC,$2685            ; {code.L2685} if >= $03
-2684: 04              INC     B                   
+2684: 04              INC     B                   ; 
 L2685:
 2685: 3A D6 4B        LD      A,($4BD6)           ; {!ram.B4BD6}
-2688: C6 E0           ADD     $E0                 
-268A: 6F              LD      L,A                 
+2688: C6 E0           ADD     $E0                 ; 
+268A: 6F              LD      L,A                 ; 
 268B: 26 3E           LD      H,$3E               ; HL = $3EE0 + B4BD6
 268D: 78              LD      A,B                 ; B = candidate step (from M436E, wave timer, AliensLeft)
-268E: BE              CP      (HL)                
+268E: BE              CP      (HL)                ; 
 268F: DA 93 26        JP      C,$2693             ; {code.L2693} keep B if B < limit
 2692: 7E              LD      A,(HL)              ; else clamp to table limit
 L2693:
-2693: 57              LD      D,A                 
+2693: 57              LD      D,A                 ; 
 2694: 3A BB 43        LD      A,($43BB)           ; {ram.BirdsLeft}
-2697: FE 04           CP      $04                 
+2697: FE 04           CP      $04                 ; 
 2699: D2 9D 26        JP      NC,$269D            ; {code.L269D} if >= $04
-269C: 14              INC     D                   
+269C: 14              INC     D                   ; 
 L269D:
-269D: FE 02           CP      $02                 
+269D: FE 02           CP      $02                 ; 
 269F: D2 A3 26        JP      NC,$26A3            ; {code.L26A3} if >= $02
-26A2: 14              INC     D                   
+26A2: 14              INC     D                   ; 
 L26A3:
 26A3: 7A              LD      A,D                 ; D further nudged by BirdsLeft, then:
-26A4: 32 D5 4B        LD      ($4BD5),A           ; {!ram.B4BD5} -> B4BD5 (feeds Part 1 above)
+26A4: 32 D5 4B        LD      ($4BD5),A           ; {!ram.B4BD5} descent step / speed value
 26A7: C9              RET                         ; 
 ; not used
 26A8: 00              NOP                         
 26A9: 58              LD      E,B                 
 L26AA:
-26AA: 21 D3 4B        LD      HL,$4BD3            ; {!+ram.B4BD3}
-26AD: 7E              LD      A,(HL)              
+26AA: 21 D3 4B        LD      HL,$4BD3            ; {!+ram.B4BD3} countdown timer between bird attacks ("bird extended storage")
+26AD: 7E              LD      A,(HL)              ; 
 L26AE:
-26AE: 35              DEC     (HL)                
+26AE: 35              DEC     (HL)                ; tick
 26AF: A7              AND     A                   ; updates the zero flag
-26B0: C0              RET     NZ                  
-26B1: 34              INC     (HL)                
+26B0: C0              RET     NZ                  ; not yet
+26B1: 34              INC     (HL)                ; 
 26B2: 2E D6           LD      L,$D6               ; $4BD6
-26B4: 7E              LD      A,(HL)              
-26B5: FE 16           CP      $16                 
-26B7: D0              RET     NC                  
-26B8: FE 08           CP      $08                 
-26BA: D8              RET     C                   
-26BB: 2C              INC     L                   
-26BC: 96              SUB     (HL)                
+26B4: 7E              LD      A,(HL)              ; 
+26B5: FE 16           CP      $16                 ; 
+26B7: D0              RET     NC                  ; 
+26B8: FE 08           CP      $08                 ; 
+26BA: D8              RET     C                   ; 
+26BB: 2C              INC     L                   ; 
+26BC: 96              SUB     (HL)                ; 
 26BD: 07              RLCA                        ; Multiply by 2
-26BE: 47              LD      B,A                 
+26BE: 47              LD      B,A                 ; 
 ; Attack sub-pattern selector
-26BF: 3A 6F 43        LD      A,($436F)           ; {ram.M436F}
+26BF: 3A 6F 43        LD      A,($436F)           ; {ram.M436F} Per-wave random variation seed (keeps successive waves from being identical)
 26C2: E6 03           AND     $03                 ; 0000_0011
-26C4: 2E D4           LD      L,$D4               ; B4BD4
-26C6: 77              LD      (HL),A              ; set attack variant
-26C7: 2F              CPL                         
+26C4: 2E D4           LD      L,$D4               ; B4BD4 attack sub-pattern selector (0–3)
+26C6: 77              LD      (HL),A              ; set one of four bird attack variants
+26C7: 2F              CPL                         ; 
 26C8: E6 03           AND     $03                 ; 0000_0011
-26CA: 3C              INC     A                   
-26CB: 4F              LD      C,A                 
+26CA: 3C              INC     A                   ; 
+26CB: 4F              LD      C,A                 ; 
 26CC: C3 76 24        JP      $2476               ; {code.L2476}
 ; not used 
 26CF: C9              RET                         
 ;
 L26D0:
 26D0: 21 A8 4B        LD      HL,$4BA8            ; {+ram.M4BA8}
-26D3: 01 00 08        LD      BC,$0800            
-26D6: 11 00 80        LD      DE,$8000            
+26D3: 01 00 08        LD      BC,$0800            ; 
+26D6: 11 00 80        LD      DE,$8000            ; 
 L26D9:
-26D9: 7E              LD      A,(HL)              
+26D9: 7E              LD      A,(HL)              ; 
 26DA: A7              AND     A                   ; updates the zero flag
 26DB: CA E5 26        JP      Z,$26E5             ; {code.L26E5}
-26DE: 7A              LD      A,D                 
+26DE: 7A              LD      A,D                 ; 
 26DF: 07              RLCA                        ; Multiply by 2
 26E0: D2 E4 26        JP      NC,$26E4            ; {code.L26E4}
-26E3: 51              LD      D,C                 
+26E3: 51              LD      D,C                 ; 
 L26E4:
-26E4: 59              LD      E,C                 
+26E4: 59              LD      E,C                 ; 
 L26E5:
-26E5: 0C              INC     C                   
-26E6: 7D              LD      A,L                 
-26E7: 90              SUB     B                   
-26E8: 6F              LD      L,A                 
-26E9: FE 68           CP      $68                 
+26E5: 0C              INC     C                   ; 
+26E6: 7D              LD      A,L                 ; 
+26E7: 90              SUB     B                   ; 
+26E8: 6F              LD      L,A                 ; 
+26E9: FE 68           CP      $68                 ; 
 26EB: C2 D9 26        JP      NZ,$26D9            ; {code.L26D9}
-26EE: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2}
-26F1: 82              ADD     A,D                 
-26F2: 83              ADD     A,E                 
+26EE: 3A D2 4B        LD      A,($4BD2)           ; {!ram.B4BD2} vertical scroll phase of the bird formation (the master index)
+26F1: 82              ADD     A,D                 ; + first active row
+26F2: 83              ADD     A,E                 ; + last active row
 26F3: E6 1F           AND     $1F                 ; 0001_1111
-26F5: 32 D6 4B        LD      ($4BD6),A           ; {!ram.B4BD6}
-26F8: 7B              LD      A,E                 
-26F9: 92              SUB     D                   
-26FA: 32 D7 4B        LD      ($4BD7),A           ; {!ram.B4BD7}
-26FD: C9              RET                         
+26F5: 32 D6 4B        LD      ($4BD6),A           ; {!ram.B4BD6} combined scroll-phase + active-bird center index (0–31)
+26F8: 7B              LD      A,E                 ; 
+26F9: 92              SUB     D                   ; 
+26FA: 32 D7 4B        LD      ($4BD7),A           ; {!ram.B4BD7} vertical spread of the active birds (computed, effectively unused)
+26FD: C9              RET                         ; 
 
 26FE: FF FF
 
@@ -6979,14 +6979,14 @@ L35B0:
 35B1: A7              AND     A                   ; updates the zero flag
 35B2: C8              RET     Z                   ; if index is 0
 35B3: 47              LD      B,A                 ; save index to B
-35B4: 2C              INC     L                   ; 
-35B5: 2C              INC     L                   ; 
-35B6: 2C              INC     L                   ; 
-35B7: 2C              INC     L                   ; 
-35B8: 7E              LD      A,(HL)              ; 
+35B4: 2C              INC     L                   ; +1
+35B5: 2C              INC     L                   ; +2
+35B6: 2C              INC     L                   ; +3
+35B7: 2C              INC     L                   ; +4
+35B8: 7E              LD      A,(HL)              ; $4B74 timer
 35B9: A7              AND     A                   ; updates the zero flag
 35BA: CA BE 35        JP      Z,$35BE             ; {code.L35BE}
-35BD: 35              DEC     (HL)                ; 
+35BD: 35              DEC     (HL)                ; count down
 L35BE:
 35BE: EB              EX      DE,HL               ; 
 35BF: D5              PUSH    DE                  ; 
@@ -7021,60 +7021,60 @@ L35BE:
 35DC: FF FF FF FF
 ; called by $35B0
 L35E0:
-35E0: 2C              INC     L                   
-35E1: 2C              INC     L                   
-35E2: 7E              LD      A,(HL)              
-35E3: FE 10           CP      $10                 
-35E5: D2 28 36        JP      NC,$3628            ; {code.L3628} if >= $10
-35E8: 47              LD      B,A                 
-35E9: 2D              DEC     L                   
-35EA: 86              ADD     A,(HL)              
-35EB: 77              LD      (HL),A              
-35EC: 2D              DEC     L                   
-35ED: 2D              DEC     L                   
-35EE: 78              LD      A,B                 
-35EF: 86              ADD     A,(HL)              
-35F0: 77              LD      (HL),A              
-35F1: FE 08           CP      $08                 
+35E0: 2C              INC     L                   ; -> +5
+35E1: 2C              INC     L                   ; -> +6
+35E2: 7E              LD      A,(HL)              ; A = $4B76 (step)
+35E3: FE 10           CP      $10                 ; 
+35E5: D2 28 36        JP      NC,$3628            ; {code.L3628} step >= $10 -> special handling
+35E8: 47              LD      B,A                 ; 
+35E9: 2D              DEC     L                   ; -> +5 (grid X)
+35EA: 86              ADD     A,(HL)              ; 
+35EB: 77              LD      (HL),A              ; grid X += step
+35EC: 2D              DEC     L                   ; -> +4
+35ED: 2D              DEC     L                   ; -> +3 (animation phase)
+35EE: 78              LD      A,B                 ; 
+35EF: 86              ADD     A,(HL)              ; 
+35F0: 77              LD      (HL),A              ; animation phase += step
+35F1: FE 08           CP      $08                 ; 
 35F3: DA 6A 36        JP      C,$366A             ; {code.L366A}
 35F6: E6 07           AND     $07                 ; 0000_0111
-35F8: 77              LD      (HL),A              
-35F9: 2D              DEC     L                   
-35FA: 7E              LD      A,(HL)              
-35FB: D6 20           SUB     $20                 
-35FD: 77              LD      (HL),A              
+35F8: 77              LD      (HL),A              ; phase wraps mod 8
+35F9: 2D              DEC     L                   ; 
+35FA: 7E              LD      A,(HL)              ; 
+35FB: D6 20           SUB     $20                 ; 
+35FD: 77              LD      (HL),A              ; 
 35FE: D2 04 36        JP      NC,$3604            ; {code.L3604}
-3601: 2D              DEC     L                   
-3602: 35              DEC     (HL)                
-3603: 2C              INC     L                   
+3601: 2D              DEC     L                   ; 
+3602: 35              DEC     (HL)                ; 
+3603: 2C              INC     L                   ; 
 L3604:
-3604: 2C              INC     L                   
-3605: 2C              INC     L                   
-3606: 2C              INC     L                   
-3607: 4E              LD      C,(HL)              
-3608: 2C              INC     L                   
-3609: 2C              INC     L                   
-360A: 7E              LD      A,(HL)              
-360B: 2D              DEC     L                   
-360C: 36 10           LD      (HL),$10            
-360E: 91              SUB     C                   
+3604: 2C              INC     L                   ; 
+3605: 2C              INC     L                   ; 
+3606: 2C              INC     L                   ; 
+3607: 4E              LD      C,(HL)              ; 
+3608: 2C              INC     L                   ; 
+3609: 2C              INC     L                   ; 
+360A: 7E              LD      A,(HL)              ; 
+360B: 2D              DEC     L                   ; 
+360C: 36 10           LD      (HL),$10            ; 
+360E: 91              SUB     C                   ; 
 360F: CA 72 36        JP      Z,$3672             ; {code.L3672}
-3612: 3D              DEC     A                   
-3613: 0F              RRCA                        
-3614: 0F              RRCA                        
-3615: 0F              RRCA                        
+3612: 3D              DEC     A                   ; 
+3613: 0F              RRCA                        ; 
+3614: 0F              RRCA                        ; 
+3615: 0F              RRCA                        ; 
 3616: E6 1F           AND     $1F                 ; 0001_1111
-3618: B8              CP      B                   
-3619: 3C              INC     A                   
-361A: 77              LD      (HL),A              
-361B: D8              RET     C                   
+3618: B8              CP      B                   ; 
+3619: 3C              INC     A                   ; 
+361A: 77              LD      (HL),A              ; 
+361B: D8              RET     C                   ; 
 361C: 3A 6E 43        LD      A,($436E)           ; {ram.M436E} target count
-361F: 77              LD      (HL),A              
-3620: B8              CP      B                   
-3621: C8              RET     Z                   
-3622: 04              INC     B                   
-3623: 70              LD      (HL),B              
-3624: C9              RET                         
+361F: 77              LD      (HL),A              ; 
+3620: B8              CP      B                   ; 
+3621: C8              RET     Z                   ; 
+3622: 04              INC     B                   ; 
+3623: 70              LD      (HL),B              ; 
+3624: C9              RET                         ; 
 ; 
 3625: FF FF FF
 
@@ -7749,6 +7749,7 @@ L3980:
 3985: D8              RET     C                   ; only when phase is in $0C..$1B
 3986: FE 10           CP      $10                 ; 
 3988: D0              RET     NC                  ; 
+
 ; --- save the real player bullet state into the $4BC0 buffer ---
 3989: 21 C4 43        LD      HL,$43C4            ; {+ram.PlayerBulletState} $43C4
 398C: 11 C0 4B        LD      DE,$4BC0            ; {!+ram.B4BC0}
@@ -7757,6 +7758,7 @@ L3980:
 3994: 2E E6           LD      L,$E6               ; AbovePlayerBulletMSB
 3996: 06 02           LD      B,$02               ; 
 3998: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE} $43E6..E7 -> $4BC4..C5
+
 ; --- aim the probe at the player ship and force it "active" ---
 399B: 2E E2           LD      L,$E2               ; PlayerShipMSB
 399D: 11 E6 43        LD      DE,$43E6            ; {+ram.AbovePlayerBulletMSB}
@@ -7780,6 +7782,11 @@ L3980:
 L39BF:
 39BF: 1A              LD      A,(DE)              ; 
 39C0: 32 C6 43        LD      ($43C6),A           ; {ram.PlayerBulletX} probe X = player mapped position
+
+; --- Use (the sweep)
+; After saving, the routine forces `PlayerBulletState` active (`$39A7: LD (HL),$08`),
+; seeds the aim X, and repeatedly calls the bird collision routine `L3800`
+; while stepping the "above-player bullet" address down one row at a time — checking up to ~`$1D` rows for a hit.
 L39C3:
 39C3: CD 00 38        CALL    $3800               ; {code.L3800} bird collision check at this row
 39C6: 21 C4 43        LD      HL,$43C4            ; {+ram.PlayerBulletState}
@@ -7787,11 +7794,15 @@ L39C3:
 39CA: E6 08           AND     $08                 ; 0000_1000
 39CC: CA F0 39        JP      Z,$39F0             ; {code.L39F0} bullet consumed (bird hit) -> shield upkeep
 39CF: 21 E7 43        LD      HL,$43E7            ; {+ram.AbovePlayerBulletLSB}
-39D2: 34              INC     (HL)                ; 
+39D2: 34              INC     (HL)                ; step down a row
 39D3: 7E              LD      A,(HL)              ; 
 39D4: E6 1F           AND     $1F                 ; 0001_1111
 39D6: FE 1D           CP      $1D                 ; 
 39D8: DA C3 39        JP      C,$39C3             ; {code.L39C3} step down a row, repeat (~29 rows)
+
+; --- Restore buffer
+; When the sweep finishes (or the shield branch at `L39F0` completes),
+; the saved bytes are copied back, returning the player bullet to exactly its previous state
 L39DB:
 39DB: 21 C0 4B        LD      HL,$4BC0            ; {!+ram.B4BC0} restore the saved player bullet state
 39DE: 11 C4 43        LD      DE,$43C4            ; {+ram.PlayerBulletState}
@@ -8016,10 +8027,10 @@ L3AD0:
 3AE4: 34              INC     (HL)                ; tick
 3AE5: A7              AND     A                   ; updates the zero flag
 3AE6: CA F8 3A        JP      Z,$3AF8             ; {code.L3AF8}
-3AE9: 3A D6 4B        LD      A,($4BD6)           ; {!ram.B4BD6}
-3AEC: C6 E0           ADD     $E0                 ; LSB of T3DE0 (tone duration table)
+3AE9: 3A D6 4B        LD      A,($4BD6)           ; {!ram.B4BD6} combined scroll-phase + active-bird center index (0–31)
+3AEC: C6 E0           ADD     $E0                 ; LSB of T3DE0 (bird background sound)
 3AEE: 5F              LD      E,A                 ; 
-3AEF: 16 3D           LD      D,$3D               ; MSB of T3DE0 (tone duration table)
+3AEF: 16 3D           LD      D,$3D               ; MSB of T3DE0 (bird background sound)
 3AF1: 1A              LD      A,(DE)              ; 
 3AF2: BE              CP      (HL)                ; reached this note's duration?
 3AF3: D0              RET     NC                  ; 
@@ -8475,10 +8486,10 @@ T3F00:
 ;.....:index to first character block shape
 ;........:MSB of initial screen address
 ;...........:LSB of the initial screen address
-;..............:movement/animation state ?
-;.................:movement/animation state ?
+;..............:animation phase / current shape frame
+;.................:movement-step countdown timer
 ;....................:grid coordinate x
-;.......................:horizontal movement direction
+;.......................:horizontal movement step (velocity)
 ;..........................:grid coordinate y
 T3F80:
 3F80: 01 48 EE 00 10 B0 10 20       ; 0
