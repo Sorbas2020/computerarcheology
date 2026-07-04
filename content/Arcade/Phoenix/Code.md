@@ -4923,7 +4923,7 @@ L2303:
 230A: 79              LD      A,C                 ; 
 230B: E6 0C           AND     $0C                 ; current tile's high 2 bits (upper half)
 230D: 0F              RRCA                        ; >> 2
-230E: 0F              RRCA                        ;   -> new LOW half
+230E: 0F              RRCA                        ; -> new LOW half
 230F: B2              OR      D                   ; combine: (prev_low<<2) | (cur_high>>2)
 2310: F6 60           OR      $60                 ; force into belt tile range $60-$6F
 2312: 77              LD      (HL),A              ; write the rotated belt tile back
@@ -6380,7 +6380,7 @@ L315A:
 3166: 07              RLCA                        ; Multiply by 2
 3167: C6 50           ADD     $50                 ; 
 3169: 6F              LD      L,A                 ; 
-316A: 26 4B           LD      H,$4B               ;HL = $4B50 + rand*2 (pattern ptr)
+316A: 26 4B           LD      H,$4B               ; HL = $4B50 + rand*2 (pattern ptr)
 316C: 78              LD      A,B                 ; 
 316D: 07              RLCA                        ; Multiply by 4 ..
 316E: 07              RLCA                        ; 
@@ -6866,7 +6866,7 @@ DrawBirdObject:
 34CE: 5E              LD      E,(HL)              ; get $4B72 LSB of screen ram
 34CF: 2C              INC     L                   ; 
 34D0: 78              LD      A,B                 ; restore shape index
-34D1: 07              RLCA                        ;  *8  (each shape owns 8 bytes = 4 phase entries)
+34D1: 07              RLCA                        ; *8  (each shape owns 8 bytes = 4 phase entries)
 34D2: 07              RLCA                        ; 
 34D3: 07              RLCA                        ; 
 34D4: 86              ADD     A,(HL)              ; and add to alien screen coordinate Y
