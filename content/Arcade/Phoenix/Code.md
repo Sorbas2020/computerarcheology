@@ -1393,6 +1393,14 @@ L0699:
 
 ;*****************************************************************************
 ;* Fill the background with (2x2) planets.
+;* Reads the MSB from `T1E20`, then reaches `T1E40` simply by adding `$20`
+;* to the same pointer (`$1E20 + $20 = $1E40`) — which is the clearest proof that `T1E40` is the LSB companion of `T1E20`.
+;* So `DE = (T1E20[i] << 8) | T1E40[i]`, then the LSB gets a scroll dependent offset added (derived from `CounterB9 >> 3`)
+;* so the planet drifts down as the star background scrolls. `DE` ends up somewhere in `$4800`–`$4BFF` (the background screen).
+;* The graphic itself is then chosen via `T1E60 -> T1E00` and drawn by `L07DC`.
+;* The routine only fires when `CounterB9` matches the planet counter (`$43AB`),
+;* so as the background scrolls a new planet is dropped in at successive slots,
+;* the slot index (masked to `$1F`) cycles through all 32 `T1E20`/`T1E40` positions.
 ;*****************************************************************************
 AddPlanetsToBackground:
 06B0: 21 AB 43        LD      HL,$43AB            ; {+ram.M43AB} counter value for (2x2) planets
@@ -1414,28 +1422,28 @@ AddPlanetsToBackground:
 06C3: 34              INC     (HL)                ; $43AE++
 06C4: 7E              LD      A,(HL)              ; A = $43AE  (planet X, MSB table)
 06C5: 21 20 1E        LD      HL,$1E20            ; {+code.T1E20} MSB's of screen ram for planets
-06C8: E6 1F           AND     $1F                 ; 0001_1111
+06C8: E6 1F           AND     $1F                 ; slot index 0..31
 06CA: 85              ADD     A,L                 ; 
-06CB: 6F              LD      L,A                 ; 
-06CC: 56              LD      D,(HL)              ; 
+06CB: 6F              LD      L,A                 ; HL = T1E20 + index
+06CC: 56              LD      D,(HL)              ; D = MSB of screen address
 06CD: C6 20           ADD     $20                 ; 
-06CF: 6F              LD      L,A                 ; 
-06D0: 5E              LD      E,(HL)              ; 
-06D1: 79              LD      A,C                 ; 
+06CF: 6F              LD      L,A                 ; HL = T1E40 + index
+06D0: 5E              LD      E,(HL)              ; E = LSB of screen address  <-- T1E40
+06D1: 79              LD      A,C                 ; C = CounterB9 (scroll phase)
 06D2: 0F              RRCA                        ; 
 06D3: 0F              RRCA                        ; 
 06D4: 0F              RRCA                        ; 
 06D5: E6 1E           AND     $1E                 ; 0001_1111
-06D7: 83              ADD     A,E                 ; 
-06D8: C6 02           ADD     $02                 ; 
-06DA: 5F              LD      E,A                 ; 
-06DB: 21 60 1E        LD      HL,$1E60            ; {+code.T1E60} LSB's of screen ram for planets
+06D7: 83              ADD     A,E                 ; add scroll-based vertical offset...
+06D8: C6 02           ADD     $02                 ; ...to the T1E40 LSB
+06DA: 5F              LD      E,A                 ; final DE = planet destination in $48xx-$4Bxx
+06DB: 21 60 1E        LD      HL,$1E60            ; {+code.T1E60} graphic-select offsets into T1E00
 06DE: 78              LD      A,B                 ; 
 06DF: E6 1F           AND     $1F                 ; 0001_1111
 06E1: 85              ADD     A,L                 ; 
 06E2: 6F              LD      L,A                 ; 
-06E3: 6E              LD      L,(HL)              ; 
-06E4: CD DC 07        CALL    $07DC               ; {code.L07DC} draw the characters at background
+06E3: 6E              LD      L,(HL)              ; HL = $1E00 + T1E60[j]  -> 2x2 tile data
+06E4: CD DC 07        CALL    $07DC               ; {code.L07DC} draw the 2x2 planet at DE
 06E7: C9              RET                         ; 
 
 ;*****************************************************************************
@@ -1875,16 +1883,16 @@ PlayerUpdate:
 ; Copy current player data to old player data.
 ;*****************************************************************************
 L0886:
-0886: 21 EB 43        LD      HL,$43EB            ; {+ram.M43EB}
-0889: 06 03           LD      B,$03               ; 
+0886: 21 EB 43        LD      HL,$43EB            ; {+ram.M43EB} start at current-LSB of object 2
+0889: 06 03           LD      B,$03               ; 3 objects
 L088B:
-088B: 56              LD      D,(HL)              ; 
+088B: 56              LD      D,(HL)              ; D = current LSB ($43EB)
 088C: 2B              DEC     HL                  ; 
-088D: 5E              LD      E,(HL)              ; 
+088D: 5E              LD      E,(HL)              ; E = current MSB ($43EA)
 088E: 2B              DEC     HL                  ; 
-088F: 72              LD      (HL),D              ; 
+088F: 72              LD      (HL),D              ; old LSB ($43E9) = current LSB
 0890: 2B              DEC     HL                  ; 
-0891: 73              LD      (HL),E              ; 
+0891: 73              LD      (HL),E              ; old MSB ($43E8) = current MSB
 0892: 2B              DEC     HL                  ; 
 0893: 05              DEC     B                   ; 
 0894: C2 8B 08        JP      NZ,$088B            ; {code.L088B}
@@ -2106,10 +2114,10 @@ L09A6:
 ;*****************************************************************************
 GetScreenRamAddress:
 09BA: 21 00 0A        LD      HL,$0A00            ; {+code.T0A00} Screen ram addresses for the top row (left to right)
-09BD: 0A              LD      A,(BC)              ; get the coordinate
+09BD: 0A              LD      A,(BC)              ; object X coordinate
 09BE: E6 F8           AND     $F8                 ; 1111_1000
 09C0: 0F              RRCA                        ; 0111_1100
-09C1: 0F              RRCA                        ; 0011_1110
+09C1: 0F              RRCA                        ; index = (X & $F8) >> 2  (even offset)
 09C2: 85              ADD     A,L                 ; 
 09C3: 6F              LD      L,A                 ; 
 09C4: 7E              LD      A,(HL)              ; get MSB of screen ram address for row
@@ -2132,6 +2140,14 @@ GetScreenRamAddress:
 
 ; Screen ram addresses for the top row (left to right)
 ; Notice these addresses are MSB:LSB (backwards from the processors endianness)
+; The offset is `(X & $F8) >> 2`, which ranges `$00`…`$3E`.
+; The 26 valid columns use offsets `$00`–`$32` (`$0A00`–`$0A33`).
+; Any X coordinate large enough to produce offset `$34`–`$3E` lands in your range and reads `$0000`.
+; Because the entry is `$0000` for both MSB and the row base LSB,
+; the computed destination collapses to address `$0000` (plus a tiny Y offset),
+; i.e. low ROM, where writes are simply ignored.
+; The result is that an object pushed past the right edge is "drawn" to a harmless null address
+; instead of corrupting screen RAM or wrapping onto a visible tile.
 T0A00:
 0A00: 43 20 ; ForegroundScreen+$320 (Upper left corner of rotated screen)
 0A02: 43 00 ; ForegroundScreen+$300
@@ -2160,7 +2176,9 @@ T0A00:
 0A30: 40 20 ; ForegroundScreen+$20
 0A32: 40 00 ; ForegroundScreen (Upper right corner of rotated screen)
 
-; Mapping the 'out of screen' objects
+; Mapping the 'out of screen' objects,
+; that catch coordinates mapping beyond the 26 columns, returning a null (`$0000`) address
+; so off screen objects are written to a safe, ignored location rather than drawn as garbage.
 0A34: 00 00
 0A36: 00 00
 0A38: 00 00
@@ -2855,8 +2873,8 @@ L0DF0:
 0DF3: 21 E6 43        LD      HL,$43E6            ; {+ram.AbovePlayerBulletMSB} MSB screen ram: One character above player bullet
 0DF6: CD 10 0E        CALL    $0E10               ; {code.L0E10}
 0DF9: 01 C8 43        LD      BC,$43C8            ; {+ram.AbovePlayerBulletState}
-0DFC: 21 EA 43        LD      HL,$43EA            ; {+ram.M43EA} MSB screen ram: Left screen edge, one character above player ship
-0DFF: C3 10 0E        JP      $0E10               ; {code.L0E10}
+0DFC: 21 EA 43        LD      HL,$43EA            ; {+ram.M43EA} current screen addr of above-bullet
+0DFF: C3 10 0E        JP      $0E10               ; {code.L0E10} check char there for a hit
 
 ; not used
 0E02: 01 CC 43        LD      BC,$43CC            ; {+ram.EnemyBullet0State}
@@ -2873,11 +2891,11 @@ L0E10:
 0E14: 56              LD      D,(HL)              ; get MSB screen ram adress
 0E15: 2C              INC     L                   ; 
 0E16: 5E              LD      E,(HL)              ; get LSB screen ram adress
-0E17: 1A              LD      A,(DE)              ; get character
+0E17: 1A              LD      A,(DE)              ; character under the bullet
 0E18: FE C0           CP      $C0                 ; is explosion parts ($C0 - $E3) ?
 0E1A: D0              RET     NC                  ; ignore them.
 0E1B: FE 60           CP      $60                 ; is alien in base formation ($60 - $BF) ?
-0E1D: D8              RET     C                   ; if no character.
+0E1D: D8              RET     C                   ; below $60 -> NOT a target, ignore
 0E1E: FE 68           CP      $68                 ; is alien out of formation ($68 - $BF) ?
 0E20: D2 39 0E        JP      NC,$0E39            ; {code.L0E39} if yes
 0E23: E6 07           AND     $07                 ; mask out 0000_0111 tile type 0..7 (low 3 bits of char code)
@@ -4075,23 +4093,30 @@ T1A00:
 ; "%% % % %%% %%% % %% % %  %"
 1B26: 64 65 00 68 00 68 00 68 68 68 00 68 64 65 00 68 00 66 67 00 68 00 68 00 00 68
 
-;alien character block shapes table using setA (for fade in)
+;Character block shapes table using setB.
+;Parts of the mothership's purple conveyor belt.
+;So an ordinary belt hit:
+;1. Consumes the bullet (`AND $F7`).
+;2. Sets the "mother-ship hit" flag `$4366` -> plays the hit sound; no score is awarded.
+;3. Swaps the hit tile for a "damaged" belt tile from `T1B40/T1B48/T1B50`,
+;   chosen by the bullet's X position (left/right half) and the tile's low nibble
+;    — so the belt visibly chips/breaks apart where you shoot it.
 T1B40:
-1B40: 6C              ;#9
-1B41: 6D              ;#10
-1B42: 6E              ;#11
-1B43: 6F              ;#12
+1B40: 6C 6D 6E 6F
 ;
 1B44: FF FF FF FF
 
-;character block shapes table using setB
-;parts of the mothership's purple conveyor belt
+;Replacement tiles.
 T1B48:
-1B48: 6C 6D 6E 6F 64 65 66 67 63 FF
-1B52: 63 61 67 FF
-1B56: 67 65 6B FF
-1B5A: 6B 69 6F FF
-1B5E: 6F 6D
+1B48: 6C 6D 6E 6F
+1B4C: 64 65 66 67
+
+;Right-half belt-parts table.
+T1B50:
+1B50: 63 FF 63 61
+1B54: 67 FF 67 65
+1B58: 6B FF 6B 69
+1B5C: 6F FF 6F 6D
 
 ;characters used for explosions using setB
 T1B60:
@@ -4150,6 +4175,8 @@ T1C00:
 1C8C: 04 00 01 00 00 06 00 01 00 02 00 01 03 04 01 03 01 02 03 04 
 1CA0: 00 05 00 01 02 00 09 00 03 04 00 01 00 01 02 03 04 00 02 00 
 
+;Tail of the star field tile pattern that occupies page `$1C` (`$1C00`–`$1CFF`).
+;It's the remaining 76 bytes that complete the 256 byte star page used to paint the whole background.
 1CB4: 00 01 02 00 03 04 00 06 00 00 01 00 
 1CC0: 00 01 02 00 05 00 00 03 00 04 00 07 00 01 00 02 
 1CD0: 00 00 03 00 04 00 04 00 0A 00 01 00 02 00 03 00 
@@ -4209,7 +4236,7 @@ T1E20:
 1E34: 4B 4A 49 48
 1E38: 49 49 4A 4A
 1E3C: 48 49 4A 48
-;
+;The low byte (LSB) half of the background screen destination addresses for the (2×2) planets
 T1E40:
 1E40: A0 60 40 00
 1E44: E0 C0 C0 60
@@ -4340,8 +4367,8 @@ L2025:
 ;
 L2030:
 2030: E6 03           AND     $03                 ; 0000_0011
-2032: FE 01           CP      $01                 
-2034: 11 50 1B        LD      DE,$1B50            
+2032: FE 01           CP      $01                 ; 
+2034: 11 50 1B        LD      DE,$1B50            ; right-half belt-parts table
 2037: C3 AC 23        JP      $23AC               ; {code.L23AC}
 ; 
 203A: FF FF FF FF FF FF
@@ -4785,22 +4812,25 @@ L2292:
 2295: 7E              LD      A,(HL)              ; 
 2296: E6 08           AND     $08                 ; mask out 0000_1000
 2298: CA F0 22        JP      Z,$22F0             ; {+code.L22F0}
+; Fill the entire background with stars (uses the whole `$1C00`–`$1CFF` page, including `$1CB4`–`$1CFF`).
+; `L2292` copies the star page into background VRAM from `$4B3F` downward, reading `T1C00` with `INC L`
+; (which wraps inside page `$1C`), until it has filled `$4800`–`$4B3F`.
 229B: 21 00 1C        LD      HL,$1C00            ; {+code.T1C00} Background stars to erase mother ship
 229E: 11 3F 4B        LD      DE,$4B3F            ; End of background screen memory
 22A1: 06 47           LD      B,$47               ; 
 L22A3:
 22A3: 7E              LD      A,(HL)              ; 
-22A4: 12              LD      (DE),A              ; 
-22A5: 2C              INC     L                   ; 
+22A4: 12              LD      (DE),A              ; write star tile
+22A5: 2C              INC     L                   ; advance in page $1C (wraps $FF->$00)
 22A6: 1B              DEC     DE                  ; 
 22A7: 7E              LD      A,(HL)              ; 
 22A8: 12              LD      (DE),A              ; 
 22A9: 2C              INC     L                   ; 
 22AA: 1B              DEC     DE                  ; 
 22AB: 78              LD      A,B                 ; 
-22AC: BA              CP      D                   ; 
+22AC: BA              CP      D                   ; stop when DE drops below $4800
 22AD: C2 A3 22        JP      NZ,$22A3            ; {+code.L22A3}
-22B0: C3 E0 22        JP      $22E0               ; {code.L22E0}
+22B0: C3 E0 22        JP      $22E0               ; {code.L22E0} then set scroll/CounterB9
 ; 
 22B3: FF
 
@@ -4857,35 +4887,55 @@ L22F0:
 22F4: C3 E2 22        JP      $22E2               ; {code.L22E2}
 ; 
 22F7: FF FF FF
-; 
+
+;*****************************************************************************
+;* Rotate the conveyor belt:
+;* How the "rotation" actually works:
+;* Each belt tile is a code in `$60`–`$6F`, i.e. `$60 + p` where `p` is a 4-bit phase (0–15)
+;* that selects which frame of the belt-link graphic is shown. The routine treats that 4-bit phase as two 2-bit halves.
+;* - high half = bits 2–3
+;* - low half = bits 0–1
+;* Walking up the belt column (`L -= $20` each step), every tile is rebuilt as:
+;* new_phase = (previous_tile.low2 << 2) | (current_tile.high2)
+;* new_tile  = $60 | new_phase
+;* In other words:
+;* - a tile's new high 2 bits come from the lower neighbour's old low 2 bits, and
+;* - its new low 2 bits come from its own old high 2 bits.
+;* That is a 2-bit-per-tile shift register running up the column:
+;* Every animation step, the belt-link pattern marches exactly one 2-bit field up the chain.
+;* The seed value read from `$488A` feeds a fresh pattern into the bottom of the chain each step,
+;* so the motion is continuous and never runs out of pattern.
+;* Because the cumulative effect is "every belt segment's pattern shifts one position along the belt each tick",
+;* the row of `$60`–`$6F` tiles cycles through their link graphics in lock-step — which the eye reads as the belt rotating/conveying.
+;*****************************************************************************
 L22FA:
-22FA: 21 AA 4A        LD      HL,$4AAA            ; {+ram.BackgroundScreen+2AA}
-22FD: 06 12           LD      B,$12               
-22FF: 3A 8A 48        LD      A,($488A)           ; {ram.BackgroundScreen+8A}
-2302: 4F              LD      C,A                 
+22FA: 21 AA 4A        LD      HL,$4AAA            ; {+ram.BackgroundScreen+2AA} $4AAA = far end of the belt column
+22FD: 06 12           LD      B,$12               ; 18 belt tiles in the column
+22FF: 3A 8A 48        LD      A,($488A)           ; {ram.BackgroundScreen+8A} $488A = seed tile feeding the belt
+2302: 4F              LD      C,A                 ; C = "incoming" pattern
 L2303:
-2303: 79              LD      A,C                 
-2304: E6 03           AND     $03                 ; 0000_0011
-2306: 07              RLCA                        ; Multiply by 4 ..
-2307: 07              RLCA                        ; ..
-2308: 57              LD      D,A                 
-2309: 4E              LD      C,(HL)              
-230A: 79              LD      A,C                 
-230B: E6 0C           AND     $0C                 ; 0000_1100
-230D: 0F              RRCA                        
-230E: 0F              RRCA                        
-230F: B2              OR      D                   
-2310: F6 60           OR      $60                 ; 0110_0000
-2312: 77              LD      (HL),A              
-2313: 7D              LD      A,L                 
-2314: D6 20           SUB     $20                 
-2316: 6F              LD      L,A                 
+2303: 79              LD      A,C                 ; A = incoming/previous tile
+2304: E6 03           AND     $03                 ; its low 2 bits (lower belt-link half)
+2306: 07              RLCA                        ; << 2
+2307: 07              RLCA                        ; 
+2308: 57              LD      D,A                 ; D = (prev & 3) << 2  -> new HIGH half
+2309: 4E              LD      C,(HL)              ; C = current tile (kept as 'previous' for next loop)
+230A: 79              LD      A,C                 ; 
+230B: E6 0C           AND     $0C                 ; current tile's high 2 bits (upper half)
+230D: 0F              RRCA                        ; >> 2
+230E: 0F              RRCA                        ;   -> new LOW half
+230F: B2              OR      D                   ; combine: (prev_low<<2) | (cur_high>>2)
+2310: F6 60           OR      $60                 ; force into belt tile range $60-$6F
+2312: 77              LD      (HL),A              ; write the rotated belt tile back
+2313: 7D              LD      A,L                 ; 
+2314: D6 20           SUB     $20                 ; step one tile up the column
+2316: 6F              LD      L,A                 ; 
 2317: D2 1B 23        JP      NC,$231B            ; {code.L231B}
-231A: 25              DEC     H                   
+231A: 25              DEC     H                   ; 
 L231B:
-231B: 05              DEC     B                   
-231C: C2 03 23        JP      NZ,$2303            ; {code.L2303}
-231F: C9              RET                         
+231B: 05              DEC     B                   ; 
+231C: C2 03 23        JP      NZ,$2303            ; {code.L2303} repeat for all 18 tiles
+231F: C9              RET                         ; 
 ; 
 2320: FF FF
 
@@ -4926,93 +4976,117 @@ T233A:
 234A: 09 08 04 03 02 01                 ; shrinking stages (the bird collapses back to a star)
 2350: FF                                ; end-of-sequence marker
 
-; 
+;*****************************************************************************
+;* Mother-ship collision routine:
+;* During the mother-ship levels (game level ≥ 8), `L2000` -> `L24A0` calls `L2351`.
+;* It looks up the tile at the (scroll-adjusted) bullet position 
+;* and explicitly tests for the `$4C`–`$4F` group.
+;*****************************************************************************
 L2351:
-2351: 1A              LD      A,(DE)              
+2351: 1A              LD      A,(DE)              ; 
 2352: E6 08           AND     $08                 ; 0000_1000
-2354: C8              RET     Z                   
-2355: 7E              LD      A,(HL)              
-2356: 2C              INC     L                   
-2357: 6E              LD      L,(HL)              
-2358: C6 08           ADD     $08                 
-235A: 67              LD      H,A                 
+2354: C8              RET     Z                   ; 
+2355: 7E              LD      A,(HL)              ; 
+2356: 2C              INC     L                   ; 
+2357: 6E              LD      L,(HL)              ; 
+2358: C6 08           ADD     $08                 ; 
+235A: 67              LD      H,A                 ; 
 235B: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
-235E: 0F              RRCA                        
-235F: 0F              RRCA                        
-2360: 0F              RRCA                        
-2361: 85              ADD     A,L                 
+235E: 0F              RRCA                        ; 
+235F: 0F              RRCA                        ; 
+2360: 0F              RRCA                        ; 
+2361: 85              ADD     A,L                 ; 
 2362: E6 1F           AND     $1F                 ; 0001_1111
-2364: 47              LD      B,A                 
-2365: 7D              LD      A,L                 
+2364: 47              LD      B,A                 ; 
+2365: 7D              LD      A,L                 ; 
 2366: E6 E0           AND     $E0                 ; 1110_0000
-2368: B0              OR      B                   
-2369: 6F              LD      L,A                 
-236A: 7E              LD      A,(HL)              
-236B: 47              LD      B,A                 
-236C: E6 FC           AND     $FC                 ; 1111_1100
-236E: FE 4C           CP      $4C                 
-2370: CA 7B 23        JP      Z,$237B             ; {code.L237B}
+2368: B0              OR      B                   ; 
+2369: 6F              LD      L,A                 ; 
+236A: 7E              LD      A,(HL)              ; tile under the bullet
+236B: 47              LD      B,A                 ; 
+236C: E6 FC           AND     $FC                 ; mask low 2 bits -> $4C/$4D/$4E/$4F all -> $4C
+236E: FE 4C           CP      $4C                 ; 
+2370: CA 7B 23        JP      Z,$237B             ; {code.L237B} hit the mother-ship SHIELD
 2373: E6 F0           AND     $F0                 ; 1111_0000
-2375: FE 60           CP      $60                 
-2377: CA 98 23        JP      Z,$2398             ; {code.L2398}
-237A: C9              RET                         
-; 
-; The mothership's protective shield was hit by a player bullet.
+2375: FE 60           CP      $60                 ; tile in $60..$6F ?
+2377: CA 98 23        JP      Z,$2398             ; {code.L2398} -> conveyor-belt hit handler
+237A: C9              RET                         ; anything else -> no hit
+
+;*****************************************************************************
+;* The mothership's protective shield was hit by a player bullet.
+;* Shield erosion.
+;* So a hit on a `$4C`–`$4F` tile does the following, with no score awarded:
+;* 1. The bullet is consumed (`AND $F7` clears the active bit) — the shot stops there; it does not punch through.
+;* 2. A "mother-ship hit" is registered (`$4366 = $FF`), which drives the hit sound effect.
+;* 3. The tile is decremented one step: `$4F -> $4E -> $4D -> $4C -> $4B`.
+;*    Because the four tiles are an increasing-density gradient, each shot visually "chips" the curved armour one notch thinner.
+;* 4. When a tile erodes to `$4B` it's cleared to `$00` (that chunk of shield is gone).
+;*    If the tile behind it is the solid hull `$5E`, that hull tile is turned into a fresh `$4F`,
+;*    i.e. the next layer of hull becomes the new erodible shield edge.
+;*****************************************************************************
 L237B:
-237B: 1A              LD      A,(DE)              
-237C: E6 F7           AND     $F7                 ; 1111_0111
-237E: 12              LD      (DE),A              
+237B: 1A              LD      A,(DE)              ; 
+237C: E6 F7           AND     $F7                 ; clear bit3 -> consume/deactivate the bullet
+237E: 12              LD      (DE),A              ; 
 237F: 3E FF           LD      A,$FF               ; set flag for
-2381: 32 66 43        LD      ($4366),A           ; {ram.M4366} 'Mothership hit detected'
-2384: 78              LD      A,B                 
-2385: 3D              DEC     A                   
-2386: 77              LD      (HL),A              
-2387: FE 4B           CP      $4B                 
-2389: C0              RET     NZ                  
-238A: 36 00           LD      (HL),$00            
-238C: 2D              DEC     L                   
-238D: 7E              LD      A,(HL)              
-238E: FE 5E           CP      $5E                 
-2390: C0              RET     NZ                  
-2391: 36 4F           LD      (HL),$4F            
-2393: C9              RET                         
+2381: 32 66 43        LD      ($4366),A           ; {ram.M4366} set 'Mothership hit detected' flag (hit sound)
+2384: 78              LD      A,B                 ; the tile that was hit
+2385: 3D              DEC     A                   ; $4F->$4E->$4D->$4C->$4B  (one gradient step)
+2386: 77              LD      (HL),A              ; write the eroded tile back to the screen
+2387: FE 4B           CP      $4B                 ; 
+2389: C0              RET     NZ                  ; not fully eroded yet -> done
+238A: 36 00           LD      (HL),$00            ; reached $4B -> remove this shield piece
+238C: 2D              DEC     L                   ; 
+238D: 7E              LD      A,(HL)              ; the tile behind it
+238E: FE 5E           CP      $5E                 ; solid mother-ship body?
+2390: C0              RET     NZ                  ; 
+2391: 36 4F           LD      (HL),$4F            ; convert body $5E -> $4F (expose next shield layer)
+2393: C9              RET                         ; 
 
 2394: FF FF FF FF
-; 
+
+;*****************************************************************************
+;* Belt-hit handler:
+;*****************************************************************************
 L2398:
-2398: 1A              LD      A,(DE)              
-2399: E6 F7           AND     $F7                 ; 1111_0111
-239B: 12              LD      (DE),A              
-239C: 1C              INC     E                   
-239D: 1C              INC     E                   
-239E: 1A              LD      A,(DE)              
-239F: E6 04           AND     $04                 ; 0000_0100
-23A1: 78              LD      A,B                 
-23A2: C2 30 20        JP      NZ,$2030            ; {code.L2030}
+2398: 1A              LD      A,(DE)              ; 
+2399: E6 F7           AND     $F7                 ; consume/deactivate the bullet
+239B: 12              LD      (DE),A              ; 
+239C: 1C              INC     E                   ; 
+239D: 1C              INC     E                   ; DE -> PlayerBulletX
+239E: 1A              LD      A,(DE)              ; 
+239F: E6 04           AND     $04                 ; which half of the belt (by bullet X)
+23A1: 78              LD      A,B                 ; B = the belt tile that was hit
+23A2: C2 30 20        JP      NZ,$2030            ; {code.L2030} right half -> use table $1B50
 23A5: E6 0C           AND     $0C                 ; 0000_1100
-23A7: FE 04           CP      $04                 
-23A9: 11 40 1B        LD      DE,$1B40            
+23A7: FE 04           CP      $04                 ; 
+23A9: 11 40 1B        LD      DE,$1B40            ; left half -> use table $1B40 belt-damage remap table
 L23AC:
-23AC: CA C0 23        JP      Z,$23C0             ; {code.L23C0}
+23AC: CA C0 23        JP      Z,$23C0             ; {code.L23C0} segment in front of the pilot -> destroy ship
 23AF: 78              LD      A,B                 ; the purple conveyor belt was hit
-23B0: E6 0F           AND     $0F                 ; 0000_1111
-23B2: 83              ADD     A,E                 
-23B3: 5F              LD      E,A                 
-23B4: 1A              LD      A,(DE)              
-23B5: 77              LD      (HL),A              
+23B0: E6 0F           AND     $0F                 ; low nibble 0..F
+23B2: 83              ADD     A,E                 ; DE = $1B40 + (tile & $0F)
+23B3: 5F              LD      E,A                 ; index into belt-parts table (T1B40/T1B48/T1B50)
+23B4: 1A              LD      A,(DE)              ; 
+23B5: 77              LD      (HL),A              ; replace tile with a 'damaged' belt tile
 23B6: 3E FF           LD      A,$FF               ; set flag for
-23B8: 32 66 43        LD      ($4366),A           ; {ram.M4366} 'Mothership hit detected'
-23BB: C9              RET                         
+23B8: 32 66 43        LD      ($4366),A           ; {ram.M4366} 'Mothership hit detected' (hit sound)
+23BB: C9              RET                         ; 
 
 23BC: FF FF FF FF
 
-; The mothership will be destroyed if an alien pilot is hit.
+;*****************************************************************************
+;* The mothership will be destroyed if an alien pilot is hit.
+;* If the hit lands on the belt segment directly in front of the alien pilot,
+;* `L23AC` takes the `JP Z,L23C0` branch instead, which checks whether the tile behind
+;* is a pilot tile (`$70`-range) and, if so, destroys the mother ship.
+;*****************************************************************************
 L23C0:
-23C0: 2D              DEC     L                   
-23C1: 7E              LD      A,(HL)              
+23C0: 2D              DEC     L                   ; 
+23C1: 7E              LD      A,(HL)              ; 
 23C2: E6 F0           AND     $F0                 ; 1111_0000
 23C4: FE 70           CP      $70                 ; background tiles code of alien pilot
-23C6: C0              RET     NZ                  ; if not the alien pilot
+23C6: C0              RET     NZ                  ; not the pilot -> nothing
 23C7: 21 A4 43        LD      HL,$43A4            ; {+ram.GameState} Next interval game state ...
 23CA: 36 06           LD      (HL),$06            ; ... is 6 (mother ship partikel explosion)
 23CC: 2C              INC     L                   ; CounterA5
@@ -5125,7 +5199,9 @@ L244C:
 ; 
 2469: FF
 
-;
+;*****************************************************************************
+;* EraseMothership:
+;*****************************************************************************
 EraseMothership:
 246A: 01 14 09        LD      BC,$0914            ; 20x9 image
 246D: 11 C6 4A        LD      DE,$4AC6            ; Screen coordinate of mother ship
@@ -5189,18 +5265,24 @@ L24A0:
 24BF: C9              RET                         
 
 24C0: FF FF FF FF
-; 
+
+;*****************************************************************************
+;* The mother-ship level handlers (`L2130`/`L2146`/`L21BA`/`L21C5`) all call `L24C4` every frame.
+;* `L24C4` bumps a frame counter (`$43AA`) and time-slices two animations:
+;* The antenna/pilot animation `L2322` runs on 3 of every 4 frames,
+;* and the belt rotation `L22FA` runs on the 4th.
+;*****************************************************************************
 L24C4:
 24C4: 3A B8 43        LD      A,($43B8)           ; {ram.LevelAndRound}
 24C7: E6 0F           AND     $0F                 ; mask out 0000_1111
 24C9: FE 08           CP      $08                 ; 
-24CB: DA F0 06        JP      C,$06F0             ; {code.L06F0} update scroll register and fill background if game level < 8
+24CB: DA F0 06        JP      C,$06F0             ; {code.L06F0} level < 8: just scroll stars
 24CE: CD E0 24        CALL    $24E0               ; {code.L24E0}
 24D1: 21 AA 43        LD      HL,$43AA            ; {+ram.M43AA} Mothership-wave frame counter
-24D4: 34              INC     (HL)                ; 
+24D4: 34              INC     (HL)                ; mother-ship frame counter
 24D5: 7E              LD      A,(HL)              ; 
 24D6: E6 03           AND     $03                 ; mask out 0000_0011
-24D8: CA FA 22        JP      Z,$22FA             ; {code.L22FA} if $43AA <> 3
+24D8: CA FA 22        JP      Z,$22FA             ; {code.L22FA} every 4th frame: rotate the conveyor belt
 24DB: C3 22 23        JP      $2322               ; {code.L2322} Animation of the mothership's antenna and the alien pilot
 
 ; not used
@@ -5211,9 +5293,9 @@ L24C4:
 L24E0:
 24E0: 3A AA 43        LD      A,($43AA)           ; {ram.M43AA} Mothership-wave frame counter
 24E3: E6 0F           AND     $0F                 ; 0000_1111
-24E5: C0              RET     NZ                  
+24E5: C0              RET     NZ                  ; 
 24E6: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
-24E9: FE A0           CP      $A0                 
+24E9: FE A0           CP      $A0                 ; 
 24EB: D8              RET     C                   ; gate stars-scroll
 24EC: C3 7A 06        JP      $067A               ; {code.StarsScrollDown}
 
@@ -7448,6 +7530,10 @@ L37DD:
 
 ;*****************************************************************************
 ;* Collision detection for birds.
+;* The routine computes a shape index `B = displayedChar − $90`,
+;* and loads the bullet's pixel column bit into `C` from `T3E00[PlayerBulletX & 7]`.
+;* It then does two mask tests against the same `C`.
+
 ;*****************************************************************************
 L3800:
 3800: 3A C4 43        LD      A,($43C4)           ; {ram.PlayerBulletState}
@@ -7493,8 +7579,8 @@ L3800:
 
 ; A bird has been hit
 L3844:
-3844: C6 60           ADD     $60                 ; index = (birdChar - $90), table base $3B60
-3846: 6F              LD      L,A                 ; 
+3844: C6 60           ADD     $60                 ; index = (birdChar - $90), table base $3B60 (body masks)
+3846: 6F              LD      L,A                 ; HL = $3B60 + B
 3847: 26 3B           LD      H,$3B               ; HL = $3B60 + (birdChar - $90)
 3849: 7E              LD      A,(HL)              ; A = solid-pixel column mask for this tile
 384A: A1              AND     C                   ; C = bullet's pixel-column bit
@@ -7549,25 +7635,27 @@ L3894:
 389C: C3 F8 38        JP      $38F8               ; {code.L38F8}
 
 389F: FF FF
-; 
+
+; Clears the hit cell and even contains the game's copy protection check that
+; reads the "R" of "AMSTAR ELECTRONICS CORP." — corrupting the bird graphics if patched.
 L38A1:
-38A1: D5              PUSH    DE                  
-38A2: 0E 20           LD      C,$20               
-38A4: EB              EX      DE,HL               
-38A5: 23              INC     HL                  
-38A6: 56              LD      D,(HL)              
-38A7: 23              INC     HL                  
-38A8: 5E              LD      E,(HL)              
+38A1: D5              PUSH    DE                  ; 
+38A2: 0E 20           LD      C,$20               ; 
+38A4: EB              EX      DE,HL               ; 
+38A5: 23              INC     HL                  ; 
+38A6: 56              LD      D,(HL)              ; 
+38A7: 23              INC     HL                  ; 
+38A8: 5E              LD      E,(HL)              ; 
 ; This is a simple protection against piracy !
 ; Changing this single letter will result in a disturbing graphics garbage,
 ; when you hit a bird.
 38A9: 3A 8C 19        LD      A,($198C)           ; {code.L198C} First letter 'R' from: " AMSTAR ELECTRONICS CORP. "
 38AC: C6 DE           ADD     $DE                 ; 1101_1110
-38AE: 6F              LD      L,A                 
+38AE: 6F              LD      L,A                 ; 
 38AF: 26 17           LD      H,$17               ; HL=$17F0 (FourByFourEmpty:)
 38B1: CD DE 34        CALL    $34DE               ; {code.L34DE}
-38B4: D1              POP     DE                  
-38B5: C9              RET                         
+38B4: D1              POP     DE                  ; 
+38B5: C9              RET                         ; 
 
 ; not used 
 38B6: 35              DEC     (HL)                
@@ -7575,42 +7663,43 @@ L38A1:
 38B8: C9              RET                         
 ; 
 38B9: FF FF FF
-; 
+
+; Test the wing mask
 L38BC:
-38BC: C6 B0           ADD     $B0                 
-38BE: 6F              LD      L,A                 
-38BF: 26 3B           LD      H,$3B               
-38C1: 7E              LD      A,(HL)              
-38C2: A1              AND     C                   
-38C3: C8              RET     Z                   
+38BC: C6 B0           ADD     $B0                 ; LSB of the wing-mask table
+38BE: 6F              LD      L,A                 ; HL = $3BB0 + B
+38BF: 26 3B           LD      H,$3B               ; 
+38C1: 7E              LD      A,(HL)              ; wing pixel-column mask
+38C2: A1              AND     C                   ; overlap with bullet column?
+38C3: C8              RET     Z                   ; no -> no wing hit
 38C4: CD A1 38        CALL    $38A1               ; {code.L38A1}
-38C7: 1A              LD      A,(DE)              
-38C8: D6 0B           SUB     $0B                 
+38C7: 1A              LD      A,(DE)              ; 
+38C8: D6 0B           SUB     $0B                 ; 
 38CA: DA E9 38        JP      C,$38E9             ; {code.L38E9}
-38CD: FE 03           CP      $03                 
+38CD: FE 03           CP      $03                 ; 
 38CF: D2 E9 38        JP      NC,$38E9            ; {code.L38E9} if >= $03
-38D2: 47              LD      B,A                 
-38D3: 62              LD      H,D                 
-38D4: 7B              LD      A,E                 
-38D5: C6 05           ADD     $05                 
-38D7: 6F              LD      L,A                 
+38D2: 47              LD      B,A                 ; 
+38D3: 62              LD      H,D                 ; 
+38D4: 7B              LD      A,E                 ; 
+38D5: C6 05           ADD     $05                 ; 
+38D7: 6F              LD      L,A                 ; 
 38D8: 3A C6 43        LD      A,($43C6)           ; {ram.PlayerBulletX}
-38DB: BE              CP      (HL)                
-38DC: 17              RLA                         
+38DB: BE              CP      (HL)                ; 
+38DC: 17              RLA                         ; 
 38DD: 07              RLCA                        ; Multiply by 4 ..
 38DE: 07              RLCA                        ; ..
 38DF: E6 04           AND     $04                 ; 0000_0100
-38E1: B0              OR      B                   
-38E2: C6 B8           ADD     $B8                 
-38E4: 6F              LD      L,A                 
-38E5: 26 3D           LD      H,$3D               
-38E7: 7E              LD      A,(HL)              
-38E8: 12              LD      (DE),A              
+38E1: B0              OR      B                   ; 
+38E2: C6 B8           ADD     $B8                 ; 
+38E4: 6F              LD      L,A                 ; 
+38E5: 26 3D           LD      H,$3D               ; 
+38E7: 7E              LD      A,(HL)              ; replacement (wing shot off) character
+38E8: 12              LD      (DE),A              ; overwrite the bird tile
 ; A bird's wing was hit
 L38E9:
 38E9: 3E FF           LD      A,$FF               ; set the flag for
 38EB: 32 66 43        LD      ($4366),A           ; {ram.M4366} bird wing hit detected
-38EE: 01 02 07        LD      BC,$0702            
+38EE: 01 02 07        LD      BC,$0702            ; 
 38F1: C3 F8 38        JP      $38F8               ; {code.L38F8}
 
 38F4: FF FF FF FF
@@ -7641,12 +7730,12 @@ L3906:
 3916: E6 F7           AND     $F7                 ; 1111_0111
 3918: 32 C4 43        LD      ($43C4),A           ; {ram.PlayerBulletState}
 391B: C9              RET                         
-; 
+; Wing mask (`$3BB0`+B) — `L38BC`, reached from `L391C` when `B >= $20`.
 L391C:
-391C: 78              LD      A,B                 
-391D: FE 20           CP      $20                 
-391F: D2 BC 38        JP      NC,$38BC            ; {code.L38BC} if >= $20
-3922: C9              RET                         
+391C: 78              LD      A,B                 ; 
+391D: FE 20           CP      $20                 ; 
+391F: D2 BC 38        JP      NC,$38BC            ; {code.L38BC} if B >= $20, test the wing mask
+3922: C9              RET                         ; 
 
 ;*****************************************************************************
 ;* Trigger the melody chip for 'Elise',
@@ -8136,16 +8225,27 @@ L3B43:
 ;Per-character horizontal hit-mask table for bird collision used at $3844.
 ;It's the lookup that lets the player's bullet hit a bird only
 ;where the bird's graphic tile actually has solid pixels, rather than treating the whole 8-pixel character cell as solid.
+;Body mask table:
 T3B60:
 3B60: 1F 7C F0 01 C0 07 7F FC F0 07 C0 1F FF FC 03 F0   ; for bird background tiles 90 - 9F
 3B70: 0F C0 3F FC 1F F0 07 FE 3F F8 0F FF FF FC 1F FF   ; for bird background tiles A0 - AF
 3B80: FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0 FF 01 00 FF   ; for bird background tiles B0 - BF
 3B90: 07 00 FF 07 FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0   ; for bird background tiles C0 - CF
 3BA0: FF 01 00 FF 07 FF 07 FC 1F F8 0F F0 C0 03 FF FF   ; for bird background tiles D0 - DF
+;Wing mask table:
+;The wing table base is `$3BB0` and it's indexed by `B`, but the wing test only runs for `B >= $20`.
+;So the addresses actually consulted are:
+; - `B = $20` -> `$3BB0 + $20` = `$3BD0` (bird character `$B0`)
+; - `B = $4F` -> `$3BB0 + $4F` = `$3BFF` (bird character `$DF`)
+;Entries `$3BB0`–`$3BCF` (which would correspond to `B < $20`) are never reached,
+;they're the dead lower part of the wing table. `$3BD0`–`$3BFF` are the real,
+;in use wing masks, one per bird shape in the `$B0`–`$DF` character range.
+T3BB0:
 3BB0: 03 E0 03 E0 0F 80 0F 00 3C 00 1E 3F 00 FC F0 00   ; for bird background tiles E0 - EF
 3BC0: 7F FE 00 F0 03 E0 00 00 0F 80 00 00 3F 00 FE 30   ; for bird background tiles F0 - FF
 
-;?
+;Bird wing pixel column collision mask table:
+T3BD0:
 3BD0: 00 06 FF 00 F8 00 00 03 E0 00 E0 08 20 04 C0 01   ; 
 3BE0: E0 03 F8 0F 07 E0 3F 03 FF FF FF 3F FC FF F8 FF   ; 
 3BF0: FF 07 E0 1F F0 FF FC FF 07 1E FC 1F 1F 7F FF FF   ; 
