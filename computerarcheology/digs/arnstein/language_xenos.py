@@ -1,0 +1,92 @@
+
+class Language:
+    def __init__(self):
+
+        self.verbs = {}
+        self.nouns = {}
+        self.words = [
+            {}, # verbs
+            {}, # nouns
+            {}, # adjectives
+            {}  # prepositions
+        ]
+        self.phrases = {}
+
+        with open("d:/git/computerarcheology/content/trs80/xenos/Code.md", "r") as f:            
+
+            g = ''
+            while not g.startswith('72E1:'):
+                g = f.readline()
+            g = g.strip()
+            while not g.startswith('7629:'):              
+                i = g.find(';')
+                if i<0:
+                    g = f.readline()
+                    g = g.strip()
+                    continue
+                g = g[i+1:].strip()
+
+                wn = int(g[:2], 16)        
+                phrase = g[5:].strip()
+                if wn in self.phrases:
+                    self.phrases[wn].append(phrase)
+                else:
+                    self.phrases[wn] = [phrase] 
+
+                g = f.readline()
+                g = g.strip()
+            
+            word_list = 0
+            while not g.startswith('762D:'):
+                g = f.readline()
+            g = g.strip()
+            while not g.startswith('7D4E:'):
+                if len(g) < 5 or g[4] != ':':
+                    g = f.readline()
+                    g = g.strip()
+                    continue
+                if g[4:]== ': 00':
+                    word_list += 1
+                    g = f.readline()
+                    g = g.strip()
+                    continue
+
+                # 762D: 04 52 45 41 44               01 ; READ
+                i = g.find(';')
+                wn = int(g[i-3:i-1], 16)
+                text = g[i+1:].strip()
+                if wn in self.words[word_list]:
+                    self.words[word_list][wn].append(text)
+                else:
+                    self.words[word_list][wn] = [text]        
+
+                g = f.readline()
+                g = g.strip()
+
+        def get_verb(self, num):
+            return self.words[0][num][0]
+
+        def get_noun(self, num):
+            if num not in self.words[1]:
+                return f'??{num:02X}??'
+            return self.words[1][num][0]
+
+        def get_adjective(self, num):
+            return self.words[2][num][0]
+
+        def get_preposition(self, num):
+            return self.words[3][num][0]
+
+        def get_phrase(self, num):
+            if num not in self.phrases:
+                return f'??{num:02X}??'
+            ret = self.phrases[num][0]
+            return ' '.join(ret.split())    
+
+if __name__ == '__main__':
+    lamg = Language()
+    print(f"Phrases: {lamg.phrases}")
+    print(f"Verbs: {lamg.words[0]}")
+    print(f"Nouns: {lamg.words[1]}")
+    print(f"Adjectives: {lamg.words[2]}")
+    print(f"Prepositions: {lamg.words[3]}")

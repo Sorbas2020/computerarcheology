@@ -1,0 +1,194 @@
+TRS80: Pyramid 26-1909 June 1980, HauntedHouse 26-1910 May 1980, RaakaTu 26-1916 1981, Bedlam 26-1917 1982, Xenos 26-1955 1982
+CoCo:  Pyramid 26-3310 1982, 26-3311 RaakaTu June 1982, Bedlam 26-3312 1982
+
+TODO run through all the different programs and align their names to these. Might need an update py script?
+TODO names of things for all programs
+
+This list of things is now in the separate names_of_things files
+
+XENOS                                                          | BEDLAM        | RAAKATU 
+00_move_and_look(room_num)                                     | x             | x       
+01_is_in_pack_or_room(obj_num)                                 | x             | x       
+02_is_owned_by(obj_num)                                        | x             | x
+03_is_located(room_num, obj_num)                               | x             | x
+04_print(mlength)                                              | x             | x
+05_is_leq_last_random(value)                                   | x             | x
+06_print_inventory()                                           | x             | x
+07_print_room_description()                                    | x             | x
+08_is_noun1(obj_num)                                           | x             | x
+09_is_noun2(obj_num)                                           | x             | x
+0A_is_input_phrase(phrase_num)                                 | x             | x
+0B_switch(mlength, num)                                        | x             | x
+0C_fail()                                                      | x             | x
+0D_group_AND(mlength)                                          | x             | x
+0E_group_OR(mlength)                                           | x             | x
+0F_pick_up_var_object()                                        | x             | x
+10_drop_var_object()                                           | x             | x
+11_print_noun1()                                               | x             | x
+12_print_noun2()                                               | x             | x
+13_process_phrase_by_room()                                    | x             | x
+14_reverse_status()                                            | x             | x
+15_is_var_attributes(bits)                                     | x             | x
+16_print_var()                                                 | x             | x
+17_move_object_to(obj_num, destination)                        | x             | x
+18_is_var_owned_by_active()                                    | x             | x
+19_move_to_room(room_num)                                      | x             | x
+1A_set_var_to_noun1()                                          | x             | x
+1B_set_var_to_noun2()                                          | x             | x 
+1C_set_var_object(obj_num)                                     | x             | x
+1D_attack_var(points)                                          | x             | x
+1E_swap_object_locations(obj_num1, obj_num2)                   | x             | x
+1F_print2(mlength)                                             | x             | x
+20_is_active_object(obj_num)                                   | x             | x
+21_execute_phrase(phrase_num, obj_num1, obj_num2)              | x             | x
+22_is_less_equal_health(points)                                | x             | x
+23_heal_var(points)                                            | x             | x
+24_exit_program()                                              | endless_loop  | endless_loop 
+25_print_linefeed()                                            | restart_game  | restart_game
+26_print_score()                                               | x             | x
+27_load_game()                                                 | x             | x
+28_save_game()                                                 | x             | x
+
+; Xenos and Bedlam
+29_toggle_var_open()                                           | x             
+2A_toggle_var_lock()                                           | x             
+2B_generate_random()                                           | x             
+2C_set_active(obj_num)                                         | x             
+2D_is_var_object(obj_num)                                      | x             
+
+; Xenos only
+2E_is_var_ext_attributes(bits)
+2F_load_section_from_disk(section_num)
+30_set_current_room(room_num)
+31_put_noun2_in_var_object()
+32_put_noun1_in_var_object()
+33_print_objects_on_var_object()
+34_save_system_objects_to_disk()
+35_load_system_objects_from_disk()
+36_is_in_room_or_open_container(obj_num)
+37_is_player_in_an_object()
+38_bump_score()
+39_is_weight_70_or_less()
+3A_clear_screen()
+3B_wait_for_key_123()
+
+
+Can I find other evidence that HauntedHouse came before Pyramid? It certainly appears commands were added.
+Compare the command code see if one evolved. Look at command placement order in the file.
+
+Looks like containers were added to Pyramid and scoring and randomness and save/load
+
+The commands are code-different from BEDLAM. The "StopIfPassElseContinue" is unique to PY/HH. Other names
+might be the same, but the decoder is not.
+
+PYRAMID                                                      | HAUNTED HOUSE
+ 1     1   move_look(room_num)                               | 1
+ 2     1   is_in_pack(obj_num)                               | 2
+ 3     1   is_in_pack_or_current_room(obj_num)               | 3
+ 4     2   print(ps_num)                                     | 4
+ 5     0   death_and_resurrect()                             | 
+ 6     -   -                                                 |   
+ 7     1   stop_if_pass()                                    | 6
+ 8     0   print_score()                                     |
+ 9     0   print_score_and_endless_loop()                    | 7 endless_loop
+10     1   pyramid_crawl_move_random(value)                  |
+11     1   drop_object_print_ok(obj_num) (NEVER USED)        | 8
+12     1   move_to_room_if_was_last(room_num) (NEVER USED)   |
+13     0   is_pack_just_emerald()                            | 
+14     0   move_to_last_room()                               |
+15     0   print_inventory()                                 | 9 
+16     0   print_room_description()                          | 5 
+17     1   is_object_user_input(obj_num)                     | 10
+18     1   get_from_room_print_ok(obj_num)                   | 11
+19     -   -                                                 |
+20     0   print_ok                                          | 12
+21     2   move_object_to_room(obj_num, room_num)            | 13
+22     0   get_users_object_print_ok                         | 14
+23     0   drop_users_object_print_ok                        | 15
+24     1   move_object_to_current_room(obj_num)              | 
+25     2   put_object_in_container_print_ok(obj_num,obj_num) | 
+26     1   is_in_current_room(obj_num)                       | 16
+27     0   load_game                                         |
+28     0   save_game                                         |
+29     0   scramble_directions_print_ack                     |
+;                                                            | 17 load_second_floor
+
+We know the Level2 TRS80 pyramid was written before the Level1 because we can see code snippets from the 2nd
+in the first uninitialized data.
+
+Dig notes:
+7/2/2026. I'm digging into Pyramid and HauntedHouse to see which came first and how the command list
+evolved.
+
+PY included a "after every command" function call (right before "Get Object Info" section). In HH1, the call
+was removed. In HH2, the call is in place, but the destination is a RET -- like it wasn't cleaned. Pretty
+conclusive HH is stripped down PY.
+
+The "container" function is in both PY and HH though it is never used in HH. Evidence that PY came first.
+
+The command functions are in the same order in PY and HH. I would expect new functions to appear at the
+end of the list, but they are sprinkled through. Evidence that HH was stripped down from PY.
+
+The general commands are in the same order for PY and HH, but PY has more. I would expect new functions to
+appear at the end of the list. Evidence that HH was stripped down from PY.
+
+I see "container" support in both PY and HH.  
+
+In HH, the parse-user-input prints "I DON'T UNDERSTAND". But in PY, a section was added to run a list of 4 messages.
+
+In both games, the gramar-type is at 467D. Coincidence? Looks like it.
+
+In HH, the parse-user-input prints "THERE's NOT ONE HERE", but PY adds a longer sequence to print "I SEE NO <obj> HERE."
+
+PY44F6, the length of word matching was increased from 4 to 6
+
+PY453E, the parse-user-input copies the unknown verb to storage for later error reporting. Same with input noun.
+
+PY4585 - new CopyWord function to copy words into print buffers for message
+
+PY45AC -- added two bytes of storage that are unused by anything
+
+TODO line up the ram names and comments between PY and HH
+
+PY4F45 PY adds the ambient light table
+
+PY503F PY adds storage for turn count, lamp on count, numObjInPack and last room
+
+Hmmmm. numObjInPack. that might be a feature that is obvious
+
+The PY5184 move-to-room has been tweaked to handle ambient light and the mummy. The HH move
+is simple and falls straight into the print-room-description command 5. The PY version inserts a 
+CALL to the print-description but then handles the Mummy. The COM5 has been moved elsewhere.
+
+PY5245 adds code to look for light before printing description.
+
+Are these additions, or were they removed to streamline HH? How could I tell?
+
+PY52A5 COM24 and COM25 have been inserted here
+
+PY COM 26 is HH COM 16 where it should be
+
+PY COM 22 is HH COM 14, but it adds a message (without failing) that you are already carying it
+
+PY 11 is HH 8 with an added counter for number of objects
+
+PY539B adds a banner to inventory print (or a YOU'RE NOT CARRYING ANYTHING)
+
+PY16COM is the two line HHCOM5 but in a different place.
+
+PY18COM is HHCOM11 but with an added check to make sure you only have 8 objects
+
+PY545A added resurrection sequence
+
+PY adds NE,SE, etc. and messages in general script for "no way to go that direction"
+
+PY adds new general command handles to HH, but it doesn't add them to the end. It sprinkles them
+in with the existing -- except for "smash", which is in the wrong place. This looks more like
+unused commands were removed. Hmmm.
+
+HH is 42E9..4FFF (3.3K)
+PY is 4300..7FFF (16K)
+
+I can see shrinking pyramid to fit in 4K or I can see starting PY with HH. The order of commands
+in the table suggests the "deletion" as does the general script. But the clencher for me is the
+PLUGH command. That is explicitly PY but appears in HH (with different function).
