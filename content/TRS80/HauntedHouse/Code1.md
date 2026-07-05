@@ -96,7 +96,8 @@ ScriptCommand17:
 4371: 32 E2 48        LD      ($48E2),A           ; {ram.CurrentRoom} ... 16 (OUTIDE OF HOUSE)
 4374: CD 2D 49        CALL    $492D               ; {code.DescribeRoom} Print the room description
 ;
-4377: 97              SUB     A,A                 ; A=0
+GameLoop:
+4377: 97              SUB     A                   ; A=0
 4378: 32 7B 46        LD      ($467B),A           ; {ram.InputNoun} Clear noun (object within reach)
 437B: 32 7C 46        LD      ($467C),A           ; {ram.InputVerb} Clear verb (throw, north, rub, etc)
 437E: 32 7D 46        LD      ($467D),A           ; {ram.GrammarType} Grammar type (verb, verb+nounInReach, verb+nounInPack)
@@ -118,7 +119,7 @@ ScriptCommand17:
 43A2: 21 0C 4F        LD      HL,$4F0C            ; Simply "NO"
 43A5: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print "NO"
 ; Removed call to "after every command"
-43A8: C3 77 43        JP      $4377               ; {} Back to get user input
+43A8: C3 77 43        JP      $4377               ; {code.GameLoop} Back to get user input
 ```
 
 # Get Object Info
@@ -177,8 +178,10 @@ ProcessRoomScript:
 43D8: 7E              LD      A,(HL)              ; Next command to run
 43D9: A7              AND     A                   ; Zero means ...
 43DA: C8              RET     Z                   ; ... end of the list
+;
 43DB: FE FF           CP      $FF                 ; If we get to an FF then ALWAYS ...
-43DD: CA E4 43        JP      Z,$43E4             ; {} ... process the command (kind of like an ELSE)
+43DD: CA E4 43        JP      Z,$43E4             ; {} ... process the command (kind of like an ELSE or is this a NOP)
+;
 43E0: 3A 7C 46        LD      A,($467C)           ; {ram.InputVerb} Verb word
 43E3: BE              CP      (HL)                ; Does it match?
 43E4: 23              INC     HL                  ; Next byte
@@ -214,7 +217,7 @@ RunScriptCommand:
 43FD: 7E              LD      A,(HL)              ; Get the script command
 43FE: 23              INC     HL                  ; Point to first parameter
 43FF: E5              PUSH    HL                  ; Current script location
-4400: 21 FD 48        LD      HL,$48FD            ; Jump table of commands
+4400: 21 FD 48        LD      HL,$48FD            ; {+code.ScriptCommands} Jump table of commands
 4403: CD BC 43        CALL    $43BC               ; {} Offset A-1 into commands table
 4406: 7E              LD      A,(HL)              ; Get LSB
 4407: 23              INC     HL                  ; Point to MSB
@@ -237,6 +240,7 @@ ScriptCommandPASS:
 4414: C2 1A 44        JP      NZ,$441A            ; {} No ... keep processing
 4417: F6 01           OR      $01                 ; Clear Zero Flag (PASS)
 4419: C9              RET                         ; Return
+;
 441A: D5              PUSH    DE                  ; Put end back on the stack
 441B: C3 FD 43        JP      $43FD               ; {code.RunScriptCommand} Keep running commands
 ```
@@ -345,7 +349,7 @@ ParseUserInput:
 44AE: C3 B4 44        JP      $44B4               ; {} Print and out
 44B1: 21 84 4F        LD      HL,$4F84            ; THERE'S_NOT_ONE_HERE.[CR]
 44B4: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print error
-44B7: 97              SUB     A,A                 ; This noun doesn't ...
+44B7: 97              SUB     A                   ; This noun doesn't ...
 44B8: 32 7B 46        LD      ($467B),A           ; {ram.InputNoun} ... count
 44BB: C3 2F 44        JP      $442F               ; {code.ParseUserInput} Back to top of input loop
 ;
@@ -368,7 +372,7 @@ ParseUserInput:
 ; Parse the input line
 ParseInputLine: 
 44DA: 21 5A 46        LD      HL,$465A            ; Start of the input
-44DD: 97              SUB     A,A                 ; Make a zero
+44DD: 97              SUB     A                   ; Make a zero
 44DE: 32 AB 45        LD      ($45AB),A           ; {ram.DecodeEmpty} Nothing in buffer to start with
 44E1: 32 7D 46        LD      ($467D),A           ; {ram.GrammarType} Grammar type
 ;
@@ -435,6 +439,7 @@ ParseInputLine:
 4550: 32 7D 46        LD      ($467D),A           ; {ram.GrammarType} Store grammar type
 4553: 1A              LD      A,(DE)              ; Get word number
 4554: 32 7C 46        LD      ($467C),A           ; {ram.InputVerb} Store verb
+;
 4557: C3 6B 45        JP      $456B               ; {} Check for more to parse
 ;Word is a noun
 455A: 1A              LD      A,(DE)              ; Noun number from the word's data
@@ -444,7 +449,7 @@ ParseInputLine:
 4562: EB              EX      DE,HL               ; Restore pointers
 4563: 78              LD      A,B                 ; Number of data bytes
 4564: 32 AA 45        LD      ($45AA),A           ; {ram.NounDataSize} Hold this for later
-4567: 97              SUB     A,A                 ; No longer remember ...
+4567: 97              SUB     A                   ; No longer remember ...
 4568: 32 D9 44        LD      ($44D9),A           ; {ram.LoneObject} ... a past lone object
 
 456B: 7E              LD      A,(HL)              ; Next from buffer
@@ -456,9 +461,11 @@ ParseInputLine:
 4573: 13              INC     DE                  ; Skip ...
 4574: 0D              DEC     C                   ; ... to end of word text ...
 4575: C2 73 45        JP      NZ,$4573            ; {} ... in table
+;
 4578: 13              INC     DE                  ; Skip to end ...
 4579: 05              DEC     B                   ; ... of data ...
 457A: C2 78 45        JP      NZ,$4578            ; {} ... bytes
+;
 457D: E1              POP     HL                  ; Back to start of word
 457E: C3 EC 44        JP      $44EC               ; {} Try next word in command table
 
@@ -466,6 +473,7 @@ ParseInputLine:
 4581: 3A AB 45        LD      A,($45AB)           ; {ram.DecodeEmpty} Something in ...
 4584: A7              AND     A                   ; ... the buffer?
 4585: C0              RET     NZ                  ; Yes ... done
+;
 4586: 3E 03           LD      A,$03               ; Grammar type 3 means ...
 4588: 32 7D 46        LD      ($467D),A           ; {ram.GrammarType} ... nothing in buffer
 458B: C9              RET                         ; Done
@@ -473,7 +481,7 @@ ParseInputLine:
 ; Skip leading space in front of token and then skip to next token.
 ; If there is another token go back and decode. Otherwise return.
 458C: E1              POP     HL                  ; Start of word
-458D: 97              SUB     A,A                 ; Clear ...
+458D: 97              SUB     A                   ; Clear ...
 458E: 32 7C 46        LD      ($467C),A           ; {ram.InputVerb} ... verb ...
 4591: 32 7B 46        LD      ($467B),A           ; {ram.InputNoun} ... and noun
 4594: 7E              LD      A,(HL)              ; Next character
@@ -491,8 +499,13 @@ ParseInputLine:
 45A7: C3 9E 45        JP      $459E               ; {} Keep looking
 
 ; RAM used in parsing input
+numBytesWordData:
 45AA: 00       ; Number of data bytes in noun       
+
+bufferHasSomething:
 45AB: 00       ; 0 if decode is empty, 1 if something was decoded               
+
+nounPointer:
 45AC: 00 00    ; Pointer to noun data            
 ```
 
@@ -637,19 +650,30 @@ PromptAndReadLine:
 
 ```code
 ; Input buffer (with some uninitialized leftover data!)
+; !! This is the same hole-within-a-hole needs decoding
 InputBuffer: 
 ; 32 bytes
-465A: 15 46 36 00 C9 45 20 49 50 20 53 49 47 4E 00 00    
-466A: 47 FE 78 28 26 FE 3C 20 F5 CD 82 47 47 CD 9C 46
+465A: 15 46 36 00 C9 45 20 49 50 20 53 49 47 4E 00 00    ;
+466A: 47 FE 78 28 26 FE 3C 20 F5 CD 82 47 47 CD 9C 46    ;
         
 467A: 00
 
 ; Used in input parsing
+Noun:
 467B: 00    ; Noun
+
+verb:
 467C: 00    ; Verb
+
+grammar:
 467D: 00    ; Grammar type
-467E: 00    ; Input loop counter (never used)
+
+keyWaitCounter:
+467E: 00    ; Input loop counter (never used -- would be random entropy)
+
+currentParsePtr:
 467F: 00 00 ; Pointer to next word while parsing                      
+
 4681: 00    ; Character counter in word text                  
 4682: 00    ; Current word data   
   
@@ -658,6 +682,7 @@ InputBuffer:
        
 ; Uninitialized stack space with some leftover data in it!
 ; This might be interesting stuff?
+; !! more uninitalized to decode
 StackRAM: 
 4693: 15 40 0D 02 C0 3F 80 04 DD 03 1D 40 15 40 D4 4D 
 46A3: 5E 0D 08 46 5F 46 FA 48 97 4A FA 48 FA 48 26 44                
@@ -676,9 +701,11 @@ UnpackMessage:
 46BC: 3E 01           LD      A,$01               ; 
 46BE: 32 7E 47        LD      ($477E),A           ; {ram.Unpack4}
 46C1: C3 CB 46        JP      $46CB               ; {}
+;
 46C4: 32 7B 47        LD      ($477B),A           ; {ram.Unpack1}
-46C7: 97              SUB     A,A                 ; 
+46C7: 97              SUB     A                   ; 
 46C8: 32 7E 47        LD      ($477E),A           ; {ram.Unpack4}
+;
 46CB: E5              PUSH    HL                  ; 
 46CC: 06 03           LD      B,$03               ; 
 46CE: E1              POP     HL                  ; 
@@ -1375,7 +1402,6 @@ ScriptCommand07:
 # Command Table
 
 ```code
-CommandTable:             
 ; aa_bbb_ccc
 ; aa is grammar type:
 ;   00 This word is a noun
@@ -1384,39 +1410,43 @@ CommandTable:
 ;   11 This verb requires nothing more
 ; bbb = number of data bytes       
 ; ccc = word text size
-;                              FIRST FLOOR WORDS
-4A4B: 0B 4B 45 59 03         ; 00_001_011  KEY   03            
-4A50: 0C 50 41 50 45 01      ; 00_001_100  PAPE  01 
-4A56: 14 44 4F 4F 52 02 05   ; 00_010_100  DOOR  02 05 ; Noun for object 2 and 5               
-4A5D: 0C 46 49 52 45 04      ; 00_001_100  FIRE  04              
-4A63: 0C 4B 4E 49 46 06      ; 00_001_100  KNIF  06
-4A69: 14 52 4F 50 45 07 0C   ; 00_010_100  ROPE  07 0C ; For 7 and C                
-4A70: 0C 41 52 4D 4F 08      ; 00_001_100  ARMO  08          
-4A76: 14 43 41 42 49 09 0B   ; 00_010_100  CABI  09 0B ; For 9 and B               
-4A7D: 0C 57 41 54 45 0A      ; 00_001_100  WATE  0A         
-4A83: 0C 42 55 43 4B 0A      ; 00_001_100  BUCK  0A          
-4A89: 0C 53 43 52 4F 0D      ; 00_001_100  SCRO  0D
-;               
-4A8F: C9 4E 01               ; 11_001_001  N     01
-4A92: C9 45 02               ; 11_001_001  E     02         
-4A95: C9 53 03               ; 11_001_001  S     03             
-4A98: C9 57 04               ; 11_001_001  W     04              
-4A9B: CC 43 4C 49 4D 0F      ; 11_001_100  CLIM  0F                    
-4AA1: CC 51 55 49 54 0B      ; 11_001_100  QUIT  0B          
-4AA7: CC 49 4E 56 45 0C      ; 11_001_100  INVE  0C              
-4AAD: CC 4C 4F 4F 4B 0D      ; 11_001_100  LOOK  0D              
-4AB3: 4C 44 52 4F 50 07      ; 01_001_100  DROP  07                   
-4AB9: 4C 50 4F 55 52 08      ; 01_001_100  POUR  08        
-4ABF: 8B 47 45 54 06         ; 10_001_011  GET   06
-4AC4: 8C 4F 50 45 4E 05      ; 10_001_100  OPEN  05              
-4ACA: 4C 44 52 49 4E 10      ; 01_001_100  DRIN  10
-4AD0: 8C 53 4D 41 53 11      ; 10_001_100  SMAS  11
-4AD6: CB 59 45 53 12         ; 11_001_011  YES   12       
-4ADB: CA 4E 4F 13            ; 11_001_010  NO    13           
-4ADF: 4C 52 45 41 44 09      ; 01_001_100  READ  09        
-4AE5: CC 50 41 4E 45 0E      ; 11_001_100  PANE  0E
-4AEB: CC 50 4C 55 47 0A      ; 11_001_100  PLUG  0A         
-4AF1: 00                     ; end of list
+;
+wordTable:
+; Nouns
+;                               Objects   ; AA_BBB_CCC  Word
+4A4B: 0B 4B 45 59               03        ; 00_001_011  KEY               
+4A50: 0C 50 41 50 45            01        ; 00_001_100  PAPE   
+4A56: 14 44 4F 4F 52            02 05     ; 00_010_100  DOOR  
+4A5D: 0C 46 49 52 45            04        ; 00_001_100  FIRE                
+4A63: 0C 4B 4E 49 46            06        ; 00_001_100  KNIF  
+4A69: 14 52 4F 50 45            07 0C     ; 00_010_100  ROPE   
+4A70: 0C 41 52 4D 4F            08        ; 00_001_100  ARMO            
+4A76: 14 43 41 42 49            09 0B     ; 00_010_100  CABI                  
+4A7D: 0C 57 41 54 45            0A        ; 00_001_100  WATE           
+4A83: 0C 42 55 43 4B            0A        ; 00_001_100  BUCK            
+4A89: 0C 53 43 52 4F            0D        ; 00_001_100  SCRO  
+; 
+; Verbs              
+4A8F: C9 4E                     01        ; 11_001_001  N     
+4A92: C9 45                     02        ; 11_001_001  E              
+4A95: C9 53                     03        ; 11_001_001  S                  
+4A98: C9 57                     04        ; 11_001_001  W                   
+4A9B: CC 43 4C 49 4D            0F        ; 11_001_100  CLIM                      
+4AA1: CC 51 55 49 54            0B        ; 11_001_100  QUIT            
+4AA7: CC 49 4E 56 45            0C        ; 11_001_100  INVE                
+4AAD: CC 4C 4F 4F 4B            0D        ; 11_001_100  LOOK                
+4AB3: 4C 44 52 4F 50            07        ; 01_001_100  DROP                     
+4AB9: 4C 50 4F 55 52            08        ; 01_001_100  POUR          
+4ABF: 8B 47 45 54               06        ; 10_001_011  GET   
+4AC4: 8C 4F 50 45 4E            05        ; 10_001_100  OPEN                
+4ACA: 4C 44 52 49 4E            10        ; 01_001_100  DRIN  
+4AD0: 8C 53 4D 41 53            11        ; 10_001_100  SMAS  
+4AD6: CB 59 45 53               12        ; 11_001_011  YES          
+4ADB: CA 4E 4F                  13        ; 11_001_010  NO               
+4ADF: 4C 52 45 41 44            09        ; 01_001_100  READ          
+4AE5: CC 50 41 4E 45            0E        ; 11_001_100  PANE  
+4AEB: CC 50 4C 55 47            0A        ; 11_001_100  PLUG           
+4AF1: 00
 ```
 
 # General Script

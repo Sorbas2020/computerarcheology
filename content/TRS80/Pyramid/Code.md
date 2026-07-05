@@ -272,6 +272,8 @@ ParseUserInput:
 440D: 3A 7D 46        LD      A,($467D)           ; {code.grammar} Action word type
 4410: FE C0           CP      $C0                 ; 11_000_000 means single word command
 4412: C8              RET     Z                   ; Input is just one word, we are done
+;
+; We have a verb that expected a noun, but no noun was given
 4413: 21 FD 46        LD      HL,$46FD            ; {+code.unknownVerb} Unknown verb
 4416: CD D0 45        CALL    $45D0               ; {code.PrintPlain} Print "verb WHAT?" (was expecting an object)
 4419: C3 CF 43        JP      $43CF               ; {code.ParseUserInput} Try again
@@ -281,6 +283,7 @@ ParseUserInput:
 441F: 3A A1 44        LD      A,($44A1)           ; {code.isLoneObject} Was the last input an object and ...
 4422: A7              AND     A                   ; ...  we then asked for a verb?
 4423: C2 8E 44        JP      NZ,$448E            ; {} Yes, skip checking the noun (use what we have)
+;
 4426: 7E              LD      A,(HL)              ; Get the object number
 4427: 23              INC     HL                  ; Next word
 4428: 22 AA 45        LD      ($45AA),HL          ; {code.nounPointer} Noun word data pointer
@@ -301,6 +304,7 @@ ParseUserInput:
 4447: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... current room?
 444A: C1              POP     BC                  ; Restore BC
 444B: CA 86 44        JP      Z,$4486             ; {} Yes, go use it
+;
 444E: 2A AA 45        LD      HL,($45AA)          ; {code.nounPointer} Restore word data pointer
 4451: 05              DEC     B                   ; All objects of this name tried?
 4452: C2 26 44        JP      NZ,$4426            ; {} No ... keep looking for matching object
@@ -313,6 +317,7 @@ ParseUserInput:
 4460: C3 7C 44        JP      $447C               ; {} Print error and back to try again
 4463: 21 87 46        LD      HL,$4687            ; {+code.MsgISeeNo} "I_SEE_NO_"
 4466: CD D0 45        CALL    $45D0               ; {code.PrintPlain} First fragment
+;
 4469: 3E 01           LD      A,$01               ; Replace '?' with ...
 446B: 32 FB 46        LD      ($46FB),A           ; {code.unknownNounPunct} ... no-CR terminator.
 446E: 21 D3 46        LD      HL,$46D3            ; {+code.unknownNoun} Buffer for unknown word
@@ -421,6 +426,7 @@ FindEndOfInputWord:
 451B: 32 7D 46        LD      ($467D),A           ; {code.grammar} Hold the verb's grammar
 451E: 1A              LD      A,(DE)              ; Get the verb number ...
 451F: 32 7C 46        LD      ($467C),A           ; {code.verb} ... from script (lots of words might map to same number)
+;
 4522: E5              PUSH    HL                  ; Hold input pointer
 4523: 21 FD 46        LD      HL,$46FD            ; {+code.unknownVerb} Storage for unknownVerb
 4526: CD 85 45        CALL    $4585               ; {code.CopyWord} Copy input to the unknownVerb storage
@@ -436,10 +442,12 @@ FindEndOfInputWord:
 4537: 32 A8 45        LD      ($45A8),A           ; {code.numBytesWordData} ... of data for this word
 453A: 97              SUB     A                   ; Clear the ...
 453B: 32 A1 44        LD      ($44A1),A           ; {code.isLoneObject} ... isLoneObject flag (we have a verb)
+;
 453E: E5              PUSH    HL                  ; Hold
 453F: 21 D3 46        LD      HL,$46D3            ; {+code.unknownNoun} Copy the ...
 4542: CD 85 45        CALL    $4585               ; {code.CopyWord} ... input noun
 4545: E1              POP     HL                  ; Restore
+;
 4546: 7E              LD      A,(HL)              ; From input
 4547: FE 20           CP      $20                 ; Is it a space?
 4549: D1              POP     DE                  ; Restore
@@ -519,6 +527,8 @@ nounPointer:
 45AA: 00 00
 
 ; unused
+; !! But adding these two bytes makes the following code line up perfectly with the address
+; of haunted house floor 1. Probably a coincidence?
 45AC: 00 00
 ```
 
@@ -888,7 +898,7 @@ UnpackStringToScreen:
 47C7: 32 87 48        LD      ($4887),A           ; {code.unpackFlagToScreen} ... the screen
 47CA: C3 D4 47        JP      $47D4               ; {} Do the unpack
 ;
-UnpackStringToBuffer:  ; Never used
+UnpackStringToBuffer:  ; Never used (but was in Haunted House)
 47CD: 32 84 48        LD      ($4884),A           ; {code.unpackNumWords} Number of words to unpack
 47D0: 97              SUB     A                   ; We are unpacking to ...
 47D1: 32 87 48        LD      ($4887),A           ; {code.unpackFlagToScreen} ... the buffer
@@ -2742,6 +2752,7 @@ MoveToRoom:
 518B: 46              LD      B,(HL)              ; ... target room number
 518C: 23              INC     HL                  ; Next byte
 518D: E5              PUSH    HL                  ; Update script pointer
+;
 518E: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Checking ...
 5191: 5F              LD      E,A                 ; ... current room
 5192: 3E 0F           LD      A,$0F               ; obj_LAMP_on
@@ -2776,8 +2787,10 @@ MoveToRoom:
 ;
 51DA: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Copy current room number ...
 51DD: 32 44 50        LD      ($5044),A           ; {code.lastRoom} ... to last room number
+;
 51E0: 78              LD      A,B                 ; Move player to ...
 51E1: 32 3F 50        LD      ($503F),A           ; {code.currentRoom} ... current room
+;
 51E4: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Print room and room description (with objects)
 51E7: 3E 2A           LD      A,$2A               ; obj_CHEST
 51E9: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} object info
