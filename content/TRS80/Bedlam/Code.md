@@ -1676,6 +1676,7 @@ Com_26_print_score:
 4E65: 3E 20           LD      A,$20               
 4E67: CD 6B 4E        CALL    $4E6B               ; {}
 4E6A: C9              RET                         
+
 4E6B: F5              PUSH    AF                  
 4E6C: 3A 6A 4F        LD      A,($4F6A)           ; {}
 4E6F: FE 20           CP      $20                 

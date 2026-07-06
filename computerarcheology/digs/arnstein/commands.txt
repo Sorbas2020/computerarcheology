@@ -44,7 +44,7 @@ XENOS                                                          | BEDLAM        |
 22_is_less_equal_health(points)                                | x             | x
 23_heal_var(points)                                            | x             | x
 24_exit_program()                                              | endless_loop  | endless_loop 
-25_print_linefeed()                                            | restart_game  | restart_game
+25_print_linefeed()                                            | x             | x
 26_print_score()                                               | x             | x
 27_load_game()                                                 | x             | x
 28_save_game()                                                 | x             | x
