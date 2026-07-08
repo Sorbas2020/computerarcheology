@@ -1,5 +1,5 @@
 
-class Language:
+class Language99:
     def __init__(self):
 
         self.verbs = {}
@@ -83,10 +83,19 @@ class Language:
             ret = self.phrases[num][0]
             return ' '.join(ret.split())    
 
+def print_format_words(words):
+    for num, word_list in words.items():
+        print(f"{num}: {word_list},") 
+
+
 if __name__ == '__main__':
-    lamg = Language()
-    print(f"Phrases: {lamg.phrases}")
-    print(f"Verbs: {lamg.words[0]}")
-    print(f"Nouns: {lamg.words[1]}")
-    print(f"Adjectives: {lamg.words[2]}")
-    print(f"Prepositions: {lamg.words[3]}")
+    lamg = Language99()
+    print_format_words(lamg.phrases)
+    # print_format_words(lamg.words[0])
+    # print()
+    # print_format_words(lamg.words[1])
+    # print()
+    # print_format_words(lamg.words[2])
+    # print()
+    # print_format_words(lamg.words[3])
+    # print()

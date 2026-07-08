@@ -13,7 +13,7 @@ class Commands:
         COMMANDS[0x04] = COMMANDS_PYRAMID[0x04]
         COMMANDS[0x05] = COMMANDS_PYRAMID[0x10]
         COMMANDS[0x06] = COMMANDS_PYRAMID[0x07]
-        COMMANDS[0x07] = ['endless_loop']
+        COMMANDS[0x07] = COMMANDS_PYRAMID[0x09]
         COMMANDS[0x08] = COMMANDS_PYRAMID[0x0B]
         COMMANDS[0x09] = COMMANDS_PYRAMID[0x0F]
         COMMANDS[0x0A] = COMMANDS_PYRAMID[0x11]
@@ -23,6 +23,7 @@ class Commands:
         COMMANDS[0x0E] = COMMANDS_PYRAMID[0x16]
         COMMANDS[0x0F] = COMMANDS_PYRAMID[0x17]
         COMMANDS[0x10] = COMMANDS_PYRAMID[0x1A]
+        # Just for Haunted House, not in Pyramid
         COMMANDS[0x11] = ['load_second_floor']
 
         self.code_address_trs80_house1 = binary_utils.read_command_table(

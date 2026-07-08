@@ -211,17 +211,17 @@ ScriptCommandFAIL:
 43C1: C9              RET                         
 ```
 
-# Command 7: StopIfPassElseContinue
+# COM_07_
+
+Run the list of commands (a sub-script). We always return SUCCESS, but if the list completes
+successfully all the way to the end, we abort the outer script. If the sub-script fails,
+the we pass to the next command in the outer script.
+
+This gives us the ability to code a line of if/else commands. We keep trying the sub-lists
+until one finishes completely.
 
 ```code
-StopIfPassElseContinue:
-; Run the list of commands (a sub-script). We always return SUCCESS, but if the list completes
-; successfully all the way to the end, we abort the outer script. If the sub-script fails,
-; the we pass to the next command in the outer script.
-;
-; This gives us the ability to code a line of if/else commands. We keep trying the sub-lists
-; until one finishes completely.
-;
+COM_07_:
 43C2: E1              POP     HL                  ; Pop the current pointer
 43C3: CD 96 43        CALL    $4396               ; {code.RunScript} Run the list of commands
 43C6: E5              PUSH    HL                  ; Current script position
@@ -2604,36 +2604,35 @@ ObjectDescriptions:
 ; for reference in the table.
 
 ScriptCommands:
-;    Address   Number Bytes Name
-509F: 8A 51   ;   1     1   MoveToRoom(room_num)
-50A1: C8 52   ;   2     1   AssertObjectIsInPack(obj_num)
-50A3: D7 52   ;   3     1   AssertObjectIsInCurrentRoomOrPack(obj_num)
-50A5: 5E 53   ;   4     2   Print(ps_num)
-50A7: 49 54   ;   5     0   PrintScoreAndStop
-50A9: 00 00   ;   6     -   -
-50AB: C2 43   ;   7     1   StopIfPassElseContinue
-50AD: C7 54   ;   8     0   PrintScore
-50AF: EF 55   ;   9     0   PrintScoreAndStop
-50B1: 18 53   ;  10     1   AssertRandomIsLessOrEqual
-50B3: 6B 53   ;  11     1   DropObject(obj_num) (NEVER USED)
-50B5: 32 53   ;  12     1   MoveToRoomIfItWasLastRoom(room_num) (NEVER USED)
-50B7: FB 52   ;  13     0   AssertPackIsEmptyExceptForEmerald
-50B9: 81 53   ;  14     0   MoveToLastRoom
-50BB: 9B 53   ;  15     0   PrintInventory
-50BD: DB 53   ;  16     0   PrintRoomDescription
-50BF: E1 53   ;  17     1   AssertObjectMatchesUserInput(obj_num)
-50C1: EF 53   ;  18     1   GetObjectFromRoom(obj_num)
-50C3: 00 00   ;  19     -   -
-50C5: 2B 54   ;  20     0   PrintOK
-50C7: 34 54   ;  21     2   MoveObjectToRoom(obj_num,room_num)
-50C9: 43 53   ;  22     0   GetUserInputObject
-50CB: 24 54   ;  23     0   DropUserInputObject
-50CD: A5 52   ;  24     1   MoveObjectToCurrentRoom(obj_num)
-50CF: B3 52   ;  25     2   MoveObjectIntoContainer(obj_num,obj_num)
-50D1: EA 52   ;  26     1   AssertObjectIsInCurrentRoom(obj_num)
-50D3: F5 55   ;  27     0   LoadGame
-50D5: 54 56   ;  28     0   SaveGame
-50D7: 94 56   ;  29     0   RandomizeDirections
+509F: 8A 51        ; COM_01_move_look(room_num)
+50A1: C8 52        ; COM_02_is_in_pack(obj_num)
+50A3: D7 52        ; COM_03_is_in_pack_or_current_room(obj_num)
+50A5: 5E 53        ; COM_04_Print(ps_num)
+50A7: 49 54        ; COM_05_PrintScoreAndStop
+50A9: 00 00
+50AB: C2 43        ; COM_07_StopIfPassElseContinue
+50AD: C7 54        ; COM_08_PrintScore
+50AF: EF 55        ; COM_09_PrintScoreAndStop
+50B1: 18 53        ; COM_0A_AssertRandomIsLessOrEqual
+50B3: 6B 53        ; COM_0B_DropObject(obj_num)
+50B5: 32 53        ; COM_0C_MoveToRoomIfItWasLastRoom(room_num)
+50B7: FB 52        ; COM_0D_AssertPackIsEmptyExceptForEmerald
+50B9: 81 53        ; COM_0E_MoveToLastRoom
+50BB: 9B 53        ; COM_0F_PrintInventory
+50BD: DB 53        ; COM_10_PrintRoomDescription
+50BF: E1 53        ; COM_11_AssertObjectMatchesUserInput(obj_num)
+50C1: EF 53        ; COM_12_GetObjectFromRoom(obj_num)
+50C3: 00 00
+50C5: 2B 54        ; COM_14_PrintOK
+50C7: 34 54        ; COM_15_MoveObjectToRoom(obj_num,room_num)
+50C9: 43 53        ; COM_16_GetUserInputObject
+50CB: 24 54        ; COM_17_DropUserInputObject
+50CD: A5 52        ; COM_18_MoveObjectToCurrentRoom(obj_num)
+50CF: B3 52        ; COM_19_MoveObjectIntoContainer(obj_num,obj_num)
+50D1: EA 52        ; COM_1A_AssertObjectIsInCurrentRoom(obj_num)
+50D3: F5 55        ; COM_1B_LoadGame
+50D5: 54 56        ; COM_1C_SaveGame
+50D7: 94 56        ; COM_1D_RandomizeDirections
 ```
 
 # After Every Step
@@ -2729,7 +2728,7 @@ BumpBCDTurnCount:
 5189: C9              RET                         
 ```
 
-# Command 1: MoveToRoom
+# COM_01_move_look(room_num)
 
 This routine moves the player to a new room. If there is light in the new room or light
 in the old room then the move always works. Otherwise there is a 60% chance the move kills you.
@@ -2747,7 +2746,7 @@ But he only puts them in the same room -- not actually in the chest. The code do
 the container relationship.
 
 ```code
-MoveToRoom:
+COM_01_move_look:
 518A: E1              POP     HL                  ; Get the ...
 518B: 46              LD      B,(HL)              ; ... target room number
 518C: 23              INC     HL                  ; Next byte
@@ -2895,10 +2894,10 @@ DescribeRoom:
 52A2: C3 83 52        JP      $5283               ; {} Go back for all objects
 ```
 
-# Command 24: MoveObjectToCurrentRoom
+# COM_18_
 
 ```code
-MoveObjectToCurrentRoom:
+COM_18_:
 52A5: E1              POP     HL                  ; Get script pointer
 52A6: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Get current room
 52A9: 5F              LD      E,A                 ; Object destination
@@ -2909,10 +2908,10 @@ MoveObjectToCurrentRoom:
 52B0: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# Command 25: MoveObjectIntoContainer
+# COM_19_
 
 ```code
-MoveObjectIntoContainer:
+COM_19_:
 52B3: E1              POP     HL                  ; Get script pointer
 52B4: 7E              LD      A,(HL)              ; Get object number from script
 52B5: 23              INC     HL                  ; Next byte in script
@@ -2929,12 +2928,12 @@ MoveObjectIntoContainer:
 52C5: C3 2B 54        JP      $542B               ; {code.PrintOK} Print OK and command passes
 ```
 
-# Command 2: AssertObjectIsInPack
+# COM_02_
 
 This command checks if the requested object is in the backpack.
 
 ```code
-AssertObjectIsInPack:
+COM_02_:
 52C8: E1              POP     HL                  ; Get the next ...
 52C9: 7E              LD      A,(HL)              ; ... byte from ...
 52CA: 23              INC     HL                  ; ... the script
@@ -2945,13 +2944,13 @@ AssertObjectIsInPack:
 52D4: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} No, command fails
 ```
 
-# Command 3: AssertObjectIsInCurrentRoomOrPack
+# COM_03_
 
 This command checks if the requested object is accessible (current room
 or backpack).
 
 ```code
-AssertObjectIsInCurrentRoomOrPack:
+COM_03_:
 52D7: E1              POP     HL                  ; Get the next ...
 52D8: 46              LD      B,(HL)              ; ... byte from ...
 52D9: 23              INC     HL                  ; ... the script
@@ -2965,13 +2964,13 @@ AssertObjectIsInCurrentRoomOrPack:
 52E7: C3 CC 52        JP      $52CC               ; {} Check the backpack for the object
 ```
 
-# Command 26: AssertObjectIsInCurrentRoom
+# COM_1A_
 
 This command checks if the request object (or object's top level container) is in
 the current room.
 
 ```code
-AssertObjectIsInCurrentRoom:
+COM_1A_:
 52EA: E1              POP     HL                  ; Get the script pointer
 52EB: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Checking ...
 52EE: 5F              LD      E,A                 ; ... current room
@@ -2983,13 +2982,13 @@ AssertObjectIsInCurrentRoom:
 52F8: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} Otherwise the command fails
 ```
 
-# Command 13: AssertPackIsEmptyExceptForEmerald
+# COM_0D_
 
 This very specific command checks if the backpack is empty or has just the emerald. This is
 used in the script for room_73, the "TIGHT_SQUEEZE" from the "CHAMBER_OF_THE_HIGH_PRIEST".
 
 ```code
-AssertPackIsEmptyExceptForEmerald:
+COM_0D_:
 52FB: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData}
 52FE: 0E 01           LD      C,$01               ; Start checking with object 1
 5300: 23              INC     HL                  ; Location of object
@@ -3007,7 +3006,7 @@ AssertPackIsEmptyExceptForEmerald:
 5315: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Success
 ```
 
-# Command 10: AssertRandomIsLessOrEqual
+# COM_0A_
 
 This command is a very specific move command. If the random value is less than or equal to 
 the given target value, then the player stays in the same room. The code prints the "crawled
@@ -3029,7 +3028,7 @@ But for values 241 through 255, the command fails and the player moves to room_5
 (ANTEROOM_OF_SEKER).
 
 ```code
-AssertRandomIsLessOrEqual:
+COM_0A_:
 5318: E1              POP     HL                  ; Get target ...
 5319: 46              LD      B,(HL)              ; ... value from script
 531A: 23              INC     HL                  ; Update the ...
@@ -3044,7 +3043,7 @@ AssertRandomIsLessOrEqual:
 532F: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Pass
 ```
 
-# Command 12: MoveToRoomIfItWasLastRoom (UNUSED)
+# COM_0C_
 
 This command moves the player to the target room but only if the target room was the last room.
 
@@ -3053,7 +3052,7 @@ If the target room is not the last room, the command fails.
 This command is not used in any script.
 
 ```code
-MoveToRoomIfItWasLastRoom:
+COM_0C_:
 5332: E1              POP     HL                  ; Get destination ...
 5333: 46              LD      B,(HL)              ; ... room
 5334: 23              INC     HL                  ; Update the ...
@@ -3067,10 +3066,10 @@ MoveToRoomIfItWasLastRoom:
 5340: C3 8A 51        JP      $518A               ; {code.MoveToRoom} Normal move to room (with lighting checks)
 ```
 
-# Command 22: GetUserInputObject
+# COM_16_
 
 ```code
-GetUserInputObject:
+COM_16_:
 5343: 3A 7B 46        LD      A,($467B)           ; {code.noun} Get the object number the player requested
 5346: 1E FF           LD      E,$FF               ; Get the ...
 5348: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... target object's info
@@ -3084,12 +3083,12 @@ GetUserInputObject:
 535B: C3 F4 53        JP      $53F4               ; {code.GetToBackpack} ... GET operation
 ```
 
-# Command 4: Print
+# COM_04_
 
 This command unpacks a string and prints it. This command always succeeds.
 
 ```code
-Print:
+COM_04_:
 535E: E1              POP     HL                  ; Get the script pointer
 535F: 5E              LD      E,(HL)              ; Get the LSB of the string
 5360: 23              INC     HL                  ; Next in script
@@ -3101,10 +3100,10 @@ Print:
 5368: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Printing is always a success
 ```
 
-# Command 11: DropObject (UNUSED)
+# COM_0B_
 
 ```code
-DropObject:
+COM_0B_:
 536B: E1              POP     HL                  ; Get the target ...
 536C: 46              LD      B,(HL)              ; ... object from the script
 536D: 23              INC     HL                  ; Update the ...
@@ -3119,13 +3118,14 @@ DropObject:
 537E: C3 2B 54        JP      $542B               ; {code.PrintOK} Print OK and command passes
 ```
 
-# Command 14: MoveToLastRoom
+# COM_0E_
 
 This command is only used by the "BACK" command to return the player to the last room.
 
 This command always passes but prints a message if there was no last room.
 
 ```code
+COM_0E_:
 5381: 3A 44 50        LD      A,($5044)           ; {code.lastRoom} Was there ...
 5384: A7              AND     A                   ; ... a last room?
 5385: CA 92 53        JP      Z,$5392             ; {} No, print error and pass
@@ -3139,10 +3139,10 @@ This command always passes but prints a message if there was no last room.
 5398: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# Command 15: PrintInventory
+# COM_0F_
 
 ```code
-PrintInventory:
+COM_0F_:
 539B: 3A 45 50        LD      A,($5045)           ; {code.numObjInPack} Is there anything in ...
 539E: A7              AND     A                   ; ... the backpack?
 539F: C2 AB 53        JP      NZ,$53AB            ; {} Yes, go list the contents
@@ -3179,18 +3179,18 @@ PrintInventory:
 53D8: C3 B3 53        JP      $53B3               ; {} Check all objects
 ```
 
-# Command 16: PrintRoomDescription
+# COM_10_
 
 ```code
-PrintRoomDescription:
+COM_10_:
 53DB: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Print the room description (with objects)
 53DE: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# Command 17: AssertObjectMatchesUserInput
+# COM_11_
 
 ```code
-AssertObjectMatchesUserInput:
+COM_11_:
 53E1: E1              POP     HL                  ; Get the script pointer
 53E2: 46              LD      B,(HL)              ; Get the target object
 53E3: 23              INC     HL                  ; Update the ...
@@ -3201,10 +3201,10 @@ AssertObjectMatchesUserInput:
 53EC: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} yes, command passes
 ```
 
-# Command 18: GetObjectFromRoom
+# COM_12_
 
 ```code
-GetObjectFromRoom:
+COM_12_:
 53EF: E1              POP     HL                  ; Get the script pointer
 53F0: 46              LD      B,(HL)              ; Get the object number
 53F1: 23              INC     HL                  ; Update ...
@@ -3235,28 +3235,28 @@ GetToBackpack:
 5421: C3 2B 54        JP      $542B               ; {code.PrintOK} Print OK and command passes
 ```
 
-# Command 23: DropUserInputObject
+# COM_17_
 
 ```code
-DropUserInputObject:
+COM_17_:
 5424: 3A 7B 46        LD      A,($467B)           ; {code.noun} Get the player's ...
 5427: 47              LD      B,A                 ; ... noun input
 5428: C3 6F 53        JP      $536F               ; {} Continue with drop
 ```
 
-# Command 20: PrintOK
+# COM_14_
 
 ```code
-PrintOK:
+COM_14_:
 542B: 21 2F 75        LD      HL,$752F            ; {+code.PS_85} "OK_"
 542E: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print string
 5431: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# Command 21: MoveObjectToRoom
+# COM_15_
 
 ```code
-MoveObjectToRoom:
+COM_15_:
 5434: E1              POP     HL                  ; Get the script pointer
 5435: 7E              LD      A,(HL)              ; Get the object number
 5436: 23              INC     HL                  ; Next in script
@@ -3271,8 +3271,12 @@ MoveObjectToRoom:
 5444: 23              INC     HL                  ; Location entry
 5445: 73              LD      (HL),E              ; Object now in target room
 5446: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
+```
 
-PlayerDied:
+# COM_05_
+
+```code
+COM_05_:
 5449: 3A 46 50        LD      A,($5046)           ; {code.numResurrected} Number of resurrections
 544C: 3C              INC     A                   ; Add one ...
 544D: 32 46 50        LD      ($5046),A           ; {code.numResurrected} ... to the count
@@ -3334,14 +3338,15 @@ ThirdResurrection:
 
 NextResurrectMessage:
 54C5: 00 00
-
-54C7: CD CD 54        CALL    $54CD               ; {code.PrintScore} Print the score
-54CA: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# Command 8: PrintScore
+# COM_08_
 
 ```code
+COM_08_:
+54C7: CD CD 54        CALL    $54CD               ; {code.PrintScore} Print the score
+54CA: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
+
 PrintScore:
 54CD: 21 00 00        LD      HL,$0000            ; Clear score tally
 54D0: 22 B2 55        LD      ($55B2),HL          ; {code.scoreTempLSB}
@@ -3479,21 +3484,22 @@ turnSpot:
 55E3: 20 20 20 20 20 54 55 52 4E 53 2E 00
 ```
 
-# Command 9: PrintScoreAndStop
+# COM_09_
 
 ```code
-PrintScoreAndStop:
+COM_09_:
 55EF: CD CD 54        CALL    $54CD               ; {code.PrintScore} Print the score
 
 EndlessLoop:
 55F2: C3 F2 55        JP      $55F2               ; {code.EndlessLoop} Endless loop ... game over
 ```
 
-# Command 27: LoadGame
+# COM_1B_LoadGame
+
+"RCONT:" ; Label appears in unitialized memory in Code1.md!
 
 ```code
-LoadGame:
-RCONT: ; Label appears in unitialized memory in Code1.md!
+COM_1B_LoadGame:
 55F5: 21 A0 7F        LD      HL,$7FA0            ; {+code.PS_BE} "READY CASSETTE"
 55F8: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
 55FB: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Wait on key
@@ -3550,12 +3556,13 @@ RCONT: ; Label appears in unitialized memory in Code1.md!
 5651: C3 19 43        JP      $4319               ; {code.GameLoop} Back to input loop
 ```
 
-# Command 28: SaveGame
+# COM_1C_SaveGame
 
 Save 4F45 through 5047 That's one too many and picks up a byte from the ObjectDescriptions table (read only).
 The LoadGame code restores the first four bytes of this ObjectDescriptions table for some reason.
 
 ```code
+COM_1C_SaveGame:
 5654: 21 A0 7F        LD      HL,$7FA0            ; {+code.PS_BE} "READY_CASSETTE"
 5657: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the message
 565A: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Get a key
@@ -3592,9 +3599,10 @@ The LoadGame code restores the first four bytes of this ObjectDescriptions table
 5691: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS}
 ```
 
-# Command 29: RandomizeDirections
+# COM_1D_
 
 ```code
+COM_1D_:
 5694: 3A 74 47        LD      A,($4774)           ; {code.keyWaitCounter} Random value
 5697: E6 03           AND     $03                 ; 0, 1, 2, or 3
 5699: 47              LD      B,A                 ; To B

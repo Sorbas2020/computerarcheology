@@ -1,18 +1,18 @@
 
-class Language:
+class Language3:
     def __init__(self):
 
         self.nouns = {}  # dataNumber -> [word]
         self.verbs = {}  # dataNumber -> [word]        
 
-        with open("d:/git/computerarcheology/content/trs80/hauntedhouse/Code1.md", "r") as f:            
+        with open("d:/git/computerarcheology/content/trs80/hauntedhouse/Code2.md", "r") as f:            
 
             g = ''
-            while not g.startswith('3C57:'):
+            while not g.startswith('4A9A:'):
                 g = f.readline()
             word_type = self.nouns
             g = g.strip()
-            while not g.startswith('4AF1:'):              
+            while not g.startswith('4B19:'):              
                 if g.startswith('; Verbs'):
                     word_type = self.verbs
                 i = g.find(';')                
@@ -43,7 +43,14 @@ class Language:
         def get_noun(self, num):
             return self.nouns[num][0]        
 
+def print_format_words(words):
+    for num, word_list in words.items():
+        print(f"{num}: {word_list},") 
+
 if __name__ == '__main__':
-    lamg = Language()
-    print(f"Verbs: {lamg.verbs}")
-    print(f"Nouns: {lamg.nouns}")    
+    lamg = Language3()
+    # print(f"Verbs: {lamg.verbs}")
+    # print(f"Nouns: {lamg.nouns}")  
+    print_format_words(lamg.verbs)
+    print()
+    print_format_words(lamg.nouns)  

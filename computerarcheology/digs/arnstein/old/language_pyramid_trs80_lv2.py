@@ -41,9 +41,16 @@ class Language:
             return self.verbs[num][0]
 
         def get_noun(self, num):
-            return self.nouns[num][0]        
+            return self.nouns[num][0]       
+
+def print_format_words(words):
+    for num, word_list in words.items():
+        print(f"{num}: {word_list}") 
 
 if __name__ == '__main__':
     lamg = Language()
-    print(f"Verbs: {lamg.verbs}")
-    print(f"Nouns: {lamg.nouns}")    
+    # print(f"Verbs: {lamg.verbs}")
+    # print(f"Nouns: {lamg.nouns}")    
+    print_format_words(lamg.verbs)
+    print()
+    print_format_words(lamg.nouns)

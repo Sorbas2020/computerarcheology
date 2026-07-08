@@ -1,6 +1,5 @@
 
 ROOMS = {
-
     1: {          
         0x00: 'nowhere', 
         0x01: 'PLAYER', 

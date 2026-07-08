@@ -270,7 +270,7 @@ ProcessCommandList:
 06E4: 39              RTS                         ; Done
 ```
 
-# Command 7: Subscript Abort If Pass  
+# COM_07_
 
 This game command runs a subscript. If the subscript passes then the entire script (no 
 matter how many subscripts-deep) ends with a "pass". If the subscript fails then the subscript 
@@ -284,7 +284,7 @@ next subscript).
 If the second subscript passes (like the SERPENT is here) then the entire script aborts with a "pass".
 
 ```code
-SubScriptAbortIfPass: 
+COM_07_: 
 06E5: 35 10           PULS    X                   ; Script pointer
 06E7: BD 06 B4        JSR     $06B4               ; {code.ProcessCommandList} Run script (Z CLEAR (NE) all passed, Z SET (EQ) a command failed)
 06EA: 34 10           PSHS    X                   ; Script pointer back to stack
@@ -752,36 +752,35 @@ PromptAndReadLine:
 ; for reference in the table.
 
 ScriptCommands:
-;    Address   Number Bytes Name
-0A17: 0B 05   ;   1     1   MoveToRoom(room_num)
-0A19: 0C 68   ;   2     1   AssertObjectIsInPack(obj_num)
-0A1B: 0C 7E   ;   3     1   AssertObjectIsInCurrentRoomOrPack(obj_num)
-0A1D: 0D 10   ;   4     2   Print(ps_num)
-0A1F: 0F 18   ;   5     0   PrintScoreAndStop
-0A21: 00 00   ;   6     -   -
-0A23: 06 E5   ;   7     1   StopIfPassElseContinue
-0A25: 0F 12   ;   8     0   PrintScore
-0A27: 0F 18   ;   9     0   PrintScoreAndStop
-0A29: 0C C6   ;  10     1   AssertRandomIsLessOrEqual
-0A2B: 0D 1C   ;  11     1   DropObject(obj_num) (NEVER USED)
-0A2D: 0C E0   ;  12     1   MoveToRoomIfItWasLastRoom(room_num) (NEVER USED)
-0A2F: 0C AB   ;  13     0   AssertPackIsEmptyExceptForEmerald
-0A31: 0D 33   ;  14     0   MoveToLastRoom
-0A33: 0D 4D   ;  15     0   PrintInventory   
-0A35: 0D 92   ;  16     0   PrintRoomDescription
-0A37: 0D 98   ;  17     1   AssertObjectMatchesUserInput(obj_num)
-0A39: 0D A6   ;  18     1   GetObjectFromRoom(obj_num)
-0A3B: 00 00   ;  19     -   -
-0A3D: 0D E8   ;  20     0   PrintOK
-0A3F: 0D F1   ;  21     2   MoveObjectToRoom(obj_num,room_num)
-0A41: 0C F4   ;  22     0   GetUserInputObject
-0A43: 0D E2   ;  23     0   DropUserInputObject
-0A45: 0C 39   ;  24     1   MoveObjectToCurrentRoom(obj_num)
-0A47: 0C 4B   ;  25     2   MoveObjectIntoContainer(obj_num,obj_num)
-0A49: 0C 97   ;  26     1   AssertObjectIsInCurrentRoom(obj_num)
-0A4B: 0E BB   ;  27     0   LoadGame
-0A4D: 0E 81   ;  28     0   SaveGame
-0A4F: 0F 1D   ;  29     0   RandomizeDirections (does nothing in CoCo version here)
+0A17: 0B 05        ; COM_01_move_look(room_num)
+0A19: 0C 68        ; COM_02_is_in_pack(obj_num)
+0A1B: 0C 7E        ; COM_03_is_in_pack_or_current_room(obj_num)
+0A1D: 0D 10        ; COM_04_Print(ps_num)
+0A1F: 0F 18        ; COM_05_PrintScoreAndStop
+0A21: 00 00
+0A23: 06 E5        ; COM_07_StopIfPassElseContinue
+0A25: 0F 12        ; COM_08_PrintScore
+0A27: 0F 18        ; COM_09_PrintScoreAndStop
+0A29: 0C C6        ; COM_0A_AssertRandomIsLessOrEqual
+0A2B: 0D 1C        ; COM_0B_DropObject(obj_num)
+0A2D: 0C E0        ; COM_0C_MoveToRoomIfItWasLastRoom(room_num)
+0A2F: 0C AB        ; COM_0D_AssertPackIsEmptyExceptForEmerald
+0A31: 0D 33        ; COM_0E_MoveToLastRoom
+0A33: 0D 4D        ; COM_0F_PrintInventory 
+0A35: 0D 92        ; COM_10_PrintRoomDescription
+0A37: 0D 98        ; COM_11_AssertObjectMatchesUserInput(obj_num)
+0A39: 0D A6        ; COM_12_GetObjectFromRoom(obj_num)
+0A3B: 00 00
+0A3D: 0D E8        ; COM_14_PrintOK
+0A3F: 0D F1        ; COM_15_MoveObjectToRoom(obj_num,room_num)
+0A41: 0C F4        ; COM_16_GetUserInputObject
+0A43: 0D E2        ; COM_17_DropUserInputObject
+0A45: 0C 39        ; COM_18_MoveObjectToCurrentRoom(obj_num)
+0A47: 0C 4B        ; COM_19_MoveObjectIntoContainer(obj_num,obj_num)
+0A49: 0C 97        ; COM_1A_AssertObjectIsInCurrentRoom(obj_num)
+0A4B: 0E BB        ; COM_1B_LoadGame
+0A4D: 0E 81        ; COM_1C_SaveGame
+0A4F: 0F 1D        ; COM_1D_RandomizeDirections
 ```
 
 # After Every Step 
@@ -876,7 +875,7 @@ AfterEveryStep:
 0B04: 39              RTS                         ; Done
 ```
 
-# Command 1: Move To Room X  
+# COM_01_move_look(room_num)
 
 This routine moves the player to a new room. If there is light in the new room or light 
 in the old room then the move always works. Otherwise there is a 60% chance the move kills you.
@@ -891,7 +890,7 @@ chest appear in the maze is to encounter the Mummy!
 Once the chest is in a room (any room) the Mummy no longer appears. You only see the Mummy once.
 
 ```code
-MoveToRoomX:
+COM_01_move_look:
 0B05: 35 10           PULS    X                   ; Processing cursor
 0B07: E6 80           LDB     ,X+                 ; Get room number
 0B09: 34 10           PSHS    X                   ; Update cursor
@@ -929,7 +928,7 @@ MoveToRoomX:
 0B54: 25 09           BCS     $0B5F               ; {} ... making it without light
 0B56: 8E 37 9A        LDX     #$379A              ; "You fell into a pit and broke ..."
 0B59: BD 08 D6        JSR     $08D6               ; {code.PrintPackedMessage} Print message
-0B5C: 7E 0F 18        JMP     $0F18               ; {code.PrintScoreAndStop} Endless loop
+0B5C: 7E 0F 18        JMP     $0F18               ; {code.COM_09_} Endless loop
 ;
 ; The move was successful
 0B5F: B6 18 E5        LDA     $18E5               ; {ram.curRoom} Current room ...
@@ -1039,12 +1038,12 @@ PrintObjectsInRoom:
 0C37: 20 D7           BRA     $0C10               ; {} Do all objects
 ```
 
-# Command 24: Move Object X To Current Room 
+# COM_18_
 
 Move the specified object to the current room.
 
 ```code
-MoveObjectXToCurrentRoom:
+COM_18_:
 0C39: 35 10           PULS    X                   ; Current action
 0C3B: B6 18 E5        LDA     $18E5               ; {ram.curRoom} Current room
 0C3E: B7 01 BC        STA     $01BC               ; {ram.m01BC} For find
@@ -1054,12 +1053,12 @@ MoveObjectXToCurrentRoom:
 0C48: 7E 06 CB        JMP     $06CB               ; {} Continue processing
 ```
 
-# Command 25: Move Object X Into Container Y 
+# COM_19_
 
 Move the specified object into the specified container object.
 
 ```code
-MoveObjectXIntoContainerY:
+COM_19_:
 0C4B: 35 10           PULS    X                   ; Get object number and container object number
 0C4D: EC 81           LDD     ,X++                ; ... from cursor
 0C4F: 34 10           PSHS    X                   ; New cursor
@@ -1071,16 +1070,16 @@ MoveObjectXIntoContainerY:
 0C5E: A7 80           STA     ,X+                 ; ... contained
 0C60: F6 01 BB        LDB     $01BB               ; {ram.m01BB} Container object
 0C63: E7 84           STB     ,X                  ; Set object's container
-0C65: 7E 0D E8        JMP     $0DE8               ; {code.PrintOK} Print "OK" and pass.
+0C65: 7E 0D E8        JMP     $0DE8               ; {code.COM_14_} Print "OK" and pass.
 ```
 
-# Command 2: Assert Object X Is In Pack 
+# COM_02_
 
 Make sure the specified object is in the pack. The object may be contained by 
 another object in the pack.
 
 ```code
-AssertObjectXIsInPack:
+COM_02_:
 0C68: 35 10           PULS    X                   ; Action cursor
 0C6A: A6 80           LDA     ,X+                 ; Get value
 0C6C: 34 10           PSHS    X                   ; Update cursor
@@ -1092,7 +1091,7 @@ AssertObjectXIsInPack:
 0C7B: 7E 06 CB        JMP     $06CB               ; {} Valid
 ```
 
-# Command 3: Assert Object X Is In Current Room Or Pack 
+# COM_03_
 
 Make sure the specified object is in the current room or in the pack. 
 If so then it is something that player can "see".
@@ -1100,7 +1099,7 @@ If so then it is something that player can "see".
 The object may be contained by another object in the room or pack.
 
 ```code
-AssertObjectXIsInCurrentRoomOrPack:
+COM_03_:
 0C7E: 35 10           PULS    X                   ; Action cursor
 0C80: A6 80           LDA     ,X+                 ; Get target object
 0C82: 34 10           PSHS    X                   ; Update cursor
@@ -1113,13 +1112,13 @@ AssertObjectXIsInCurrentRoomOrPack:
 0C95: 20 D7           BRA     $0C6E               ; {} ... backpack
 ```
 
-# Command 26: Assert Object X Is In Current Room 
+# COM_1A_
 
 Make sure the specified object is in the current room (either directly or 
 in a container in the room).
 
 ```code
-AssertObjectXIsInCurrentRoom:
+COM_1A_:
 0C97: 35 10           PULS    X                   ; Action cursor
 0C99: B6 18 E5        LDA     $18E5               ; {ram.curRoom} Current room
 0C9C: B7 01 BC        STA     $01BC               ; {ram.m01BC} For find routine
@@ -1130,13 +1129,13 @@ AssertObjectXIsInCurrentRoom:
 0CA8: 7E 06 DF        JMP     $06DF               ; {} Invalid
 ```
 
-# Command 13: Assert Pack Is Empty Except For Emerald 
+# COM_0D_
 
 Make sure pack is completely empty except for the emerald. In order to get 
 the emerald through a "tight squeeze" everything else must be out of the pack.
 
 ```code
-AssertPackIsEmptyExceptForEmerald:
+COM_0D_:
 0CAB: 8E 18 8D        LDX     #$188D              ; Object data
 0CAE: C6 01           LDB     #$01                ; First object
 0CB0: 30 01           LEAX    1,X                 ; Point to room location
@@ -1152,7 +1151,7 @@ AssertPackIsEmptyExceptForEmerald:
 0CC3: 7E 06 CB        JMP     $06CB               ; {}
 ```
 
-# Command 10: Assert Random Is Greater Than X 
+# COM_0A_
 
 Assert that the random count is greater than the specified value. 
 If so then print "You have crawled around in some little holes ...".
@@ -1160,7 +1159,7 @@ If so then print "You have crawled around in some little holes ...".
 This is used for rooms that have random movement paths.
 
 ```code
-AssertRandomIsGreaterThanX:
+COM_0A_:
 0CC6: 35 10           PULS    X                   ; Cursor
 0CC8: E6 80           LDB     ,X+                 ; Comparrison threshold
 0CCA: 34 10           PSHS    X                   ; Update cursor
@@ -1173,7 +1172,7 @@ AssertRandomIsGreaterThanX:
 0CDD: 7E 06 CB        JMP     $06CB               ; {} OK
 ```
 
-# Command 12: Move To Room X If It Was Last Room 
+# COM_0C_
 
 ?? TODO is this ever used?
 
@@ -1181,7 +1180,7 @@ Move player to the specified room, but only if that room was the last room.
 This is for when you can only go back the way you came.
 
 ```code
-MoveToRoomXIfItWasLastRoom:
+COM_0C_:
 0CE0: 35 10           PULS    X                   ; Get cursor
 0CE2: E6 80           LDB     ,X+                 ; Target room
 0CE4: 34 10           PSHS    X                   ; Update cursor
@@ -1190,10 +1189,10 @@ MoveToRoomXIfItWasLastRoom:
 0CEB: 35 10           PULS    X                   ; Cursor
 0CED: 30 1F           LEAX    -1,X                ; Back it ..
 0CEF: 34 10           PSHS    X                   ; ... up
-0CF1: 7E 0B 05        JMP     $0B05               ; {code.MoveToRoomX} Move to room N
+0CF1: 7E 0B 05        JMP     $0B05               ; {code.COM_01_move_look} Move to room N
 ```
 
-# Command 22: Get User Input Object 
+# COM_16_
 
 Move the specified object to the pack. If the object is already in the 
 pack then print "You are already carying it". 
@@ -1204,7 +1203,7 @@ This is the last script in the general GET handler.
 Note that "You are already carying it" is already being checked in the general input routine.
 
 ```code
-GetUserInputObject:
+COM_16_:
 0CF4: 86 FF           LDA     #$FF                ; Pack value
 0CF6: B7 01 BC        STA     $01BC               ; {ram.m01BC} For find
 0CF9: B6 01 E7        LDA     $01E7               ; {ram.m01E7} Object from input (noun)
@@ -1217,12 +1216,12 @@ GetUserInputObject:
 0D0D: 7E 0D AC        JMP     $0DAC               ; {} Pick up object
 ```
 
-# Command 4: Print Message X 
+# COM_04_
 
 Print the specified message (packed message).
 
 ```code
-PrintMessageX:
+COM_04_:
 0D10: 35 20           PULS    Y                   ; Get cursor
 0D12: AE A1           LDX     ,Y++                ; Get address of message
 0D14: 34 20           PSHS    Y                   ; Update cursor
@@ -1230,13 +1229,13 @@ PrintMessageX:
 0D19: 7E 06 CB        JMP     $06CB               ; {} Pass
 ```
 
-# Command 11: Drop Object X 
+# COM_0B_
 
 Move the specified object from the pack to the current room. 
 This does assume the object is in the pack.
 
 ```code
-DropObjectX:
+COM_0B_:
 0D1C: 35 10           PULS    X                   ; Get object ...
 0D1E: E6 80           LDB     ,X+                 ; ... from cursor
 0D20: 34 10           PSHS    X                   ; Restore cursor
@@ -1245,10 +1244,10 @@ DropObjectX:
 0D28: B7 01 BC        STA     $01BC               ; {ram.m01BC} For the move
 0D2B: 1F 98           TFR     B,A                 ; FOr the move
 0D2D: BD 06 90        JSR     $0690               ; {code.MoveObject} Drop object in current room
-0D30: 7E 0D E8        JMP     $0DE8               ; {code.PrintOK} OK and out
+0D30: 7E 0D E8        JMP     $0DE8               ; {code.COM_14_} OK and out
 ```
 
-# Command 14: Move To Last Room 
+# COM_0E_
 
 Move the player to the "last" room. If there is no "last" 
 room then print an error message.
@@ -1256,7 +1255,7 @@ room then print an error message.
 This command always passes.
 
 ```code
-MoveToLastRoom:
+COM_0E_:
 0D33: F6 18 EA        LDB     $18EA               ; {ram.lastRoom} Last room number
 0D36: 27 0C           BEQ     $0D44               ; {} There was no last ... error message
 0D38: F7 01 BB        STB     $01BB               ; {ram.m01BB} Hold this
@@ -1268,7 +1267,7 @@ MoveToLastRoom:
 0D4A: 7E 06 CB        JMP     $06CB               ; {} Pass
 ```
 
-# Command 15: Print Inventory 
+# COM_0F_
 
 List all the objects in the pack. Object that are contained by 
 objects in the pack are printed too.
@@ -1276,7 +1275,7 @@ objects in the pack are printed too.
 This command always passes.
 
 ```code
-PrintInventory:
+COM_0F_:
 0D4D: B6 18 EB        LDA     $18EB               ; {ram.numInPack} Do we even have anything?
 0D50: 26 09           BNE     $0D5B               ; {} Yes ... there is something
 0D52: 8E 34 4F        LDX     #$344F              ; "You're not carrying anything."
@@ -1310,24 +1309,24 @@ PrintInventory:
 0D90: 20 D0           BRA     $0D62               ; {} Do all objects
 ```
 
-# Command 16: Print Room Description
+# COM_10_
 
 Print the current room description and contained objects. If the room is dark then print "it is dark".
 
 This command always passes.
 
 ```code
-C_PrintRoomDescription:
+COM_10_:
 0D92: BD 0B D2        JSR     $0BD2               ; {code.PrintRoomDescription} Print room description
 0D95: 7E 06 CB        JMP     $06CB               ; {}
 ```
 
-# Command 17: Assert Object X Matches User Input 
+# COM_11_
 
 Make sure the input noun matches the specified object.
 
 ```code
-AssertObjectXMatchesUserInput:
+COM_11_:
 0D98: 35 10           PULS    X                   ; Get the object ...
 0D9A: E6 80           LDB     ,X+                 ; ... from the cursor
 0D9C: 34 10           PSHS    X                   ; Update cursor
@@ -1336,7 +1335,7 @@ AssertObjectXMatchesUserInput:
 0DA3: 7E 06 DF        JMP     $06DF               ; {} Fail
 ```
 
-# Command 18: Get Object From Room 
+# COM_12_
 
 Get the specified object from the current room if there is space in the pack and the object is packable.
 
@@ -1344,7 +1343,7 @@ Get the specified object from the current room if there is space in the pack and
   * Some objects are flagged as "non pick-up-able"
 
 ```code
-GetObjectFromRoom:
+COM_12_:
 0DA6: 35 10           PULS    X                   ; Get the object's description from the ...
 0DA8: E6 80           LDB     ,X+                 ; ... cursor
 0DAA: 34 10           PSHS    X                   ; Update the cursor
@@ -1368,37 +1367,37 @@ GetObjectFromRoom:
 0DD7: B7 01 BC        STA     $01BC               ; {ram.m01BC} For function
 0DDA: B6 01 BB        LDA     $01BB               ; {ram.m01BB} Object number
 0DDD: BD 06 90        JSR     $0690               ; {code.MoveObject} Move object
-0DE0: 20 06           BRA     $0DE8               ; {code.PrintOK} Print "OK" and out
+0DE0: 20 06           BRA     $0DE8               ; {code.COM_14_} Print "OK" and out
 ```
 
-# Command 23: Drop User Input Object 
+# COM_17_
 
 Drop the object the user requested from the pack.
 
 ```code
-DropUserInputObject:
+COM_17_:
 0DE2: F6 01 E7        LDB     $01E7               ; {ram.m01E7} Value from user word
 0DE5: 7E 0D 22        JMP     $0D22               ; {} Drop object
 ```
 
-# Command 20: Print OK 
+# COM_14_
 
 Print "OK".
 
 ```code
-PrintOK:
+COM_14_:
 0DE8: 8E 33 DA        LDX     #$33DA              ; "OK"
 0DEB: BD 08 D6        JSR     $08D6               ; {code.PrintPackedMessage} Print message
 0DEE: 7E 06 CB        JMP     $06CB               ; {}
 ```
 
-# Command 21: Move Object X To Room Y 
+# COM_15_
 
 Move the specified object to the specified room. This removes 
 the target object from any container it might be in.
 
 ```code
-MoveObjectXToRoomY:
+COM_15_:
 0DF1: 35 10           PULS    X                   ; Cursor
 0DF3: EC 81           LDD     ,X++                ; Get object number and room number
 0DF5: 34 10           PSHS    X                   ; Update cursor
@@ -1471,12 +1470,12 @@ PrintScore:
 0E80: 39              RTS                         ; Done
 ```
 
-# Command 28: Save Game 
+# COM_1C_
 
 Save the current state of the game to tape.
 
 ```code
-SaveGame:
+COM_1C_:
 0E81: 8E 3C 27        LDX     #$3C27              ; "Ready Cassette"
 0E84: BD 08 D6        JSR     $08D6               ; {code.PrintPackedMessage} Print message
 0E87: BD 09 37        JSR     $0937               ; {code.ReadKey} Get a key
@@ -1502,12 +1501,12 @@ SaveGame:
 0EB8: 7E 06 CB        JMP     $06CB               ; {}
 ```
 
-# Command 27: Load Game 
+# COM_1B_
 
 Load the state of the game from tape.
 
 ```code
-LoadGame:
+COM_1B_:
 0EBB: 8E 3C 27        LDX     #$3C27              ; "Ready Cassette"
 0EBE: BD 08 D6        JSR     $08D6               ; {code.PrintPackedMessage} Print message
 0EC1: BD 09 37        JSR     $0937               ; {code.ReadKey} Wait on a key
@@ -1538,43 +1537,42 @@ LoadGame:
 0F00: BD 0F 0C        JSR     $0F0C               ; {} Turn motor off
 0F03: 8E 3C 33        LDX     #$3C33              ; "Checksum Error"
 0F06: BD 08 D6        JSR     $08D6               ; {code.PrintPackedMessage} Print messagge
-0F09: 7E 0E BB        JMP     $0EBB               ; {code.LoadGame} Try again
+0F09: 7E 0E BB        JMP     $0EBB               ; {code.COM_1B_} Try again
 0F0C: 86 34           LDA     #$34                ; Motor ...
 0F0E: B7 FF 21        STA     $FF21               ; {hard.PIA1_CA} ... off
 0F11: 39              RTS                         ; 
 ```
 
-# Command 8: Print Score 
+# COM_08_ 
 
 Print the current score.
 
 ```code
-C_PrintScore:
+COM_08_:
 0F12: BD 0E 0D        JSR     $0E0D               ; {code.PrintScore} Print score
 0F15: 7E 06 CB        JMP     $06CB               ; {}
 ```
 
-# Command 5: Print Score And Stop
-
-# Command 9: Print Score And Stop
+# COM_05_ and COM_09_
 
 Print the score and go into an endless loop. When the player dies 
 the scripts use command 5. When the player quits the scripts 
 use command 9.
 
 ```code
-PrintScoreAndStop:
+COM_05_:
+COM_09_:
 0F18: BD 0E 0D        JSR     $0E0D               ; {code.PrintScore} Print score
 0F1B: 20 FE           BRA     $0F1B               ; {} Endless loop
 ```
 
-# Command 29: Jump To Top Of Game Loop 
+# COM_1D_
 
 This is what the old PLUGH command does. The TRS80 version works through the room scripts and scrambles
 the compass directions. The CoCo version just returns to the top of the game loop (do nothing).
 
 ```code
-JumpToTopOfGameLoop:
+COM_1D_:
 0F1D: 10 CE 03 FF     LDS     #$03FF              ; Forget where we came from ...
 0F21: 7E 06 35        JMP     $0635               ; {code.MainLoop} ... and go back to top of game loop
 ```

@@ -3051,7 +3051,7 @@ But for values 241 through 255, the command fails and the player moves to room_5
 (ANTEROOM_OF_SEKER).
 
 ```code
-AssertRandomIsLessOrEqual:
+COM_AssertRandomIsLessOrEqual:
 52B5: E1              POP     HL                  ; Get target ...
 52B6: 46              LD      B,(HL)              ; ... value from script
 52B7: 23              INC     HL                  ; Update the ...
