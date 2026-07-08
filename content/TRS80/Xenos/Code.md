@@ -780,7 +780,7 @@ GetInputLine:
 6298: C9              RET                         
 
 GetKey:
-6299: CD C6 71        CALL    $71C6               ; {code.COM_2B_random} Get random number (entropy while we wait)
+6299: CD C6 71        CALL    $71C6               ; {code.COM_2B_generate_random} Get random number (entropy while we wait)
 629C: CD 2B 00        CALL    $002B               ; {hard.GetKey} Get keyboard input
 629F: A7              AND     A                   ; Did the user press a key?
 62A0: CA 99 62        JP      Z,$6299             ; {code.GetKey} No ... keep waiting
@@ -929,10 +929,15 @@ ExecuteCommand:
 6384: 32 89 63        LD      ($6389),A           ; {} Write it into JP instruction below
 ;
 6387: C3 87 63        JP      $6387               ; {} This jump destination is modified by code above
+```
 
-COM_0D_while_pass:
-; Execute commands while they are passing. If they all pass then we return a PASS.
-; If any fail, we stop and return a FAIL.
+# COM_0D_group_AND(...)
+
+Execute commands while they are passing. If they all pass then we return a PASS.
+If any fail, we stop and return a FAIL.
+
+```code
+COM_0D_group_AND:
 638A: CD C9 61        CALL    $61C9               ; {code.GetMultiByteLength} Get the length of the list
 638D: CD DC 61        CALL    $61DC               ; {code.CompareHLandDE} Have we reached the end of the list?
 6390: D2 9D 63        JP      NC,$639D            ; {} Yes, this list was all PASS and we pass
@@ -946,10 +951,15 @@ COM_0D_while_pass:
 639D: EB              EX      DE,HL               ; Jump past the command list
 639E: 97              SUB     A                   ; Z=1 PASS
 639F: C9              RET                         
+```
 
-COM_0E_while_fail:
-; Execute commands while they are failing. If they all fail then we return a FAIL.
-; If any pass, we stop and return a PASS.
+# COM_0E_group_OR(...)
+
+Execute commands while they are failing. If they all fail then we return a FAIL.
+If any pass, we stop and return a PASS.
+
+```code
+COM_0E_group_OR:
 63A0: CD C9 61        CALL    $61C9               ; {code.GetMultiByteLength} Get the length of the list
 63A3: CD DC 61        CALL    $61DC               ; {code.CompareHLandDE} Have we reached the end of the list?
 63A6: D2 B3 63        JP      NC,$63B3            ; {} Yes, this list was all FAIL and we fail
@@ -963,11 +973,16 @@ COM_0E_while_fail:
 63B3: EB              EX      DE,HL               ; Point script to next construct
 63B4: F6 01           OR      $01                 ; Z=0 FAIL
 63B6: C9              RET                         
+```
 
+# COM_0B_switch(num, ...)
+
+Repeatedly call a target function with different input parameters. If a test call PASSes then we
+execute the associated script. Otherwise, we move to the next test call. If all the tests fail,
+we return a FAIL.
+
+```code
 COM_0B_switch:
-; Repeatedly call a target function with different input parameters. If a test call PASSes then we
-; execute the associated script. Otherwise, we move to the next test call. If all the tests fail,
-; we return a FAIL.
 63B7: CD C9 61        CALL    $61C9               ; {code.GetMultiByteLength} Get the length and pointer to end
 63BA: 46              LD      B,(HL)              ; Get the command number ...
 63BB: 23              INC     HL                  ; ... to call for each entry
@@ -988,9 +1003,13 @@ COM_0B_switch:
 63D7: CD 57 63        CALL    $6357               ; {code.ExecuteCommand} Execute the  matching script
 63DA: E1              POP     HL                  ; Restore script pointer
 63DB: C9              RET                         
+```
 
-COM_00_move_ACTIVE_and_look:
-63DC: CD F5 63        CALL    $63F5               ; {code.COM_19_move_ACTIVE} Move the active object
+# COM_00_move_and_look(room_num)
+
+```code
+COM_00_move_and_look:
+63DC: CD F5 63        CALL    $63F5               ; {code.COM_19_move_to_room} Move the active object
 63DF: E5              PUSH    HL                  ; Hold script pointer
 63E0: 2A 22 72        LD      HL,($7222)          ; {code.currentRoomPtr} Point to the room's ...
 63E3: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} ... data byte
@@ -1002,9 +1021,12 @@ COM_00_move_ACTIVE_and_look:
 63F0: 97              SUB     A                   ; Clear stop printing after ...
 63F1: 32 F0 71        LD      ($71F0),A           ; {code.stopAtPeriod} ... period flag
 63F4: C9              RET                         
+```
 
-COM_19_move_ACTIVE:
-; move_ACTIVE(room)
+# COM_19_move_to_room(room_num)
+
+```code
+COM_19_move_to_room:
 63F5: 7E              LD      A,(HL)              ; New room number from the script
 63F6: 23              INC     HL                  ; Next in script
 63F7: E5              PUSH    HL                  ; Hold script pointer
@@ -1020,8 +1042,12 @@ COM_19_move_ACTIVE:
 640F: E1              POP     HL                  ; Restore script
 6410: 97              SUB     A                   ; Z=1 PASS
 6411: C9              RET                         
+```
 
-COM_37_assert_player_is_in_an_object:
+# COM_37_is_player_in_any_object()
+
+```code
+COM_37_is_player_in_any_object:
 6412: 06 01           LD      B,$01               ; Player object number
 6414: E5              PUSH    HL                  ; Hold script pointer
 6415: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Get the player object
@@ -1041,8 +1067,12 @@ COM_37_assert_player_is_in_an_object:
 ; !! The return is missing. We set the Z flag as usual, but without the RET, we fall into next
 ; command and change the VAR to something else. The game scripts use this function to check if the
 ; player is contained in any object. Thus the particular container is never used.
+```
 
-COM_1A_set_VAR_to_first_noun:
+# COM_1A_set_var_to_noun1()
+
+```code
+COM_1A_set_var_to_noun1:
 642C: E5              PUSH    HL                  ; Hold script pointer
 642D: 2A 12 72        LD      HL,($7212)          ; {code.firstNounPtr} Copy first noun ...
 6430: 22 0C 72        LD      ($720C),HL          ; {code.varObjectPtr} ... pointer to var object
@@ -1051,9 +1081,12 @@ COM_1A_set_VAR_to_first_noun:
 6439: E1              POP     HL                  ; Restore script pointer
 643A: 97              SUB     A                   ; Z=1 PASS
 643B: C9              RET                         
+```
 
-COM_1B_set_VAR_to_second_noun:
-; set_VAR_to_second_noun()
+# COM_1B_set_var_to_noun2()
+
+```code
+COM_1B_set_var_to_noun2:
 643C: E5              PUSH    HL                  ; Hold script pointer
 643D: 2A 18 72        LD      HL,($7218)          ; {code.secondNounPtr} Copy second noun ...
 6440: 22 0C 72        LD      ($720C),HL          ; {code.varObjectPtr} ... pointer to var object
@@ -1062,8 +1095,12 @@ COM_1B_set_VAR_to_second_noun:
 6449: E1              POP     HL                  
 644A: 97              SUB     A                   ; Z=1 PASS
 644B: C9              RET                         
+```
 
-COM_1C_set_VAR_object:
+# COM_1C_set_var_object()
+
+```code
+COM_1C_set_var_object:
 644C: 46              LD      B,(HL)              ; Get the object from the script
 644D: 23              INC     HL                  ; Next in script
 644E: E5              PUSH    HL                  ; Hold script pointer
@@ -1076,9 +1113,12 @@ COM_1C_set_VAR_object:
 645D: E1              POP     HL                  ; Restore script pointer
 645E: 97              SUB     A                   ; Z=1 PASS
 645F: C9              RET                         
+```
 
+# COM_21_execute_phrase(phrase_num, obj_num1, obj_num2)
+
+```code
 COM_21_execute_phrase:
-; execute_phrase(phrase,first_noun,second_noun)
 6460: EB              EX      DE,HL               
 6461: 2A 12 72        LD      HL,($7212)          ; {code.firstNounPtr}
 6464: E5              PUSH    HL                  
@@ -1240,7 +1280,11 @@ printOnVarSeenScript:
 657D: B2 ; Routine B2: ?? " ON <THE VAR> CAN BE SEEN"
 
 657E: 00 00
+```
 
+# COM_33_print_objects_on_var_object()
+
+```code
 COM_33_print_objects_on_var_object:
 ; FAILs if there is nothing
 6580: E5              PUSH    HL                  ; Hold the script pointer
@@ -1490,8 +1534,12 @@ printedSomethingOn??:
 ;
 677C: E1              POP     HL                  ; Restore object script
 677D: C9              RET                         
+```
 
-COM_01_is_in_pack_or_current_room:
+# COM_01_is_in_pack_or_room(obj_num)
+
+```code
+COM_01_is_in_pack_or_room:
 677E: 46              LD      B,(HL)              ; Get the object number
 677F: 23              INC     HL                  ; Bump script pointer
 6780: E5              PUSH    HL                  ; Hold script pointer
@@ -1499,13 +1547,21 @@ COM_01_is_in_pack_or_current_room:
 6784: CD 23 60        CALL    $6023               ; {code.InInRoomOrPack} Check if object is in room or pack
 6787: E1              POP     HL                  ; Restore script pointer
 6788: C9              RET                         
+```
 
-COM_20_is_active_this:
+# COM_20_is_active_object(obj_num)
+
+```code
+COM_20_is_active_object:
 6789: 3A 1E 72        LD      A,($721E)           ; {code.activeObject} Get the active object number
 678C: BE              CP      (HL)                ; Does it match target in script?
 678D: 23              INC     HL                  ; Bump script pointer
 678E: C9              RET                         
+```
 
+# COM_2C_set_active(obj_num)
+
+```code
 COM_2C_set_active:
 678F: 46              LD      B,(HL)              ; Get object number from script
 6790: 23              INC     HL                  ; Bump script
@@ -1531,19 +1587,31 @@ COM_2C_set_active:
 67BB: E1              POP     HL                  
 67BC: 97              SUB     A                   ; Z=1 PASS
 67BD: C9              RET                         
+```
 
+# COM_30_set_current_room(room_num)
+
+```code
 COM_30_set_current_room:
 67BE: 7E              LD      A,(HL)              ; Value from the script
 67BF: 23              INC     HL                  ; Advance the script pointer
 67C0: 32 21 72        LD      ($7221),A           ; {code.currentRoom} Set the current room
 67C3: 97              SUB     A                   ; Z=1 PASS
 67C4: C9              RET                         
+```
 
-COM_02_is_owned:
+# COM_02_is_owned_by(obj_num)
+
+```code
+COM_02_is_owned_by:
 67C5: 46              LD      B,(HL)              
 67C6: 23              INC     HL                  
 67C7: C3 AB 6C        JP      $6CAB               ; {}
+```
 
+# COM_03_is_located(room_num, obj_num)
+
+```code
 COM_03_is_located:
 67CA: 4E              LD      C,(HL)              
 67CB: 23              INC     HL                  
@@ -1559,18 +1627,31 @@ COM_03_is_located:
 67D9: 7B              LD      A,E                 
 67DA: B9              CP      C                   
 67DB: C9              RET                         
+```
 
+# COM_0C_fail()
+
+```code
 COM_0C_fail:
 67DC: F6 01           OR      $01                 ; Z=0 FAIL
 67DE: C9              RET                         
+```
 
-COM_04_print_message:
+# COM_04_print(...)
+
+```code
+COM_04_print:
 67DF: 3A 1E 72        LD      A,($721E)           ; {code.activeObject} Get the active object number
 67E2: FE 38           CP      $38                 ; Is this the system object? !! From the BEDLAM code. Not used here.
 67E4: CA 00 68        JP      Z,$6800             ; {} Yes ... print the message
 67E7: FE 01           CP      $01                 ; Is this the player object?
 67E9: C2 F9 67        JP      NZ,$67F9            ; {} No ...
 
+```
+
+# COM_1F_print2(...)
+
+```code
 COM_1F_print2:
 67EC: 06 01           LD      B,$01               ; Find player object
 67EE: E5              PUSH    HL                  ; Hold
@@ -1585,13 +1666,21 @@ COM_1F_print2:
 6800: CD 6F 70        CALL    $706F               ; {code.PrintPackedAutoWrap}
 6803: 97              SUB     A                   ; Z=1 PASS
 6804: C9              RET                         
+```
 
+# COM_07_print_room_description()
+
+```code
 COM_07_print_room_description:
 6805: CD C1 64        CALL    $64C1               ; {code.PrintRoomDescription}
 6808: 97              SUB     A                   
 6809: 32 F0 71        LD      ($71F0),A           ; {code.stopAtPeriod}
 680C: C9              RET                         
+```
 
+# COM_06_print_inventory()
+
+```code
 COM_06_print_inventory:
 680D: E5              PUSH    HL                  ; Hold
 680E: 3E 0D           LD      A,$0D               ; Print a ...
@@ -1650,8 +1739,12 @@ COM_06_print_inventory:
 687D: 97              SUB     A                   ; Z=1 PASS
 687E: E1              POP     HL                  ; Restore script pointer
 687F: C9              RET                         
+```
 
-COM_08_is_first_noun:
+# COM_08_is_noun1(obj_num)
+
+```code
+COM_08_is_noun1:
 6880: E5              PUSH    HL                  ; Hold script pointer
 6881: 2A 12 72        LD      HL,($7212)          ; {code.firstNounPtr}
 6884: 3A 0F 72        LD      A,($720F)           ; {code.firstNoun}
@@ -1679,26 +1772,42 @@ COM_08_is_first_noun:
 68A7: C9              RET                         
 68A8: B8              CP      B                   
 68A9: C9              RET                         
+```
 
-COM_09_compare_to_second_noun:
+# COM_09_is_noun2(obj_num)
+
+```code
+COM_09_is_noun2:
 68AA: E5              PUSH    HL                  ; Hold script pointer
 68AB: 2A 18 72        LD      HL,($7218)          ; {code.secondNounPtr} Get the ...
 68AE: 3A 15 72        LD      A,($7215)           ; {code.secondNoun} ... second noun
 68B1: C3 87 68        JP      $6887               ; {} ?? to second noun instead
+```
 
-COM_2D_compare_to_var_object:
+# COM_2D_is_var_object(obj_num)
+
+```code
+COM_2D_is_var_object:
 68B4: E5              PUSH    HL                  ; Hold script pointer
 68B5: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Get the ...
 68B8: 3A 0B 72        LD      A,($720B)           ; {code.varObject} ... var object
 68BB: C3 87 68        JP      $6887               ; {} ?? to var object instead
+```
 
+# COM_0A_is_input_phrase(phrase_num)
+
+```code
 COM_0A_is_input_phrase:
 68BE: 46              LD      B,(HL)              ; Get the target phrase number
 68BF: 23              INC     HL                  ; Skip over in script
 68C0: 3A 1D 72        LD      A,($721D)           ; {code.inputPhrase} Current input phrase
 68C3: B8              CP      B                   ; Does it match? Z=1 PASS if the same
 68C4: C9              RET                         
+```
 
+# COM_0F_pick_up_var_object()
+
+```code
 COM_0F_pick_up_var_object:
 68C5: E5              PUSH    HL                  ; Hold the script pointer
 68C6: 06 01           LD      B,$01               ; Look up ...
@@ -1727,8 +1836,12 @@ COM_0F_pick_up_var_object:
 68EC: 97              SUB     A                   ; Z=1 PASS
 68ED: E1              POP     HL                  
 68EE: C9              RET                         
+```
 
-COM_10_drop_var:
+# COM_10_drop_var_object()
+
+```code
+COM_10_drop_var_object:
 68EF: E5              PUSH    HL                  ; Hold script pointer
 68F0: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} The current VAR object ptr
 68F3: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Skip to the data
@@ -1744,8 +1857,12 @@ COM_10_drop_var:
 6904: 97              SUB     A                   ; Z=1 PASS
 6905: E1              POP     HL                  ; Restore script pointer
 6906: C9              RET                         
+```
 
-COM_13_process_phrase_by_room_first_second:
+# COM_13_process_phrase_by_room()
+
+```code
+COM_13_process_phrase_by_room:
 6907: E5              PUSH    HL                  
 6908: 2A 22 72        LD      HL,($7222)          ; {code.currentRoomPtr}
 690B: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
@@ -1790,14 +1907,22 @@ COM_13_process_phrase_by_room_first_second:
 6960: CD 57 63        CALL    $6357               ; {code.ExecuteCommand}
 6963: E1              POP     HL                  
 6964: C9              RET                         
+```
 
+# COM_16_print_var()
+
+```code
 COM_16_print_var:
 6965: E5              PUSH    HL                  
 6966: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr}
 6969: 3A 0B 72        LD      A,($720B)           ; {code.varObject}
 696C: C3 76 69        JP      $6976               ; {}
+```
 
-COM_11_print_first_noun:
+# COM_11_print_noun1()
+
+```code
+COM_11_print_noun1:
 696F: E5              PUSH    HL                  
 6970: 2A 12 72        LD      HL,($7212)          ; {code.firstNounPtr}
 6973: 3A 0F 72        LD      A,($720F)           ; {code.firstNoun}
@@ -1821,17 +1946,22 @@ COM_11_print_first_noun:
 6999: E1              POP     HL                  
 699A: 97              SUB     A                   ; Z=1 PASS
 699B: C9              RET                         
+```
 
-COM_12_print_second_noun:
+# COM_12_print_noun2()
+
+```code
+COM_12_print_noun2:
 699C: E5              PUSH    HL                  
 699D: 3A 15 72        LD      A,($7215)           ; {code.secondNoun}
 69A0: 2A 18 72        LD      HL,($7218)          ; {code.secondNounPtr}
 69A3: C3 76 69        JP      $6976               ; {}
+```
 
-; ?? The general script added a check on the object for "GET HANDS". Revisit that.
+# COM_15_is_var_attributes(bits)
 
-COM_15_check_var: ; ?? 2nd byte is abilities?
-; Bits from the next byte in the script
+```code
+COM_15_is_var_attributes: 
 69A6: E5              PUSH    HL                  ; Hold script pointer
 69A7: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Pointer to the var object
 69AA: 3A 0B 72        LD      A,($720B)           ; {code.varObject} Var object number
@@ -1852,8 +1982,12 @@ COM_15_check_var: ; ?? 2nd byte is abilities?
 69BD: 23              INC     HL                  ; Skip over check bits
 69BE: F6 01           OR      $01                 ; Z=0 FAIL
 69C0: C9              RET                         
+```
 
-COM_2E_check_extended_attributes:
+# COM_2E_is_var_ext_attributes(bits)
+
+```code
+COM_2E_is_var_ext_attributes:
 69C1: E5              PUSH    HL                  ; Hold script pointer
 69C2: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Pointer to the VAR object
 69C5: 3A 0B 72        LD      A,($720B)           ; {code.varObject} Number of the VAR object
@@ -1861,8 +1995,12 @@ COM_2E_check_extended_attributes:
 69C9: CA 48 69        JP      Z,$6948             ; {} ... object, FAIL
 69CC: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Point to data
 69CF: C3 B5 69        JP      $69B5               ; {} Read the 2nd byte -- the extended attributes
+```
 
-COM_29_toggle_open_var:
+# COM_29_toggle_var_open()
+
+```code
+COM_29_toggle_var_open:
 69D2: E5              PUSH    HL                  ; Save script pointer
 69D3: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Get the var object pointer
 69D6: 3A 0B 72        LD      A,($720B)           ; {code.varObject} Get the var object
@@ -1876,8 +2014,12 @@ COM_29_toggle_open_var:
 69E5: E1              POP     HL                  ; Restore script pointer
 69E6: 97              SUB     A                   ; Z=1 PASS
 69E7: C9              RET                         
+```
 
-COM_2A_toggle_lock_var:
+# COM_2A_toggle_var_lock()
+
+```code
+COM_2A_toggle_var_lock:
 69E8: E5              PUSH    HL                  ; Hold script pointer
 69E9: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Get the var object pointer
 69EC: 3A 0B 72        LD      A,($720B)           ; {code.varObject} Get the var object
@@ -1895,10 +2037,16 @@ COM_2A_toggle_lock_var:
 ; https://oldcomputers-ddns.org/public/pub/rechner/tandy/manuals/newdos-80%20manual.pdf
 ; File Control Block: https://www.trs-80.com/sub-reference-dos-trsdos-13-internals.htm#FCB
 
-COM_2F_load_disk_section:
-; Loads the section from the disk. This command aborts the current script and returns to the
-; top of the game loop for the next user input. This makes since as the new script is
-; overwriting the old.
+```
+
+# COM_2F_load_section_from_disk(section_num)
+
+Loads the section from the disk. This command aborts the current script and returns to the
+top of the game loop for the next user input. This makes since as the new script is
+overwriting the old.
+
+```code
+COM_2F_load_section_from_disk:
 69FE: 7E              LD      A,(HL)              ; Get the section number (1-9)
 69FF: C6 30           ADD     $30                 ; Now an ASCII digit for filename
 6A01: 32 EC 6A        LD      ($6AEC),A           ; {code.sectionLetter} Build the filename
@@ -2049,8 +2197,12 @@ sectorBuffer:
 6C19: 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF
 6C29: 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF
 6C39: 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF 00 FF
+```
 
-COM_14_execute_and_reverse_status:
+# COM_14_reverse_status(...)
+
+```code
+COM_14_reverse_status:
 6C49: CD 57 63        CALL    $6357               ; {code.ExecuteCommand} Execute the requested command
 6C4C: C2 52 6C        JP      NZ,$6C52            ; {} Command failed ... reverse it to passed
 6C4F: F6 01           OR      $01                 ; Z=0 FAIL
@@ -2058,8 +2210,12 @@ COM_14_execute_and_reverse_status:
 ;
 6C52: 97              SUB     A                   ; Z=1 PASS
 6C53: C9              RET                         
+```
 
-COM_31_move_second_noun_to_var_object:
+# COM_31_put_noun2_in_var_object()
+
+```code
+COM_31_put_noun2_in_var_object:
 ; Never used
 6C54: E5              PUSH    HL                  ; Hold script pointer
 6C55: 2A 18 72        LD      HL,($7218)          ; {code.secondNounPtr} Look up the ...
@@ -2073,13 +2229,21 @@ COM_31_move_second_noun_to_var_object:
 6C64: E1              POP     HL                  ; Restore script pointer
 6C65: 97              SUB     A                   ; Z=1 PASS
 6C66: C9              RET                         
+```
 
-COM_32_move_first_noun_to_var_object:
+# COM_32_put_noun1_in_var_object()
+
+```code
+COM_32_put_noun1_in_var_object:
 6C67: E5              PUSH    HL                  ; Hold script pointer
 6C68: 2A 12 72        LD      HL,($7212)          ; {code.firstNounPtr} Continue with ...
 6C6B: C3 58 6C        JP      $6C58               ; {} ... first noun pointer instead of second
+```
 
-COM_17_move_object_to_destination:
+# COM_17_move_object_to(obj_num, destination)
+
+```code
+COM_17_move_object_to:
 6C6E: 46              LD      B,(HL)              ; Target object from script
 6C6F: 23              INC     HL                  ; Bump script
 6C70: E5              PUSH    HL                  ; Hold script pointer
@@ -2108,7 +2272,11 @@ COM_17_move_object_to_destination:
 6C91: 23              INC     HL                  ; Skip over the destination we loaded above
 6C92: 97              SUB     A                   ; Z=1 PASS
 6C93: C9              RET                         
+```
 
+# COM_18_is_var_owned_by_active()
+
+```code
 COM_18_is_var_owned_by_active:
 6C94: E5              PUSH    HL                  ; Hold script pointer
 6C95: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Get the var object ptr
@@ -2180,7 +2348,7 @@ COM_18_is_var_owned_by_active:
 6D09: D2 46 6D        JP      NC,$6D46            ; {} No EVERY_TURN script, then skip this object
 6D0C: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Get start/length of section
 6D0F: E5              PUSH    HL                  ; Hold pointer to section script
-6D10: CD C6 71        CALL    $71C6               ; {code.COM_2B_random} Get a fresh random number
+6D10: CD C6 71        CALL    $71C6               ; {code.COM_2B_generate_random} Get a fresh random number
 6D13: 3A 1C 72        LD      A,($721C)           ; {} Our current object ...
 6D16: 32 1E 72        LD      ($721E),A           ; {code.activeObject} ... is now the active object
 6D19: 47              LD      B,A                 ; To B for lookup
@@ -2209,8 +2377,12 @@ COM_18_is_var_owned_by_active:
 6D46: E1              POP     HL                  ; Restore object pointer
 6D47: D1              POP     DE                  ; Restore end of objects
 6D48: C3 BC 6C        JP      $6CBC               ; {} Back for next object
+```
 
-COM_05_is_less_equal_last_random:
+# COM_05_is_leq_last_random(value)
+
+```code
+COM_05_is_leq_last_random:
 6D4B: 3A EC 71        LD      A,($71EC)           ; {code.RandomSeed2}
 6D4E: BE              CP      (HL)                ; Compare to target value
 6D4F: 23              INC     HL                  ; Bump the script pointer
@@ -2222,8 +2394,12 @@ COM_05_is_less_equal_last_random:
 ;
 6D59: 97              SUB     A                   ; Z=1 PASS
 6D5A: C9              RET                         
+```
 
-COM_1D_attack_VAR:
+# COM_1D_attack_var(value)
+
+```code
+COM_1D_attack_var:
 6D5B: 4E              LD      C,(HL)              
 6D5C: 23              INC     HL                  
 6D5D: E5              PUSH    HL                  
@@ -2260,8 +2436,12 @@ COM_1D_attack_VAR:
 6D96: D1              POP     DE                  
 6D97: E1              POP     HL                  
 6D98: C3 82 6D        JP      $6D82               ; {}
+```
 
-COM_1E_swap:
+# COM_1E_swap_object_locations(obj_num1, obj_num2)
+
+```code
+COM_1E_swap_object_locations:
 6D9B: 46              LD      B,(HL)              
 6D9C: 23              INC     HL                  
 6D9D: 4E              LD      C,(HL)              
@@ -2283,8 +2463,12 @@ COM_1E_swap:
 6DB5: E1              POP     HL                  
 6DB6: 97              SUB     A                   ; Z=1 PASS
 6DB7: C9              RET                         
+```
 
-COM_22__:
+# COM_22_is_less_equal_health(value)
+
+```code
+COM_22_is_less_equal_health:
 6DB8: 4E              LD      C,(HL)              
 6DB9: 23              INC     HL                  
 6DBA: E5              PUSH    HL                  
@@ -2309,11 +2493,18 @@ COM_22__:
 6DDC: 97              SUB     A                   ; Z=1 PASS
 6DDD: E1              POP     HL                  
 6DDE: C9              RET                         
+```
 
+# COM_23_heal_var(value)
+
+First value of HP section is max points
+
+Second is current hit points
+
+This command adds a value to the current, but clamps the value at the max
+
+```code
 COM_23_heal_var:
-; First value of HP section is max points
-; Second is current hit points
-; This command adds a value to the current, but clamps the value at the max
 6DDF: 4E              LD      C,(HL)              ; Heal points
 6DE0: 23              INC     HL                  ; Advance ...
 6DE1: E5              PUSH    HL                  ; ... script
@@ -2335,7 +2526,11 @@ COM_23_heal_var:
 6DFE: 7A              LD      A,D                 ; Use the max allowed
 6DFF: 77              LD      (HL),A              ; New health
 6E00: C3 DC 6D        JP      $6DDC               ; {} PASS
+```
 
+# COM_25_print_linefeed()
+
+```code
 COM_25_print_linefeed:
 6E03: 3A 1E 72        LD      A,($721E)           ; {code.activeObject} Is the player ...
 6E06: FE 01           CP      $01                 ; ... the active object?
@@ -2344,11 +2539,18 @@ COM_25_print_linefeed:
 6E0D: CD EB 70        CALL    $70EB               ; {code.PrintCharCullSpaces} ... line feed
 6E10: 97              SUB     A                   ; Z=1 PASS
 6E11: C9              RET                         
+```
 
-COM_36__: ; ??
-; If var object is in a room, PASS
-; If var's container is open, PASS
-; Else set the var to the var's container and FAIL
+# COM_36_is_in_room_or_open_container(obj_num)
+
+If var object is in a room, PASS
+
+If var's container is open, PASS
+
+Else set the var to the var's container and FAIL
+
+```code
+COM_36_is_in_room_or_open_container:
 6E12: E5              PUSH    HL                  ; Hold script pointer
 6E13: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Var object structure
 6E16: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Skip to the data
@@ -2379,10 +2581,18 @@ COM_36__: ; ??
 6E3E: E1              POP     HL                  ; Restore the script pointer
 6E3F: 97              SUB     A                   ; Z=1 PASS
 6E40: C9              RET                         
+```
 
+# COM_24_exit_program()
+
+```code
 COM_24_exit_program:
 6E41: C3 2D 40        JP      $402D               ; {hard.EndProgram} Exit program normally
+```
 
+# COM_28_save_game()
+
+```code
 COM_28_save_game:
 6E44: 3E 55           LD      A,$55               ; "U" prefix
 6E46: 32 4F 6F        LD      ($6F4F),A           ; {code.objectSaveName} This goes to the USER save file USVDOBJS/DAT
@@ -2402,7 +2612,11 @@ COM_28_save_game:
 6E66: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 6E69: 77              LD      (HL),A              ; ?? loaded section number to the room number ??
 6E6A: C3 DA 6E        JP      $6EDA               ; {} Common access routine
+```
 
+# COM_27_load_game()
+
+```code
 COM_27_load_game:
 6E6D: 3E 55           LD      A,$55               ; "U" prefix to filename
 6E6F: 32 4F 6F        LD      ($6F4F),A           ; {code.objectSaveName} This goes to the USER save file USVDOBJS/DAT
@@ -2442,14 +2656,22 @@ COM_27_load_game:
 6EB1: 3A FA 71        LD      A,($71FA)           ; {code.currentLoadedSection} Is the needed disk ...
 6EB4: BE              CP      (HL)                ; ... section already loaded?
 6EB5: CA 6F 6A        JP      Z,$6A6F             ; {code.DescribeCurrentRoom} Yes ... go print the room description
-6EB8: C3 FE 69        JP      $69FE               ; {code.COM_2F_load_disk_section} No ... load the section and print description
+6EB8: C3 FE 69        JP      $69FE               ; {code.COM_2F_load_section_from_disk} No ... load the section and print description
+```
 
+# COM_34_save_system_objects_to_disk()
+
+```code
 COM_34_save_system_objects_to_disk:
 6EBB: 3E 20           LD      A,$20               ; 4420 - OPEN NEW OR EXISTING EXISTING (for writing/overwriting)
 6EBD: 32 03 6F        LD      ($6F03),A           ; {} Set LSB of CALL later in code
 6EC0: 3E 39           LD      A,$39               ; 4439 - WRITE RECORD (for writing)
 6EC2: C3 CC 6E        JP      $6ECC               ; {} Do the common read/write function
+```
 
+# COM_35_load_system_objects_from_disk()
+
+```code
 COM_35_load_system_objects_from_disk:
 6EC5: 3E 24           LD      A,$24               ; 4424 - OPEN EXISTING (for reading)
 6EC7: 32 03 6F        LD      ($6F03),A           ; {} Set LSB of CALL later in code
@@ -2558,10 +2780,16 @@ PrintAsciiString: ; Doesn't seem to be called
 6FAB: D1              POP     DE                  ; Restore
 6FAC: 13              INC     DE                  ; Point to next character
 6FAD: C3 A4 6F        JP      $6FA4               ; {code.PrintAsciiString} Do all characters
+```
 
+# COM_26_print_score()
+
+Score is kept in a BCD nibble printed as "X0" with a trailing 0.
+Thus score is "00", "10", "20", "30", etc. You will never see 100%.
+?? You can win/exit the game without turning on the radio -- without 100%.
+
+```code
 COM_26_print_score:
-; Score is kept in a BCD nibble printed as "X0" with a trailing 0.
-; Thus score is "00", "10", "20", "30", etc
 6FB0: E5              PUSH    HL                  ; Hold
 6FB1: 06 92           LD      B,$92               ; Look up the ...
 6FB3: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... score object
@@ -2584,7 +2812,11 @@ COM_26_print_score:
 6FD8: E1              POP     HL                  ; Restore
 6FD9: 97              SUB     A                   ; Z=1 PASS
 6FDA: C9              RET                         
+```
 
+# COM_38_bump_score()
+
+```code
 COM_38_bump_score:
 6FDB: E5              PUSH    HL                  ; Hold
 6FDC: 06 92           LD      B,$92               ; Look up ...
@@ -2597,10 +2829,16 @@ COM_38_bump_score:
 6FE9: E1              POP     HL                  ; Restore
 6FEA: 97              SUB     A                   ; Z=1 PASS
 6FEB: C9              RET                         
+```
 
-COM_39_check_weight_70_or_less:
-; PASS if weight is 70 or less
-; FAIL if too heavy
+# COM_39_is_weight_70_or_less()
+
+PASS if weight is 70 or less
+
+FAIL if too heavy
+
+```code
+COM_39_is_weight_70_or_less:
 6FEC: E5              PUSH    HL                  ; Hold script
 6FED: 21 7A 88        LD      HL,$887A            ; {+code.ObjectData} Run the list of objects
 6FF0: 97              SUB     A                   ; Total weight ...
@@ -2636,7 +2874,11 @@ COM_39_check_weight_70_or_less:
 7029: E1              POP     HL                  ; Restore script pointer
 702A: F6 01           OR      $01                 ; Z=0 FAIL
 702C: C9              RET                         
+```
 
+# COM_3A_clear_screen()
+
+```code
 COM_3A_clear_screen:
 702D: E5              PUSH    HL                  ; Hold script pointer
 702E: 21 00 3C        LD      HL,$3C00            ; Start of screen
@@ -2650,7 +2892,11 @@ COM_3A_clear_screen:
 703D: E1              POP     HL                  ; Restore script pointer
 703E: 97              SUB     A                   ; Z=1 PASS
 703F: C9              RET                         
+```
 
+# COM_3B_wait_for_key_123()
+
+```code
 COM_3B_wait_for_key_123:
 7040: E5              PUSH    HL                  ; Hold script pointer
 7041: CD 99 62        CALL    $6299               ; {code.GetKey} Wait for a key
@@ -2879,8 +3125,12 @@ unpackBuffer:
 71C2: 00 00 00              
 
 71C5: 00              
+```
 
-COM_2B_random:
+# COM_2B_generate_random()
+
+```code
+COM_2B_generate_random:
 71C6: C5              PUSH    BC                  ; Algorithm for random number from seed
 71C7: E5              PUSH    HL                  ; 
 71C8: 2A EC 71        LD      HL,($71EC)          ; {code.RandomSeed2}

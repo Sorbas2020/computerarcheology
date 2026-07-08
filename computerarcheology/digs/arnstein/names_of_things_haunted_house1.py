@@ -1,0 +1,35 @@
+ROOMS = {
+    0x01: 'FORYER',
+    0x02: 'LIVING_ROOM',
+    0x03: 'DINING_ROOM',
+    0x04: 'KITCHEN',
+    0x05: 'BREAKFAST_ROOM',
+    0x06: 'SERVANTS_QUARTERS1',
+    0x07: 'SERVANTS_QUARTERS2',
+    0x08: 'DEN',
+    0x09: 'EAST_END_HALL',
+    0x0A: 'WEST_END_HALL',
+    0x0B: 'GREEN_BEDROOM',
+    0x0C: 'SECRET_PASSAGE',
+    0x0D: 'BLUE_BEDROOM',
+    0x0E: 'MASTER_BEDROOM',
+    0x0F: 'LIBRARY',
+    0x10: 'OUTSIDE_HOUSE',
+}
+
+OBJECTS = {
+    0x01: 'PAPER',
+    0x02: 'DOOR',
+    0x03: 'KEY',
+    0x04: 'FIRE',
+    0x05: 'LOCKED_DOOR',
+    0x06: 'KNIFE',
+    0x07: 'ROPE',
+    0x08: 'ARMOR',
+    0x09: 'CABINET',
+    0x0A: 'BUCKET',
+    0x0B: 'KEY_IN_CABINET',
+    0x0C: 'ROPE_CEILING',
+    0x0D: 'SCROLL',
+}
+

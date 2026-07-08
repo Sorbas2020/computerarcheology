@@ -1632,6 +1632,7 @@ Com_27_load_game:
 4D8C: 11 95 4D        LD      DE,$4D95            
 4D8F: CD AF 4D        CALL    $4DAF               ; {}
 4D92: C3 0E 4D        JP      $4D0E               ; {}
+;
 4D95: 0D              DEC     C                   
 4D96: 43              LD      B,E                 
 4D97: 48              LD      C,B                 
