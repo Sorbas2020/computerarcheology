@@ -55,6 +55,7 @@ ADDRESSES = {
     "TRS80": {
         "PYRAMID_L1": {
             "File": "/git/ComputerArcheology/content/trs80/pyramid/code1.md",
+            "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
             "RoomTable": (0x4825, 0x4965),
             "RoomScripts": (0x4969, 0x4EE0),
@@ -67,6 +68,7 @@ ADDRESSES = {
         },
         "PYRAMID_L2": {
             "File": "/git/ComputerArcheology/content/trs80/pyramid/code.md",
+            "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
             "RoomTable": (0x4888, 0x49C8),
             "RoomScripts": (0x49CC, 0x4F43),
@@ -79,6 +81,7 @@ ADDRESSES = {
         },
         "HAUNTEDHOUSE1": {
             "File": "/git/ComputerArcheology/content/trs80/hauntedhouse/code1.md",
+            "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
             "RoomTable": (0x477F, 0x47BB),
             "RoomScripts": (0x47BF, 0x48C7),
@@ -90,6 +93,7 @@ ADDRESSES = {
         },
         "HAUNTEDHOUSE2": {
             "File": "/git/ComputerArcheology/content/trs80/hauntedhouse/code2.md",
+            "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
             "RoomTable": (0x4782, 0x479E),
             "RoomScripts": (0x47A2, 0x4914),
@@ -103,6 +107,7 @@ ADDRESSES = {
     "COCO": {
         "PYRAMID": {
             "File": "/git/ComputerArcheology/content/coco/pyramid/code.md",
+            "IsLittleEndian": False,
             "Commands": COMMANDS_PYRAMID,
             "RoomTable": (0x112E, 0x126E),
             "RoomScripts": (0x1272, 0x17E9),
@@ -160,21 +165,26 @@ def update_command_names(info):
         i = line.find('COM_')
         if i>-1:
             cn = int(line[i+4:i+6], 16)
-            addresses[cn] = int(line[9:11] + line[6:8], 16)            
-            # TODO print both
-            line = f'{line[:11]}        ; COM_{cn:02X}_{info["Commands"][cn][0]}({", ".join(info["Commands"][cn][1:])})'
-            lines[ps-1] = line    
+            if info['IsLittleEndian']:
+                addresses[cn] = int(line[9:11] + line[6:8], 16)                
+            else:
+                addresses[cn] = int(line[6:8] + line[9:11], 16)                                        
+            nline = f'{line[:11]}        ; COM_{cn:02X}_{info["Commands"][cn][0]}({", ".join(info["Commands"][cn][1:])})'
+            print(">>>", line, nline)
+            lines[ps-1] = nline    
 
     # Update the individual command routines
-    for i, addr in addresses.items():       
-
+    for i, addr in addresses.items():
+        if not info['IsLittleEndian'] and (i == 0x05 or i == 0x09):
+            # Special syntax for these two in the CoCo because they are one command
+            continue
         # The label 
         ps,pe = find_start_and_end(lines, addr, addr)
         lab = lines[ps-1]
         if lab.startswith('COM_') and lab.endswith(':'):
             labn = f'COM_{i:02X}_{info["Commands"][i][0]}:'
             lines[ps-1] = labn
-            # print('>>>',lab,labn)
+            print('>>>',lab,labn)
         else:
             raise Exception(f'Label not found for command at {addr:04X} (line {ps})')
         
@@ -184,62 +194,15 @@ def update_command_names(info):
         if not lines[ps].startswith(f'# COM_{i:02X}_'):
             raise Exception(f'Markdown not found for command at {addr:04X} (line {ps})')
         lines[ps] = f'# COM_{i:02X}_{info["Commands"][i][0]}({", ".join(info["Commands"][i][1:])})'
-        # print(lines[ps])
+        print('>>>', lines[ps])
 
+        # TODO updae all the comments and headers for all the commands. Make TRS80LV2 Pyramid the reference
 
-def read_command_table(file_path, start_addr, end_addr, little_endian=False):
-    ret = []
-    with open(file_path, "r") as f:            
-        g = ''
-        while not g.startswith(start_addr):
-            g = f.readline()
-        g = g.strip()
-        while True: # not g.startswith(end_addr):
-            if not g: # Stop on blank lines too
-                break
-            if len(g)>4 and g[4] == ':':
-                if little_endian:
-                    addr = int(g[6:8] + g[9:11], 16)
-                else:
-                    addr = int(g[9:11] + g[6:8], 16)
-                ret.append(addr)
-                print(f'addr: {addr:04X}')    
-                # Up to and including the end address
-                if g.startswith(end_addr):
-                    print('-----FOUND ',len(ret))
-                    print('')
-                    break        
-            g = f.readline()
-            g = g.strip()
-    return ret
+    write_code_file(info["File"], lines)
 
-info = ADDRESSES["TRS80"]["PYRAMID_L1"]
+# info = ADDRESSES["TRS80"]["PYRAMID_L1"]
+# info = ADDRESSES["TRS80"]["PYRAMID_L2"]
+#info = ADDRESSES["TRS80"]["HAUNTEDHOUSE1"]
+#info = ADDRESSES["TRS80"]["HAUNTEDHOUSE2"]
+info = ADDRESSES["COCO"]["PYRAMID"]
 update_command_names(info)
-
-# code = read_code_file(info["File"])
-
-# ps = 0
-# while not code[ps].startswith(f'{info["ScriptCommands"][0]:04X}:'):
-#     ps += 1
-# pe = ps
-# while not code[pe].startswith(f'{info["ScriptCommands"][1]:04X}:'):
-#     pe += 1
-# pe += 1
-
-# command_table = []
-
-# cn = 1
-# x = ps
-# y = pe
-# while x < y:
-#     line = code[x]    
-#     if len(line) > 4 and line[4] == ':':
-#         addr = int(line[9:11] + line[6:8], 16)        
-#         command_table.append(addr)
-#         if addr:
-#             line = f'{line[:11]}        ; COM _{cn:02X}_{info["Commands"][cn][0]}({", ".join(info["Commands"][cn][1:])})'
-#             print(">>>",line)
-#         cn += 1
-#     x += 1
-# print(code[ps:pe])
-

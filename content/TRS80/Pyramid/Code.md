@@ -65,8 +65,8 @@ containers are in.
 
 ```code
 GetObjectInfo:
-; Recurse through carriers to find the room number of the requested object. 
-; Return HL points to the top level object entry. 
+; Recurse through carriers to find the room number of the requested object.
+; Return HL points to the top level object entry.
 ; Return ZF is set if top level object room number matches E.
 4350: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} Information about all the objects
 4353: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} Room number to 2-byte table entry
@@ -120,10 +120,10 @@ SetObjectLocation:
 Each room is a collection of verb and the script commands that go with each verb. We look through
 the verb-map for the room and run the list of script commands for that verb.
 
-As soon as an individual command fails, we stop the processing of the list. As long as the commands 
+As soon as an individual command fails, we stop the processing of the list. As long as the commands
 are passing, we continue to run them.
 
-Interestingly, if a command list for a verb FAILS, we continue looking for verb matches in the 
+Interestingly, if a command list for a verb FAILS, we continue looking for verb matches in the
 collection. That allows for multiple command lists to be given for the same verb.
 
 If the user verb matches the collection and all the commands pass, we return with NOT ZERO as a sign
@@ -211,7 +211,7 @@ ScriptCommandFAIL:
 43C1: C9              RET                         
 ```
 
-# COM_07_
+# COM_07_stop_if_pass()
 
 Run the list of commands (a sub-script). We always return SUCCESS, but if the list completes
 successfully all the way to the end, we abort the outer script. If the sub-script fails,
@@ -221,7 +221,7 @@ This gives us the ability to code a line of if/else commands. We keep trying the
 until one finishes completely.
 
 ```code
-COM_07_:
+COM_07_stop_if_pass:
 43C2: E1              POP     HL                  ; Pop the current pointer
 43C3: CD 96 43        CALL    $4396               ; {code.RunScript} Run the list of commands
 43C6: E5              PUSH    HL                  ; Current script position
@@ -803,10 +803,10 @@ WelcomeMsg:
 
 ; The next 40 bytes (there is that magic number 40 again) are uninitalized
 ; memory reserved for the stack. The uninitialized memory contains the output of
-; a previous assembly, but with a different origin. You'll find these live 
-; instructions in this final assembly at 47FA below -- just 99 bytes from here. 
-; 99 bytes of compiled code was added above this between the final assembly and 
-; the assembly before this. We get a peek at the system one step before the 
+; a previous assembly, but with a different origin. You'll find these live
+; instructions in this final assembly at 47FA below -- just 99 bytes from here.
+; 99 bytes of compiled code was added above this between the final assembly and
+; the assembly before this. We get a peek at the system one step before the
 ; final assembly.
 ;
 ;                ; Disassembly of the PREVIOUS state of the code.
@@ -814,23 +814,23 @@ WelcomeMsg:
 ; UNINITIALIZED MEMORY
 4797: E1         ;     POP     HL
 4798: CA B8 47   ;     JP      Z,$47B8
-479B: 3E 00      ;     LD      A,$00               
-479D: CE 00      ;     ADC     $00                 
-479F: 29         ;     ADD     HL,HL               
-47A0: 44         ;     LD      B,H                 
-47A1: 85         ;     ADD     A,L                 
+479B: 3E 00      ;     LD      A,$00
+479D: CE 00      ;     ADC     $00
+479F: 29         ;     ADD     HL,HL
+47A0: 44         ;     LD      B,H
+47A1: 85         ;     ADD     A,L
 47A2: 2A 22 48   ;     LD      HL,($4822)
-47A5: 95         ;     SUB     L                   
-47A6: 4F         ;     LD      C,A                 
-47A7: 78         ;     LD      A,B                 
-47A8: 9C         ;     SBC     H                   
-47A9: 47         ;     LD      B,A                 
-47AA: C5         ;     PUSH    BC                  
+47A5: 95         ;     SUB     L
+47A6: 4F         ;     LD      C,A
+47A7: 78         ;     LD      A,B
+47A8: 9C         ;     SBC     H
+47A9: 47         ;     LD      B,A
+47AA: C5         ;     PUSH    BC
 47AB: D2 B0 47   ;     JP      NC,$47B0
-47AE: 09         ;     ADD     HL,BC               
-47AF: E3         ;     EX      (SP),HL             
-47B0: 21 B7 47   ;     LD      HL,$47B7            
-47B3: 3F         ;     CCF                         
+47AE: 09         ;     ADD     HL,BC
+47AF: E3         ;     EX      (SP),HL
+47B0: 21 B7 47   ;     LD      HL,$47B7
+47B3: 3F         ;     CCF
 47B4: C3 90 47   ;     JP      $4790
 47B7: 00         ;
 47B8: 01 F9 47   ;     LD      NC,$47F9
@@ -842,7 +842,7 @@ WelcomeMsg:
 TopOfStack:
 ; The Z80 stack decrements before write. The 40 bytes above are the uninitialized
 ; memory reserved for the statck.
-47BF: 00 
+47BF: 00
 
 EmptyString:
 47C0: 00 00 ; For objects that have no descriptions
@@ -1036,19 +1036,19 @@ The following messages in loc.c are regular prints here: 16, 20, 21, 22,
 
 ```
 Large sequences left out of Pyramid:
-  - 107 - 112 "Witt's end" (replaced with Land of the Dead)
-  - 69 - 79 "Secret canyon area"
-  - 115 - 140 "Repository, Dragon, and Bear"
+- 107 - 112 "Witt's end" (replaced with Land of the Dead)
+- 69 - 79 "Secret canyon area"
+- 115 - 140 "Repository, Dragon, and Bear"
 
 Single rooms missing from Pyramid:
-  - 35 "Shadowing figure peering back at you" (mirror from 110, which was removed)
-  - 66 "Swiss cheese room" (better in a cave)
-  - 95 "Sparkling waterfall" (probably not a lot of these in a pyramid) TRIDENT here
-  - 113 "Underground reservoir" (probably not a lot of these in a pyramid)
-  - 91 "Steep incline"  
-  - 97 "Oriental room"
-  - 98 "Misty carvern"
-  - 101 "Dark room" STONE TABLET congrats on bringing light
+- 35 "Shadowing figure peering back at you" (mirror from 110, which was removed)
+- 66 "Swiss cheese room" (better in a cave)
+- 95 "Sparkling waterfall" (probably not a lot of these in a pyramid) TRIDENT here
+- 113 "Underground reservoir" (probably not a lot of these in a pyramid)
+- 91 "Steep incline"
+- 97 "Oriental room"
+- 98 "Misty carvern"
+- 101 "Dark room" STONE TABLET congrats on bringing light
 ```
 
 Rusty door in 94. Oil to get access to 95 and the trident.
@@ -1271,7 +1271,7 @@ room_8: ; woodsRoom10
 ;
 4A47: 02 03     ; E
 4A49: 01 07     ;    MoveToRoom(room_7) woodsRoom9
-4A4B: 0C 03     ; OUT 
+4A4B: 0C 03     ; OUT
 4A4D: 01 07     ;    MoveToRoom(room_7) woodsRoom9
 4A4F: 04 03     ; W
 4A51: 01 09     ;    MoveToRoom(room_9) woodsRoom11
@@ -2070,7 +2070,7 @@ room_61: ; woodsRoom103
 ; YOU'RE_IN_A_LARGE_ROOM_WITH_ANCIENT_DRAWINGS_ON_ALL_WALLS.______
 ; THE_PICTURES_DEPICT_ATUM,_A_PHARAOH_WEARING_THE_DOUBLE_CROWN.___
 ; A_SHALLOW_PASSAGE_PROCEEDS_DOWNWARD,_AND_A_SOMEWHAT_STEEPER_ONE_
-; LEADS_UP.__A_LOW_HANDS_AND_KNEES_PASSAGE_ENTERS_FROM_THE_SOUTH. 
+; LEADS_UP.__A_LOW_HANDS_AND_KNEES_PASSAGE_ENTERS_FROM_THE_SOUTH.
 ;
 4E06: 03 11     ; S
 4E08: 07 06     ;    StopIfPassElseContinue
@@ -2100,7 +2100,7 @@ room_62: ; woodsRoom102
 
 room_63: ; woodsRoom104
 ; PS_23
-; YOU_ARE_IN_A_LONG_SLOPING_CORRIDOR_WITH_RAGGED_WALLS._ 
+; YOU_ARE_IN_A_LONG_SLOPING_CORRIDOR_WITH_RAGGED_WALLS._
 ;
 4E2A: 09 03     ; U
 4E2C: 01 3D     ;    MoveToRoom(room_61) woodsRoom103
@@ -2472,14 +2472,14 @@ ObjectData:
 4FE9: 00 00 ; 000_00000 00  ; 2    obj_bridge_18        *
 4FEB: 00 00 ;               ; 3
 4FED: 00 00 ;               ; 4
-4FEF: 00 00 ;               ; 5 
+4FEF: 00 00 ;               ; 5
 4FF1: 00 33 ; 000_00000 33  ; 6    obj_MACHINE          (Room 51)
 4FF3: 00 51 ; 000_00000 51  ; 7    obj_PLANT_A          (Room 81)
 4FF5: 00 00 ; 000_00000 00  ; 8    obj_PLANT_B          *
 4FF7: 00 00 ; 000_00000 00  ; 9    obj_PLANT_C          *
 4FF9: 00 00 ;               ; 10
 4FFB: 00 10 ; 000_00000 10  ; 11   obj_SERPENT          (Room 16)
-4FFD: 00 00 ;               ; 12 
+4FFD: 00 00 ;               ; 12
 4FFF: 00 00 ;               ; 13
 5001: 40 02 ; 010_00000 02  ; 14   obj_LAMP_off         (Room 2)
 5003: 40 00 ; 010_00000 00  ; 15   obj_LAMP_on          *
@@ -2505,7 +2505,7 @@ ObjectData:
 502B: 40 00 ; 010_00000 00  ; 35   obj_BATTERIES_fresh  *
 502D: 40 00 ; 010_00000 00  ; 36   obj_BATTERIES_worn   *
 502F: 60 0E ; 011_00000 0E  ; 37   obj_GOLD             (Room 14)
-5031: 60 11 ; 011_00000 11  ; 38   obj_DIAMNODS         (Room 17) 
+5031: 60 11 ; 011_00000 11  ; 38   obj_DIAMNODS         (Room 17)
 5033: 60 19 ; 011_00000 19  ; 39   obj_SILVER           (Room 25)
 5035: 60 12 ; 011_00000 12  ; 40   obj_JEWELRY          (Room 18)
 5037: 60 18 ; 011_00000 18  ; 41   obj_COINS            (Room 24)
@@ -2607,32 +2607,32 @@ ScriptCommands:
 509F: 8A 51        ; COM_01_move_look(room_num)
 50A1: C8 52        ; COM_02_is_in_pack(obj_num)
 50A3: D7 52        ; COM_03_is_in_pack_or_current_room(obj_num)
-50A5: 5E 53        ; COM_04_Print(ps_num)
-50A7: 49 54        ; COM_05_PrintScoreAndStop
+50A5: 5E 53        ; COM_04_print(ps_num)
+50A7: 49 54        ; COM_05_death_and_resurrect()
 50A9: 00 00
-50AB: C2 43        ; COM_07_StopIfPassElseContinue
-50AD: C7 54        ; COM_08_PrintScore
-50AF: EF 55        ; COM_09_PrintScoreAndStop
-50B1: 18 53        ; COM_0A_AssertRandomIsLessOrEqual
-50B3: 6B 53        ; COM_0B_DropObject(obj_num)
-50B5: 32 53        ; COM_0C_MoveToRoomIfItWasLastRoom(room_num)
-50B7: FB 52        ; COM_0D_AssertPackIsEmptyExceptForEmerald
-50B9: 81 53        ; COM_0E_MoveToLastRoom
-50BB: 9B 53        ; COM_0F_PrintInventory
-50BD: DB 53        ; COM_10_PrintRoomDescription
-50BF: E1 53        ; COM_11_AssertObjectMatchesUserInput(obj_num)
-50C1: EF 53        ; COM_12_GetObjectFromRoom(obj_num)
+50AB: C2 43        ; COM_07_stop_if_pass()
+50AD: C7 54        ; COM_08_print_score()
+50AF: EF 55        ; COM_09_end_of_game()
+50B1: 18 53        ; COM_0A_pyramid_crawl_move_random(value)
+50B3: 6B 53        ; COM_0B_drop_object_print_ok(obj_num)
+50B5: 32 53        ; COM_0C_move_to_room_if_was_last(room_num)
+50B7: FB 52        ; COM_0D_is_pack_just_emerald()
+50B9: 81 53        ; COM_0E_move_to_last_room()
+50BB: 9B 53        ; COM_0F_print_inventory()
+50BD: DB 53        ; COM_10_print_room_description()
+50BF: E1 53        ; COM_11_is_object_user_input(obj_num)
+50C1: EF 53        ; COM_12_get_from_room_print_ok(obj_num)
 50C3: 00 00
-50C5: 2B 54        ; COM_14_PrintOK
-50C7: 34 54        ; COM_15_MoveObjectToRoom(obj_num,room_num)
-50C9: 43 53        ; COM_16_GetUserInputObject
-50CB: 24 54        ; COM_17_DropUserInputObject
-50CD: A5 52        ; COM_18_MoveObjectToCurrentRoom(obj_num)
-50CF: B3 52        ; COM_19_MoveObjectIntoContainer(obj_num,obj_num)
-50D1: EA 52        ; COM_1A_AssertObjectIsInCurrentRoom(obj_num)
-50D3: F5 55        ; COM_1B_LoadGame
-50D5: 54 56        ; COM_1C_SaveGame
-50D7: 94 56        ; COM_1D_RandomizeDirections
+50C5: 2B 54        ; COM_14_print_ok()
+50C7: 34 54        ; COM_15_move_object_to_room(obj_num, room_num)
+50C9: 43 53        ; COM_16_get_users_object_print_ok()
+50CB: 24 54        ; COM_17_drop_users_object_print_ok()
+50CD: A5 52        ; COM_18_move_object_to_current_room(obj_num)
+50CF: B3 52        ; COM_19_put_object_in_container_print_ok(obj_num, obj_num)
+50D1: EA 52        ; COM_1A_is_in_current_room(obj_num)
+50D3: F5 55        ; COM_1B_load_game()
+50D5: 54 56        ; COM_1C_save_game()
+50D7: 94 56        ; COM_1D_scramble_directions_print_ack()
 ```
 
 # After Every Step
@@ -2738,7 +2738,7 @@ If there is light in the new room then the room description is printed.
 After every move the code checks the pack for treasures. If there are 2 or more treasures then
 the Mummy moves them all to room 53 (the hard-to-find room in the maze). Then the code moves the
 chest to room 53. Up till now the chest has been in room 0 (out of play). The only way to make the
-chest appear in the maze is to encounter the mummy. Once the chest is in a room (any room) the 
+chest appear in the maze is to encounter the mummy. Once the chest is in a room (any room) the
 mummy no longer appears. You only see the mummy once.
 
 The mummy says he is going to take the treasures and "PUT_THEM_IN_THE_CHEST_DEEP_IN_THE_MAZE!".
@@ -2782,7 +2782,7 @@ COM_01_move_look:
 51CE: DA DA 51        JP      C,$51DA             ; {} Yes, we were lucky. Make the move.
 51D1: 21 04 79        LD      HL,$7904            ; {+code.PS_A1} "YOU_FELL_INTO_A_PIT_AND_BROKE_EVERY_BONE_IN_YOUR_BODY. "
 51D4: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
-51D7: C3 49 54        JP      $5449               ; {code.PlayerDied} The player died. Resurrect the player.
+51D7: C3 49 54        JP      $5449               ; {code.COM_05_death_and_resurrect} The player died. Resurrect the player.
 ;
 51DA: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Copy current room number ...
 51DD: 32 44 50        LD      ($5044),A           ; {code.lastRoom} ... to last room number
@@ -2894,10 +2894,10 @@ DescribeRoom:
 52A2: C3 83 52        JP      $5283               ; {} Go back for all objects
 ```
 
-# COM_18_
+# COM_18_move_object_to_current_room(obj_num)
 
 ```code
-COM_18_:
+COM_18_move_object_to_current_room:
 52A5: E1              POP     HL                  ; Get script pointer
 52A6: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Get current room
 52A9: 5F              LD      E,A                 ; Object destination
@@ -2908,10 +2908,10 @@ COM_18_:
 52B0: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# COM_19_
+# COM_19_put_object_in_container_print_ok(obj_num, obj_num)
 
 ```code
-COM_19_:
+COM_19_put_object_in_container_print_ok:
 52B3: E1              POP     HL                  ; Get script pointer
 52B4: 7E              LD      A,(HL)              ; Get object number from script
 52B5: 23              INC     HL                  ; Next byte in script
@@ -2925,15 +2925,15 @@ COM_19_:
 52C2: 77              LD      (HL),A              ; ... flag on the target object
 52C3: 23              INC     HL                  ; Being carried by ...
 52C4: 70              LD      (HL),B              ; ... container
-52C5: C3 2B 54        JP      $542B               ; {code.PrintOK} Print OK and command passes
+52C5: C3 2B 54        JP      $542B               ; {code.COM_14_print_ok} Print OK and command passes
 ```
 
-# COM_02_
+# COM_02_is_in_pack(obj_num)
 
 This command checks if the requested object is in the backpack.
 
 ```code
-COM_02_:
+COM_02_is_in_pack:
 52C8: E1              POP     HL                  ; Get the next ...
 52C9: 7E              LD      A,(HL)              ; ... byte from ...
 52CA: 23              INC     HL                  ; ... the script
@@ -2944,13 +2944,13 @@ COM_02_:
 52D4: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} No, command fails
 ```
 
-# COM_03_
+# COM_03_is_in_pack_or_current_room(obj_num)
 
 This command checks if the requested object is accessible (current room
 or backpack).
 
 ```code
-COM_03_:
+COM_03_is_in_pack_or_current_room:
 52D7: E1              POP     HL                  ; Get the next ...
 52D8: 46              LD      B,(HL)              ; ... byte from ...
 52D9: 23              INC     HL                  ; ... the script
@@ -2964,13 +2964,13 @@ COM_03_:
 52E7: C3 CC 52        JP      $52CC               ; {} Check the backpack for the object
 ```
 
-# COM_1A_
+# COM_1A_is_in_current_room(obj_num)
 
 This command checks if the request object (or object's top level container) is in
 the current room.
 
 ```code
-COM_1A_:
+COM_1A_is_in_current_room:
 52EA: E1              POP     HL                  ; Get the script pointer
 52EB: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Checking ...
 52EE: 5F              LD      E,A                 ; ... current room
@@ -2982,13 +2982,13 @@ COM_1A_:
 52F8: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} Otherwise the command fails
 ```
 
-# COM_0D_
+# COM_0D_is_pack_just_emerald()
 
 This very specific command checks if the backpack is empty or has just the emerald. This is
 used in the script for room_73, the "TIGHT_SQUEEZE" from the "CHAMBER_OF_THE_HIGH_PRIEST".
 
 ```code
-COM_0D_:
+COM_0D_is_pack_just_emerald:
 52FB: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData}
 52FE: 0E 01           LD      C,$01               ; Start checking with object 1
 5300: 23              INC     HL                  ; Location of object
@@ -3006,9 +3006,9 @@ COM_0D_:
 5315: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Success
 ```
 
-# COM_0A_
+# COM_0A_pyramid_crawl_move_random(value)
 
-This command is a very specific move command. If the random value is less than or equal to 
+This command is a very specific move command. If the random value is less than or equal to
 the given target value, then the player stays in the same room. The code prints the "crawled
 around" message and reprints the current room description and the command returns success.
 If the random value is greater than the given value, the command fails.
@@ -3028,7 +3028,7 @@ But for values 241 through 255, the command fails and the player moves to room_5
 (ANTEROOM_OF_SEKER).
 
 ```code
-COM_0A_:
+COM_0A_pyramid_crawl_move_random:
 5318: E1              POP     HL                  ; Get target ...
 5319: 46              LD      B,(HL)              ; ... value from script
 531A: 23              INC     HL                  ; Update the ...
@@ -3043,7 +3043,7 @@ COM_0A_:
 532F: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Pass
 ```
 
-# COM_0C_
+# COM_0C_move_to_room_if_was_last(room_num)
 
 This command moves the player to the target room but only if the target room was the last room.
 
@@ -3052,7 +3052,7 @@ If the target room is not the last room, the command fails.
 This command is not used in any script.
 
 ```code
-COM_0C_:
+COM_0C_move_to_room_if_was_last:
 5332: E1              POP     HL                  ; Get destination ...
 5333: 46              LD      B,(HL)              ; ... room
 5334: 23              INC     HL                  ; Update the ...
@@ -3063,13 +3063,13 @@ COM_0C_:
 533D: E1              POP     HL                  ; Back the script ...
 533E: 2B              DEC     HL                  ; ... pointer up so we ...
 533F: E5              PUSH    HL                  ; ... can call MoveToRoom
-5340: C3 8A 51        JP      $518A               ; {code.MoveToRoom} Normal move to room (with lighting checks)
+5340: C3 8A 51        JP      $518A               ; {code.COM_01_move_look} Normal move to room (with lighting checks)
 ```
 
-# COM_16_
+# COM_16_get_users_object_print_ok()
 
 ```code
-COM_16_:
+COM_16_get_users_object_print_ok:
 5343: 3A 7B 46        LD      A,($467B)           ; {code.noun} Get the object number the player requested
 5346: 1E FF           LD      E,$FF               ; Get the ...
 5348: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... target object's info
@@ -3083,12 +3083,12 @@ COM_16_:
 535B: C3 F4 53        JP      $53F4               ; {code.GetToBackpack} ... GET operation
 ```
 
-# COM_04_
+# COM_04_print(ps_num)
 
 This command unpacks a string and prints it. This command always succeeds.
 
 ```code
-COM_04_:
+COM_04_print:
 535E: E1              POP     HL                  ; Get the script pointer
 535F: 5E              LD      E,(HL)              ; Get the LSB of the string
 5360: 23              INC     HL                  ; Next in script
@@ -3100,10 +3100,10 @@ COM_04_:
 5368: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Printing is always a success
 ```
 
-# COM_0B_
+# COM_0B_drop_object_print_ok(obj_num)
 
 ```code
-COM_0B_:
+COM_0B_drop_object_print_ok:
 536B: E1              POP     HL                  ; Get the target ...
 536C: 46              LD      B,(HL)              ; ... object from the script
 536D: 23              INC     HL                  ; Update the ...
@@ -3115,17 +3115,17 @@ COM_0B_:
 5379: 5F              LD      E,A                 ; Move ...
 537A: 78              LD      A,B                 ; ... object to ...
 537B: CD 76 43        CALL    $4376               ; {code.SetObjectLocation} ... current room
-537E: C3 2B 54        JP      $542B               ; {code.PrintOK} Print OK and command passes
+537E: C3 2B 54        JP      $542B               ; {code.COM_14_print_ok} Print OK and command passes
 ```
 
-# COM_0E_
+# COM_0E_move_to_last_room()
 
 This command is only used by the "BACK" command to return the player to the last room.
 
 This command always passes but prints a message if there was no last room.
 
 ```code
-COM_0E_:
+COM_0E_move_to_last_room:
 5381: 3A 44 50        LD      A,($5044)           ; {code.lastRoom} Was there ...
 5384: A7              AND     A                   ; ... a last room?
 5385: CA 92 53        JP      Z,$5392             ; {} No, print error and pass
@@ -3139,10 +3139,10 @@ COM_0E_:
 5398: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# COM_0F_
+# COM_0F_print_inventory()
 
 ```code
-COM_0F_:
+COM_0F_print_inventory:
 539B: 3A 45 50        LD      A,($5045)           ; {code.numObjInPack} Is there anything in ...
 539E: A7              AND     A                   ; ... the backpack?
 539F: C2 AB 53        JP      NZ,$53AB            ; {} Yes, go list the contents
@@ -3179,18 +3179,18 @@ COM_0F_:
 53D8: C3 B3 53        JP      $53B3               ; {} Check all objects
 ```
 
-# COM_10_
+# COM_10_print_room_description()
 
 ```code
-COM_10_:
+COM_10_print_room_description:
 53DB: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Print the room description (with objects)
 53DE: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# COM_11_
+# COM_11_is_object_user_input(obj_num)
 
 ```code
-COM_11_:
+COM_11_is_object_user_input:
 53E1: E1              POP     HL                  ; Get the script pointer
 53E2: 46              LD      B,(HL)              ; Get the target object
 53E3: 23              INC     HL                  ; Update the ...
@@ -3201,10 +3201,10 @@ COM_11_:
 53EC: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} yes, command passes
 ```
 
-# COM_12_
+# COM_12_get_from_room_print_ok(obj_num)
 
 ```code
-COM_12_:
+COM_12_get_from_room_print_ok:
 53EF: E1              POP     HL                  ; Get the script pointer
 53F0: 46              LD      B,(HL)              ; Get the object number
 53F1: 23              INC     HL                  ; Update ...
@@ -3232,31 +3232,31 @@ GetToBackpack:
 541B: 78              LD      A,B                 ; Object number
 541C: 1E FF           LD      E,$FF               ; Backpack location
 541E: CD 76 43        CALL    $4376               ; {code.SetObjectLocation} Move the object to the backpack
-5421: C3 2B 54        JP      $542B               ; {code.PrintOK} Print OK and command passes
+5421: C3 2B 54        JP      $542B               ; {code.COM_14_print_ok} Print OK and command passes
 ```
 
-# COM_17_
+# COM_17_drop_users_object_print_ok()
 
 ```code
-COM_17_:
+COM_17_drop_users_object_print_ok:
 5424: 3A 7B 46        LD      A,($467B)           ; {code.noun} Get the player's ...
 5427: 47              LD      B,A                 ; ... noun input
 5428: C3 6F 53        JP      $536F               ; {} Continue with drop
 ```
 
-# COM_14_
+# COM_14_print_ok()
 
 ```code
-COM_14_:
+COM_14_print_ok:
 542B: 21 2F 75        LD      HL,$752F            ; {+code.PS_85} "OK_"
 542E: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print string
 5431: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# COM_15_
+# COM_15_move_object_to_room(obj_num, room_num)
 
 ```code
-COM_15_:
+COM_15_move_object_to_room:
 5434: E1              POP     HL                  ; Get the script pointer
 5435: 7E              LD      A,(HL)              ; Get the object number
 5436: 23              INC     HL                  ; Next in script
@@ -3273,10 +3273,10 @@ COM_15_:
 5446: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 ```
 
-# COM_05_
+# COM_05_death_and_resurrect()
 
 ```code
-COM_05_:
+COM_05_death_and_resurrect:
 5449: 3A 46 50        LD      A,($5046)           ; {code.numResurrected} Number of resurrections
 544C: 3C              INC     A                   ; Add one ...
 544D: 32 46 50        LD      ($5046),A           ; {code.numResurrected} ... to the count
@@ -3292,7 +3292,7 @@ COM_05_:
 5463: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the message
 5466: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Wait for the user
 5469: FE 59           CP      $59                 ; Is it a "Y" for yes to continuing on?
-546B: C2 EF 55        JP      NZ,$55EF            ; {code.PrintScoreAndStop} No, print score and stop
+546B: C2 EF 55        JP      NZ,$55EF            ; {code.COM_09_end_of_game} No, print score and stop
 546E: 2A C5 54        LD      HL,($54C5)          ; {code.NextResurrectMessage} Print resurrection ...
 5471: CD AE 45        CALL    $45AE               ; {code.PrintPacked} ... message
 5474: 21 02 50        LD      HL,$5002            ; {+} obj_LAMP_off to ...
@@ -3334,16 +3334,16 @@ SecondResurrection:
 ThirdResurrection:
 54BC: 21 79 7E        LD      HL,$7E79            ; {+code.PS_BB} "HOW_CAN_I_REINCARNATE_YOU____WITHOUT_ORANGE_SMOKE?"
 54BF: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
-54C2: C3 EF 55        JP      $55EF               ; {code.PrintScoreAndStop} All lives gone. Print score and stop.
+54C2: C3 EF 55        JP      $55EF               ; {code.COM_09_end_of_game} All lives gone. Print score and stop.
 
 NextResurrectMessage:
 54C5: 00 00
 ```
 
-# COM_08_
+# COM_08_print_score()
 
 ```code
-COM_08_:
+COM_08_print_score:
 54C7: CD CD 54        CALL    $54CD               ; {code.PrintScore} Print the score
 54CA: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Command passes
 
@@ -3467,39 +3467,39 @@ BinaryToASCII:
 55B1: C9              RET                         
 
 scoreTempLSB:
-55B2: 00 
+55B2: 00
 
 scoreTempMSB:
-55B3: 00           
+55B3: 00
 
 ScoreString:
 ; YOU_SCORED_______OUT_OF_A_POSSIBLE_0220,_USING______TURNS.
-55B4: 59 4F 55 20 53 43 4F 52 45 44 20 
+55B4: 59 4F 55 20 53 43 4F 52 45 44 20
 scoreSign:
-55BF: 20 
+55BF: 20
 scoreSpot:
 55C0: 20 20 20 20 20 4F 55 54 20 4F 46 20 41 20 50 4F 53 53 49 42
-55D4: 4C 45 20 30 32 32 30 2C 20 55 53 49 4E 47 20 
+55D4: 4C 45 20 30 32 32 30 2C 20 55 53 49 4E 47 20
 turnSpot:
 55E3: 20 20 20 20 20 54 55 52 4E 53 2E 00
 ```
 
-# COM_09_
+# COM_09_end_of_game()
 
 ```code
-COM_09_:
+COM_09_end_of_game:
 55EF: CD CD 54        CALL    $54CD               ; {code.PrintScore} Print the score
 
 EndlessLoop:
 55F2: C3 F2 55        JP      $55F2               ; {code.EndlessLoop} Endless loop ... game over
 ```
 
-# COM_1B_LoadGame
+# COM_1B_load_game()
 
 "RCONT:" ; Label appears in unitialized memory in Code1.md!
 
 ```code
-COM_1B_LoadGame:
+COM_1B_load_game:
 55F5: 21 A0 7F        LD      HL,$7FA0            ; {+code.PS_BE} "READY CASSETTE"
 55F8: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
 55FB: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Wait on key
@@ -3541,7 +3541,7 @@ COM_1B_LoadGame:
 ; to the top, but if the player aborts the load at the top of this function, then the
 ; game continues with corrupt data. Oops.
 ;
-563C: C3 F5 55        JP      $55F5               ; {code.RCONT} Go back and try again
+563C: C3 F5 55        JP      $55F5               ; {code.COM_1B_load_game} Go back and try again
 ;
 563F: CD F8 01        CALL    $01F8               ; {hard.TapeOff} Turn off the tape
 ;
@@ -3556,13 +3556,13 @@ COM_1B_LoadGame:
 5651: C3 19 43        JP      $4319               ; {code.GameLoop} Back to input loop
 ```
 
-# COM_1C_SaveGame
+# COM_1C_save_game()
 
 Save 4F45 through 5047 That's one too many and picks up a byte from the ObjectDescriptions table (read only).
 The LoadGame code restores the first four bytes of this ObjectDescriptions table for some reason.
 
 ```code
-COM_1C_SaveGame:
+COM_1C_save_game:
 5654: 21 A0 7F        LD      HL,$7FA0            ; {+code.PS_BE} "READY_CASSETTE"
 5657: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the message
 565A: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Get a key
@@ -3599,10 +3599,10 @@ COM_1C_SaveGame:
 5691: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS}
 ```
 
-# COM_1D_
+# COM_1D_scramble_directions_print_ack()
 
 ```code
-COM_1D_:
+COM_1D_scramble_directions_print_ack:
 5694: 3A 74 47        LD      A,($4774)           ; {code.keyWaitCounter} Random value
 5697: E6 03           AND     $03                 ; 0, 1, 2, or 3
 5699: 47              LD      B,A                 ; To B
@@ -4483,7 +4483,7 @@ PS_20: ; room_60
 ; YOU'RE_IN_A_LARGE_ROOM_WITH_ANCIENT_DRAWINGS_ON_ALL_WALLS.______
 ; THE_PICTURES_DEPICT_ATUM,_A_PHARAOH_WEARING_THE_DOUBLE_CROWN.___
 ; A_SHALLOW_PASSAGE_PROCEEDS_DOWNWARD,_AND_A_SOMEWHAT_STEEPER_ONE_
-; LEADS_UP.__A_LOW_HANDS_AND_KNEES_PASSAGE_ENTERS_FROM_THE_SOUTH. 
+; LEADS_UP.__A_LOW_HANDS_AND_KNEES_PASSAGE_ENTERS_FROM_THE_SOUTH.
 PS_21: ; room_61
 65D5: 55 C7 DE AF 23 D0 15 7B 14 54 8B 9B 6C 01 B3 59
 65E5: 90 82 7B 90 14 47 54 B3 9A EB 5B 50 D1 CB 6E 03
@@ -4508,7 +4508,7 @@ PS_22: ; room_62
 66C2: 15 17 47 4A 13 4B 5E D6 B5 DB 72 36 6E 1A 16 1D
 66D2: A0 16 EE DB 72 4F 13 40 A0 81 15 44 2E 00
 
-; YOU_ARE_IN_A_LONG_SLOPING_CORRIDOR_WITH_RAGGED_WALLS._ 
+; YOU_ARE_IN_A_LONG_SLOPING_CORRIDOR_WITH_RAGGED_WALLS._
 PS_23: ; room_63
 66E0: 12 C7 DE 94 14 4B 5E 83 96 49 16 AB 98 C9 B8 90
 66F0: A5 C5 6A BC A0 09 79 99 AF 82 7B 2B 17 F7 6C 19
@@ -5372,7 +5372,7 @@ PS_A0:
 
 ; 23	 YOU FELL INTO A PIT AND BROKE EVERY BONE IN YOUR BODY!
 ;
-; YOU_FELL_INTO_A_PIT_AND_BROKE_EVERY_BONE_IN_YOUR_BODY. 
+; YOU_FELL_INTO_A_PIT_AND_BROKE_EVERY_BONE_IN_YOUR_BODY.
 PS_A1:
 7904: 12 C7 DE 4F 15 F3 8C 9E 7A C3 9C E3 16 03 BC 33
 7914: 98 79 4F 9B 85 CF 62 7B B4 00 4F 4B 5E 9B 96 34
