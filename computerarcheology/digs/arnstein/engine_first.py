@@ -1,3 +1,7 @@
+import specifics_pyramid
+import specifics_hauntedhouse1
+import specifics_hauntedhouse2
+
 COMMANDS_PYRAMID = {
 0x01:     ['move_look',                          'room_num'],
 0x02:     ['is_in_pack',                         'obj_num'],
@@ -57,6 +61,8 @@ ADDRESSES = {
             "File": "/git/ComputerArcheology/content/trs80/pyramid/code1.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
+            "Rooms": specifics_pyramid.ROOMS,
+            "Objects": specifics_pyramid.OBJECTS,
             "RoomTable": (0x4825, 0x4965),
             "RoomScripts": (0x4969, 0x4EE0),
             "AmbientLightTable": (0x4EE2, 0x4F82),
@@ -70,6 +76,8 @@ ADDRESSES = {
             "File": "/git/ComputerArcheology/content/trs80/pyramid/code.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
+            "Rooms": specifics_pyramid.ROOMS,
+            "Objects": specifics_pyramid.OBJECTS,
             "RoomTable": (0x4888, 0x49C8),
             "RoomScripts": (0x49CC, 0x4F43),
             "AmbientLightTable": (0x4F45, 0x4FE5),
@@ -83,8 +91,11 @@ ADDRESSES = {
             "File": "/git/ComputerArcheology/content/trs80/hauntedhouse/code1.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
+            "Rooms": specifics_hauntedhouse1.ROOMS,
+            "Objects": specifics_hauntedhouse1.OBJECTS,
             "RoomTable": (0x477F, 0x47BB),
             "RoomScripts": (0x47BF, 0x48C7),
+            "AmbientLightTable": None,
             "ObjectData": (0x48C8, 0x48E0),
             "ObjectDescriptions": (0x48E3, 0x48FB),
             "ScriptCommands": (0x48FD, 0x491D),
@@ -95,8 +106,11 @@ ADDRESSES = {
             "File": "/git/ComputerArcheology/content/trs80/hauntedhouse/code2.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
+            "Rooms": specifics_hauntedhouse2.ROOMS,
+            "Objects": specifics_hauntedhouse2.OBJECTS,
             "RoomTable": (0x4782, 0x479E),
             "RoomScripts": (0x47A2, 0x4914),
+            "AmbientLightTable": None,
             "ObjectData": (0x4915, 0x492D),
             "ObjectDescriptions": (0x4933, 0x494B),
             "ScriptCommands": (0x494D, 0x496B),
@@ -109,6 +123,8 @@ ADDRESSES = {
             "File": "/git/ComputerArcheology/content/coco/pyramid/code.md",
             "IsLittleEndian": False,
             "Commands": COMMANDS_PYRAMID,
+            "Rooms": specifics_pyramid.ROOMS,
+            "Objects": specifics_pyramid.OBJECTS,
             "RoomTable": (0x112E, 0x126E),
             "RoomScripts": (0x1272, 0x17E9),
             "AmbientLightTable": (0x17EB, 0x188B),
@@ -134,7 +150,9 @@ def write_code_file(file_name, code):
         for line in code:
             f.write(line + "\n")
 
-def find_start_and_end(lines, start_addr, end_addr):
+def find_start_and_end(lines, start_addr, end_addr=None):
+    if end_addr is None:
+        end_addr = start_addr
     ps = 0
     while not lines[ps].startswith(f'{start_addr:04X}:'):
         ps += 1
@@ -200,9 +218,148 @@ def update_command_names(info):
 
     write_code_file(info["File"], lines)
 
-# info = ADDRESSES["TRS80"]["PYRAMID_L1"]
-# info = ADDRESSES["TRS80"]["PYRAMID_L2"]
-#info = ADDRESSES["TRS80"]["HAUNTEDHOUSE1"]
-#info = ADDRESSES["TRS80"]["HAUNTEDHOUSE2"]
+def update_room_names(info):
+    # RoomTable
+    lines = read_code_file(info["File"])
+    ps,pe = find_start_and_end(lines, info["RoomTable"][0], info["RoomTable"][1])
+
+    if lines[ps-2] != 'RoomTable:':        
+        raise Exception(f'Expected RoomTable: label at {info["RoomTable"][0]:04X} (line {ps-2})')
+
+    room_ps = {}
+    rn = 0
+    while ps < pe:
+        line = lines[ps]
+        ps += 1
+        if line.startswith(';'):            
+            continue
+        rn += 1
+        if line[4]!=':' or line[18]!=';':
+            raise Exception(f'Expected room table entry at {info["RoomTable"][0]:04X} (line {ps})')
+        
+        if line[6:17] == '00 00 00 00':
+            rm_text = '                                '
+            ps_text = '     '
+            com_text = line[19:].strip()
+        else:          
+            rm_text = f'RM_{rn:02X}_{info["Rooms"][rn].ljust(26)}'  
+            i = line.rfind('PS_')
+            ps_text = line[i:i+5]
+            if ps_text in room_ps:
+                room_ps[ps_text].append(f'RM_{rn:02X}')
+            else:
+                room_ps[ps_text] = [rm_text.strip()]
+            com_text = line[i+5:].strip()
+        nl = f'{line[:17]} ; {rm_text} {ps_text}    {com_text}'        
+        print(">>>",nl)
+        lines[ps-1] = nl
+
+    # AmbientLight table
+
+    if info["AmbientLightTable"] is not None:
+
+        ps,pe = find_start_and_end(lines, info["AmbientLightTable"][0], info["AmbientLightTable"][1])
+        if lines[ps-2] != 'AmbientLightTable:':        
+            raise Exception(f'Expected AmbientLightTable: label at {info["AmbientLightTable"][0]:04X} (line {ps-2})')
+        
+        rn = 0
+        while ps < pe:
+            line = lines[ps]
+            ps += 1
+            if line.startswith(';'):            
+                continue
+            rn += 1
+            if line[4]!=':':
+                raise Exception(f'Expected room table entry at {info["RoomTable"][0]:04X} (line {ps})')
+            i = line.find(';')
+            com_text = line[i+1:].strip()
+            i = com_text.find(' ')
+            if i > -1:
+                com_text = com_text[i+1:].strip()
+            else:
+                com_text = ''
+            if rn in info["Rooms"]:
+                rm_text = f'RM_{rn:02X}_{info["Rooms"][rn].ljust(26)}'
+            else:
+                rm_text = f'RM_{rn:02X}_{"".ljust(26)}'
+            nl = f'{line[:11]} ; {rm_text}    {com_text}'
+            print(">>>",nl)
+            lines[ps-1] = nl
+
+    # PS_xx room description comments
+
+    for ps_text, room_nums in room_ps.items():
+        for i in range(len(lines)):
+            if lines[i].startswith(f'{ps_text}:'):
+                break
+        line = lines[i]
+        nl = f'{line[:6]} ; {", ".join(room_nums)}'        
+        print(">>>", nl)
+        lines[i] = nl        
+
+    # RoomScripts (elsewhere)
+    # Objects (elsewhere)
+    # GeneralScript (elsewhere)
+
+    write_code_file(info["File"], lines) 
+
+def update_objects(info):
+    lines = read_code_file(info["File"])
+    ps,pe = find_start_and_end(lines, info["ObjectData"][0], info["ObjectData"][1])
+
+    onum = 0
+    while ps < pe:
+        line = lines[ps]
+        ps += 1
+        if line.startswith(';'):            
+            continue
+        if line[4]!=':' or line[12]!=';':
+            raise Exception(f'Expected object data entry at {info["ObjectData"][0]:04X} (line {ps})')
+        
+        onum += 1
+
+        data = line[13:].strip()
+        if not data:
+            continue
+
+        rn  = int(line[9:11], 16)
+        if rn==0:
+            rn_text = '*'
+        else:
+            rn_text = f'RM_{rn:02X}_{info["Rooms"][rn]}'
+        obj_text = f'OBJ_{onum:02X}_{info["Objects"][onum]}'
+
+        nl = f'{line[:22]} {obj_text.ljust(24)} {rn_text}'
+        
+        print(">>>",nl)
+        lines[ps-1] = nl        
+
+    # TODO object descriptions
+
+    write_code_file(info["File"], lines)
+
+
+info = ADDRESSES["TRS80"]["PYRAMID_L2"]
+# update_command_names(info)
+# update_room_names(info)
+# update_objects(info)
+
+info = ADDRESSES["TRS80"]["PYRAMID_L1"]
+# update_command_names(info)
+# update_room_names(info)
+# update_objects(info)
+
 info = ADDRESSES["COCO"]["PYRAMID"]
-update_command_names(info)
+# update_command_names(info)
+# update_room_names(info)
+# update_objects(info)
+
+info = ADDRESSES["TRS80"]["HAUNTEDHOUSE1"]
+# update_command_names(info)
+# update_room_names(info)
+# update_objects(info)
+
+info = ADDRESSES["TRS80"]["HAUNTEDHOUSE2"]
+# update_command_names(info)
+#update_room_names(info)
+update_objects(info)

@@ -31,9 +31,9 @@ Start:
 
 GameLoop:
 4319: 97              SUB     A                   ; A=0
-431A: 32 7B 46        LD      ($467B),A           ; {code.noun} Clear noun (object within reach)
-431D: 32 7C 46        LD      ($467C),A           ; {code.verb} Clear verb (throw, north, rub, etc)
-4320: 32 7D 46        LD      ($467D),A           ; {code.grammar} Grammar type (verb, verb+nounInReach, verb+nounInPack)
+431A: 32 7B 46        LD      ($467B),A           ; {code.inputNoun} Clear noun (object within reach)
+431D: 32 7C 46        LD      ($467C),A           ; {code.inputVerb} Clear verb (throw, north, rub, etc)
+4320: 32 7D 46        LD      ($467D),A           ; {code.verbGrammar} Grammar type (verb, verb+nounInReach, verb+nounInPack)
 4323: CD CF 43        CALL    $43CF               ; {code.ParseUserInput} Get user input line and parse
 4326: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Room number
 4329: 21 88 48        LD      HL,$4888            ; {+code.RoomTable} Room descriptors
@@ -81,6 +81,7 @@ GetObjectInfo:
 
 TableOffsetTwoBytes:
 ; HL = HL + (A-1)*2
+; Notice that the first index is "1" -- not "0".
 4361: D5              PUSH    DE                  ; Hold DE
 4362: EB              EX      DE,HL               ; HL to DE for later add
 4363: 6F              LD      L,A                 ; LSB ...
@@ -137,7 +138,7 @@ ProcessRoomScript:
 437E: A7              AND     A                   ; Are we at the end?
 437F: C8              RET     Z                   ; Yes, we are done. Return ZERO as FAIL.
 ;
-4380: 3A 7C 46        LD      A,($467C)           ; {code.verb} User's input verb
+4380: 3A 7C 46        LD      A,($467C)           ; {code.inputVerb} User's input verb
 4383: BE              CP      (HL)                ; Does the input verb match the script verb?
 4384: 23              INC     HL                  ; Point to next byte
 4385: CA 8F 43        JP      Z,$438F             ; {} Yes, dive into this script
@@ -157,42 +158,41 @@ ProcessRoomScript:
 RunScript:
 4396: E5              PUSH    HL                  ; Hold the script pointer
 4397: 4E              LD      C,(HL)              ; Get the length
-4398: 06 00           LD      B,$00               ; Point to the end ...
+4398: 06 00           LD      B,$00               ; Point past the end ...
 439A: 09              ADD     HL,BC               ; ... of the script
 439B: E3              EX      (SP),HL             ; Now the end of the script is on the stack
 439C: 23              INC     HL                  ; Next byte is the command
 ;
 RunScriptCommand:
 439D: 7E              LD      A,(HL)              ; Get the command number
-439E: 23              INC     HL                  ; Next in command
-439F: E5              PUSH    HL                  ; Hold our pointer
+439E: 23              INC     HL                  ; Next command in the script
+439F: E5              PUSH    HL                  ; Hold current pointer
 43A0: 21 9F 50        LD      HL,$509F            ; {+code.ScriptCommands} Table of script commands
 43A3: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} Offset into table
 43A6: 7E              LD      A,(HL)              ; Hold LSB from table
 43A7: 23              INC     HL                  ; Get the ...
 43A8: 66              LD      H,(HL)              ; ... msb to H
 43A9: 6F              LD      L,A                 ; HL now points to the routine to run
-43AA: E9              JP      (HL)                ; Jump to the command
+43AA: E9              JP      (HL)                ; Execute command (then to ScriptCommandPASS or FAIL below)
 ```
 
 # Script Command PASS
 
-When an individual command succeeds, it comes here. If there are no more commands
-left in the script, we return with ZF cleared as a sign of success. If there are
-commands left, we continue running the next one.
+When an individual command succeeds, it comes here. If we reached the end of the list (all
+commands passed) then we return Z=0 PASS. Otherwise, we continue to the next command.
 
 ```code
 ScriptCommandPASS:
 43AB: E1              POP     HL                  ; The current script pointer
 43AC: D1              POP     DE                  ; The calculated end of the script
 43AD: 7C              LD      A,H                 ; Are we at the ...
-43AE: BA              CP      D                   ; ... end of the script?
+43AE: BA              CP      D                   ; ... end of the script (LSB)?
 43AF: C2 BA 43        JP      NZ,$43BA            ; {} No ... keep going
 43B2: 7D              LD      A,L                 ; Are we at the ...
-43B3: BB              CP      E                   ; ... end of the script?
+43B3: BB              CP      E                   ; ... end of the script (MSB)?
 43B4: C2 BA 43        JP      NZ,$43BA            ; {} No ... keep going
-43B7: F6 01           OR      $01                 ; Clear the ZERO flag for success
-43B9: C9              RET                         ; Done
+43B7: F6 01           OR      $01                 ; Z=0 PASS
+43B9: C9              RET                         
 ;
 43BA: D5              PUSH    DE                  ; Put the calculated end of script back on stack
 43BB: C3 9D 43        JP      $439D               ; {code.RunScriptCommand} Run the next command
@@ -200,37 +200,43 @@ ScriptCommandPASS:
 
 # Script Command FAIL
 
-When an individual command fails, it comes here. We return ZF set as a sign of failure. No more
-commands are run.
+When an individual command fails, it comes here. We return Z=1 FAIL. No more commands in this
+script are run.
 
 ```code
 ScriptCommandFAIL:
 43BE: E1              POP     HL                  ; Pop the script pointer
 43BF: E1              POP     HL                  ; Pop the calculated end of the script
-43C0: AF              XOR     A                   ; Set the ZERO flag meaning failure
+43C0: AF              XOR     A                   ; Z=1 FAIL
 43C1: C9              RET                         
 ```
 
 # COM_07_stop_if_pass()
 
-Run the list of commands (a sub-script). We always return SUCCESS, but if the list completes
-successfully all the way to the end, we abort the outer script. If the sub-script fails,
-the we pass to the next command in the outer script.
+Run a sublist of commands. If all the commands in the sublist pass, we abort the current script we are
+in with a PASS. If a command in the subscript fails, we continue in the current script at the next
+command beyond the failed subscript.
 
-This gives us the ability to code a line of if/else commands. We keep trying the sub-lists
-until one finishes completely.
+In other words: if the sublist passes, then abort the script with a PASS. Otherwise, continue on to the
+next command after the sublist.
+
+There are a few places in Pyramid and Haunted House that nest these sublists, but never more than two
+levels deep total.
+
+All of the other commands are "do something" commands. This command provides "if/else" abilities to the
+scripts.
 
 ```code
 COM_07_stop_if_pass:
-43C2: E1              POP     HL                  ; Pop the current pointer
+43C2: E1              POP     HL                  ; Get the current script pointer
 43C3: CD 96 43        CALL    $4396               ; {code.RunScript} Run the list of commands
 43C6: E5              PUSH    HL                  ; Current script position
-43C7: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} The list failed ... treat that as a PASS
+43C7: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} The list failed. PASS into the next command.
 ; The subscript failed. Bail out (with a PASS)
-43CA: E1              POP     HL                  ; Pop the current pointer
-43CB: E1              POP     HL                  ; Pop the calculated end of list
-43CC: F6 01           OR      $01                 ; Return NOT ZERO ... a PASS
-43CE: C9              RET                         
+43CA: E1              POP     HL                  ; Get the current pointer
+43CB: E1              POP     HL                  ; Get the calculated end of list
+43CC: F6 01           OR      $01                 ; Return Z=0 PASS
+43CE: C9              RET                         ; Return from ALL command processing, not just this command
 ```
 
 # Parse User Input
@@ -239,24 +245,24 @@ COM_07_stop_if_pass:
 ParseUserInput:
 43CF: CD 05 46        CALL    $4605               ; {code.PromptAndReadLine} Get the command line from the player
 43D2: CD A2 44        CALL    $44A2               ; {code.ParseInputString} Parse the input string
-43D5: 2A AA 45        LD      HL,($45AA)          ; {code.nounPointer} Pointer to the noun word
-43D8: 3A A8 45        LD      A,($45A8)           ; {code.numBytesWordData} Number of bytes ...
+43D5: 2A AA 45        LD      HL,($45AA)          ; {code.nounDataPtr} Pointer to the noun word
+43D8: 3A A8 45        LD      A,($45A8)           ; {code.nounDataSize} Number of bytes ...
 43DB: 47              LD      B,A                 ; ... in word data
-43DC: 3A 7D 46        LD      A,($467D)           ; {code.grammar} Verb grammar
+43DC: 3A 7D 46        LD      A,($467D)           ; {code.verbGrammar} Verb grammar
 43DF: FE 03           CP      $03                 ; Value 3 means stand alone verb
 43E1: CA CF 43        JP      Z,$43CF             ; {code.ParseUserInput} We needed a noun before but didn't get one. Get it now.
-43E4: 3A 7B 46        LD      A,($467B)           ; {code.noun} Do we have ..
+43E4: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Do we have ..
 43E7: A7              AND     A                   ; ... a noun?
 43E8: C2 1C 44        JP      NZ,$441C            ; {} Yes, go check it
-43EB: 3A 7C 46        LD      A,($467C)           ; {code.verb} Otherwise, do we have ...
+43EB: 3A 7C 46        LD      A,($467C)           ; {code.inputVerb} Otherwise, do we have ...
 43EE: A7              AND     A                   ; ... a verb?
 43EF: C2 0D 44        JP      NZ,$440D            ; {} Yes, go handle it
 ;
 ; General error message ... didn't understand a thing
-43F2: 3A 7E 46        LD      A,($467E)           ; {code.nextErrorString} Last general error message
+43F2: 3A 7E 46        LD      A,($467E)           ; {code.nextErrorNum} Last general error message
 43F5: 3C              INC     A                   ; Point to next
 43F6: E6 03           AND     $03                 ; Roll around over 4 messages
-43F8: 32 7E 46        LD      ($467E),A           ; {code.nextErrorString} For next time
+43F8: 32 7E 46        LD      ($467E),A           ; {code.nextErrorNum} For next time
 43FB: 21 7F 46        LD      HL,$467F            ; {+code.PtrErrorString1} Table of general error messages
 43FE: 07              RLCA                        ; Two bytes each
 43FF: 4F              LD      C,A                 ; All ...
@@ -269,7 +275,7 @@ ParseUserInput:
 4407: CD D0 45        CALL    $45D0               ; {code.PrintPlain} Print the error
 440A: C3 CF 43        JP      $43CF               ; {code.ParseUserInput} Back for more
 ;
-440D: 3A 7D 46        LD      A,($467D)           ; {code.grammar} Action word type
+440D: 3A 7D 46        LD      A,($467D)           ; {code.verbGrammar} Action word type
 4410: FE C0           CP      $C0                 ; 11_000_000 means single word command
 4412: C8              RET     Z                   ; Input is just one word, we are done
 ;
@@ -279,23 +285,23 @@ ParseUserInput:
 4419: C3 CF 43        JP      $43CF               ; {code.ParseUserInput} Try again
 ;
 ; Validate noun
-441C: 22 AA 45        LD      ($45AA),HL          ; {code.nounPointer} Save pointer to noun word data
+441C: 22 AA 45        LD      ($45AA),HL          ; {code.nounDataPtr} Save pointer to noun word data
 441F: 3A A1 44        LD      A,($44A1)           ; {code.isLoneObject} Was the last input an object and ...
 4422: A7              AND     A                   ; ...  we then asked for a verb?
 4423: C2 8E 44        JP      NZ,$448E            ; {} Yes, skip checking the noun (use what we have)
 ;
 4426: 7E              LD      A,(HL)              ; Get the object number
 4427: 23              INC     HL                  ; Next word
-4428: 22 AA 45        LD      ($45AA),HL          ; {code.nounPointer} Noun word data pointer
+4428: 22 AA 45        LD      ($45AA),HL          ; {code.nounDataPtr} Noun word data pointer
 442B: 1E FF           LD      E,$FF               ; Backpack location
 442D: C5              PUSH    BC                  ; Save BC
 442E: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Look up the requested object
 4431: C1              POP     BC                  ; Restore BC
 4432: CA 86 44        JP      Z,$4486             ; {} Object is actually in pack ... go use it
-4435: 3A 7D 46        LD      A,($467D)           ; {code.grammar} Grammar type
+4435: 3A 7D 46        LD      A,($467D)           ; {code.verbGrammar} Grammar type
 4438: FE 40           CP      $40                 ; 01_000_000 means noun-in-pack
 443A: CA 4E 44        JP      Z,$444E             ; {} Yes, check the backpack
-443D: 2A AA 45        LD      HL,($45AA)          ; {code.nounPointer} Noun word pointer
+443D: 2A AA 45        LD      HL,($45AA)          ; {code.nounDataPtr} Noun word pointer
 4440: 2B              DEC     HL                  ; Back up the word pointer
 4441: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Is ...
 4444: 5F              LD      E,A                 ; ... this ...
@@ -305,12 +311,12 @@ ParseUserInput:
 444A: C1              POP     BC                  ; Restore BC
 444B: CA 86 44        JP      Z,$4486             ; {} Yes, go use it
 ;
-444E: 2A AA 45        LD      HL,($45AA)          ; {code.nounPointer} Restore word data pointer
+444E: 2A AA 45        LD      HL,($45AA)          ; {code.nounDataPtr} Restore word data pointer
 4451: 05              DEC     B                   ; All objects of this name tried?
 4452: C2 26 44        JP      NZ,$4426            ; {} No ... keep looking for matching object
 ;
 ; Object not found (either not in pack or not in room depending on verb requirements)
-4455: 3A 7D 46        LD      A,($467D)           ; {code.grammar} Grammar type
+4455: 3A 7D 46        LD      A,($467D)           ; {code.verbGrammar} Grammar type
 4458: FE 40           CP      $40                 ; 01_000_000 means noun-in-pack
 445A: C2 63 44        JP      NZ,$4463            ; {} Error ... can't find noun in room
 445D: 21 98 46        LD      HL,$4698            ; {+code.MsgNotCarrying} "YOU_AREN'T_CARRYING_IT."
@@ -327,15 +333,15 @@ ParseUserInput:
 4479: 21 91 46        LD      HL,$4691            ; {+code.MsgHere} "_HERE."
 447C: CD D0 45        CALL    $45D0               ; {code.PrintPlain} Print the last fragment of error
 447F: 97              SUB     A                   ; Clear ...
-4480: 32 7B 46        LD      ($467B),A           ; {code.noun} ... the unknown noun
+4480: 32 7B 46        LD      ($467B),A           ; {code.inputNoun} ... the unknown noun
 4483: C3 CF 43        JP      $43CF               ; {code.ParseUserInput} Back to try again
 ;
 ; Found object
-4486: 2A AA 45        LD      HL,($45AA)          ; {code.nounPointer}
+4486: 2A AA 45        LD      HL,($45AA)          ; {code.nounDataPtr}
 4489: 2B              DEC     HL                  ; Back up to start
 448A: 7E              LD      A,(HL)              ; Get the object number
-448B: 32 7B 46        LD      ($467B),A           ; {code.noun} Hold the noun
-448E: 3A 7C 46        LD      A,($467C)           ; {code.verb} Get the verb
+448B: 32 7B 46        LD      ($467B),A           ; {code.inputNoun} Hold the noun
+448E: 3A 7C 46        LD      A,($467C)           ; {code.inputVerb} Get the verb
 4491: A7              AND     A                   ; Noun and verb?
 4492: C0              RET     NZ                  ; Yes, done
 4493: 21 B0 46        LD      HL,$46B0            ; {+code.MsgWhatDoWith} "WHAT_DO_YOU_WANT_ME_TO_DO_WITH_THE_"+noun+"?"
@@ -345,7 +351,7 @@ ParseUserInput:
 449E: C3 CF 43        JP      $43CF               ; {code.ParseUserInput} Back to get user input
 
 isLoneObject:
-44A1: 00 ; 1 if there was a lone object given last input
+44A1: 00 ; 1 if a lone object was given last input
 ```
 
 # Tokenize the input
@@ -356,8 +362,8 @@ Parse the input into words.
 ParseInputString:
 44A2: 21 5A 46        LD      HL,$465A            ; {+code.inputBuffer} Start of user input buffer
 44A5: 97              SUB     A                   ; Clear the ...
-44A6: 32 A9 45        LD      ($45A9),A           ; {code.bufferHasSomething} ... buffer-has-something flag
-44A9: 32 7D 46        LD      ($467D),A           ; {code.grammar} ... and the grammar
+44A6: 32 A9 45        LD      ($45A9),A           ; {code.someDecoded} ... buffer-has-something flag
+44A9: 32 7D 46        LD      ($467D),A           ; {code.verbGrammar} ... and the grammar
 ;
 44AC: 11 CE 56        LD      DE,$56CE            ; {+code.wordTable} Pointer to all the words we know
 44AF: EB              EX      DE,HL               ; Now HL=words we know, DE=where we are in the input
@@ -370,21 +376,21 @@ ParseInputString:
 44B7: C2 BE 44        JP      NZ,$44BE            ; {} ... leading ...
 44BA: 23              INC     HL                  ; ... blank ...
 44BB: C3 B4 44        JP      $44B4               ; {} ... spaces
-44BE: 22 7B 47        LD      ($477B),HL          ; {code.startOfWord} start of this word
+44BE: 22 7B 47        LD      ($477B),HL          ; {code.inputWordPtr} start of this word
 44C1: A7              AND     A                   ; Nothing but spaces?
 44C2: CA 5C 45        JP      Z,$455C             ; {} Yes, we are done parsing
 ;
 44C5: 3E 01           LD      A,$01               ; There is SOMETHING ...
-44C7: 32 A9 45        LD      ($45A9),A           ; {code.bufferHasSomething} ... in the buffer
+44C7: 32 A9 45        LD      ($45A9),A           ; {code.someDecoded} ... in the buffer
 44CA: E5              PUSH    HL                  ; Hold the pointer
 44CB: 1A              LD      A,(DE)              ; First byte of word table
 44CC: A7              AND     A                   ; Reached the end of the table?
 44CD: CA 67 45        JP      Z,$4567             ; {} Done tokenizing ... now have a look at the words
-44D0: 32 81 47        LD      ($4781),A           ; {code.wordBeingTested} Hold 1st byte of word being tested
+44D0: 32 81 47        LD      ($4781),A           ; {code.testWord} Hold 1st byte of word being tested
 44D3: E6 07           AND     $07                 ; Number of bytes ...
 44D5: 4F              LD      C,A                 ; ... in ...
-44D6: 32 7D 47        LD      ($477D),A           ; {code.charsInWord} ... current word text
-44D9: 3A 81 47        LD      A,($4781)           ; {code.wordBeingTested} We'll need that info byte several times
+44D6: 32 7D 47        LD      ($477D),A           ; {code.numCharsTest} ... current word text
+44D9: 3A 81 47        LD      A,($4781)           ; {code.testWord} We'll need that info byte several times
 44DC: E6 38           AND     $38                 ; Number ...
 44DE: 0F              RRCA                        ; ... of ...
 44DF: 0F              RRCA                        ; ... bytes ...
@@ -401,7 +407,7 @@ ParseInputString:
 44EE: 13              INC     DE                  ; Next in word text
 44EF: 0D              DEC     C                   ; All characters of word being tested?
 44F0: C2 E8 44        JP      NZ,$44E8            ; {} No, keep testing
-44F3: 3A 7D 47        LD      A,($477D)           ; {code.charsInWord} Number of characters in the test word
+44F3: 3A 7D 47        LD      A,($477D)           ; {code.numCharsTest} Number of characters in the test word
 44F6: FE 06           CP      $06                 ; Six is the max size EXCEPT FOR "SCEPTER" WHICH IS 7 -- BUG?
 44F8: CA 05 45        JP      Z,$4505             ; {code.FindEndOfInputWord} Six matched ... ignore the rest of the input
 ;
@@ -420,12 +426,12 @@ FindEndOfInputWord:
 450F: 23              INC     HL                  ; Next character in input
 4510: C3 05 45        JP      $4505               ; {code.FindEndOfInputWord} Find end of word
 ;
-4513: 3A 81 47        LD      A,($4781)           ; {code.wordBeingTested}
+4513: 3A 81 47        LD      A,($4781)           ; {code.testWord}
 4516: E6 C0           AND     $C0                 ; Is the word a noun? (anything else is a verb)
 4518: CA 2D 45        JP      Z,$452D             ; {} Yes ... record the noun
-451B: 32 7D 46        LD      ($467D),A           ; {code.grammar} Hold the verb's grammar
+451B: 32 7D 46        LD      ($467D),A           ; {code.verbGrammar} Hold the verb's grammar
 451E: 1A              LD      A,(DE)              ; Get the verb number ...
-451F: 32 7C 46        LD      ($467C),A           ; {code.verb} ... from script (lots of words might map to same number)
+451F: 32 7C 46        LD      ($467C),A           ; {code.inputVerb} ... from script (lots of words might map to same number)
 ;
 4522: E5              PUSH    HL                  ; Hold input pointer
 4523: 21 FD 46        LD      HL,$46FD            ; {+code.unknownVerb} Storage for unknownVerb
@@ -434,12 +440,12 @@ FindEndOfInputWord:
 452A: C3 46 45        JP      $4546               ; {} Skip spaces and next word
 ;
 452D: 1A              LD      A,(DE)              ; Store the ...
-452E: 32 7B 46        LD      ($467B),A           ; {code.noun} ... noun number (several words might match)
+452E: 32 7B 46        LD      ($467B),A           ; {code.inputNoun} ... noun number (several words might match)
 4531: EB              EX      DE,HL               ; Get HL into position
-4532: 22 AA 45        LD      ($45AA),HL          ; {code.nounPointer} Store pointer to noun
+4532: 22 AA 45        LD      ($45AA),HL          ; {code.nounDataPtr} Store pointer to noun
 4535: EB              EX      DE,HL               ; Restore pointer positions
 4536: 78              LD      A,B                 ; Number of bytes ...
-4537: 32 A8 45        LD      ($45A8),A           ; {code.numBytesWordData} ... of data for this word
+4537: 32 A8 45        LD      ($45A8),A           ; {code.nounDataSize} ... of data for this word
 453A: 97              SUB     A                   ; Clear the ...
 453B: 32 A1 44        LD      ($44A1),A           ; {code.isLoneObject} ... isLoneObject flag (we have a verb)
 ;
@@ -467,18 +473,18 @@ FindEndOfTestData:
 4558: E1              POP     HL                  ; Restore pointer to input
 4559: C3 B4 44        JP      $44B4               ; {} Skip blank spaces in input
 ;
-455C: 3A A9 45        LD      A,($45A9)           ; {code.bufferHasSomething} Is the buffer ...
+455C: 3A A9 45        LD      A,($45A9)           ; {code.someDecoded} Is the buffer ...
 455F: A7              AND     A                   ; ... empty?
 4560: C0              RET     NZ                  ; YES, we are done
 ;
 4561: 3E 03           LD      A,$03               ; Stand alone ...
-4563: 32 7D 46        LD      ($467D),A           ; {code.grammar} ... verb
+4563: 32 7D 46        LD      ($467D),A           ; {code.verbGrammar} ... verb
 4566: C9              RET                         ; Done
 ;
 4567: E1              POP     HL                  ; Restore pointer to input
 4568: 97              SUB     A                   ; Zero the ...
-4569: 32 7C 46        LD      ($467C),A           ; {code.verb} ... verb
-456C: 32 7B 46        LD      ($467B),A           ; {code.noun} And the noun
+4569: 32 7C 46        LD      ($467C),A           ; {code.inputVerb} ... verb
+456C: 32 7B 46        LD      ($467B),A           ; {code.inputNoun} And the noun
 456F: 7E              LD      A,(HL)              ; Next input
 4570: FE 20           CP      $20                 ; Is it a space?
 4572: C2 79 45        JP      NZ,$4579            ; {code.SkipInputWord} No, go process it
@@ -496,7 +502,7 @@ SkipInputWord:
 
 CopyWord:
 4585: EB              EX      DE,HL               ; Now DE=storage
-4586: 2A 7B 47        LD      HL,($477B)          ; {code.startOfWord}
+4586: 2A 7B 47        LD      HL,($477B)          ; {code.inputWordPtr}
 4589: 06 28           LD      B,$28               ; 40 chars max in storage for word
 458B: 7E              LD      A,(HL)              ; From input buffer
 458C: A7              AND     A                   ; End of the buffer?
@@ -517,18 +523,16 @@ CopyWord:
 45A4: C2 9F 45        JP      NZ,$459F            ; {} ... the "@" character
 45A7: C9              RET                         
 
-numBytesWordData:
-45A8: 00
+nounDataSize:
+45A8: 00 ; Number of bytes in noun's data area
 
-bufferHasSomething:
-45A9: 00 ; 0 if the input buffer is empty or 1 if there is input
+someDecoded:
+45A9: 00 ; 1 if something was decoded from input
 
-nounPointer:
-45AA: 00 00
+nounDataPtr:
+45AA: 00 00 ; Pointer to noun data
 
 ; unused
-; !! But adding these two bytes makes the following code line up perfectly with the address
-; of haunted house floor 1. Probably a coincidence?
 45AC: 00 00
 ```
 
@@ -638,7 +642,7 @@ PromptAndReadLine:
 4625: CA 57 46        JP      Z,$4657             ; {code.InputDone} Yes, we are done
 4628: 0C              INC     C                   ; Increment the character count
 4629: 23              INC     HL                  ; Next in buffer
-462A: 11 7A 46        LD      DE,$467A            ; {+code.OnePastInput} One past the end of the input buffer
+462A: 11 7A 46        LD      DE,$467A            ; {+} One past the end of the input buffer
 462D: 7C              LD      A,H                 ; Overflowed the ...
 462E: BA              CP      D                   ; ... buffer?
 462F: DA 10 46        JP      C,$4610             ; {} No, keep taking keys
@@ -694,20 +698,18 @@ inputBuffer:
 ; Hole within the hole:
 ; --  "---------------,A"  0D  ; Must be "MOV x,A" where x is B,C,D,E,H,L,M,A
 ; 12  "0000  -----------"  --  ; Double-space means no label, and we know the length (10)
+467A: 00 ; null terminator for input buffer
 
-OnePastInput: ; Really UNUSED, but having this makes a label reference above
-467A: 00
+inputNoun:
+467B: 00 ; The user input noun
 
-noun:
-467B: 00
+inputVerb:
+467C: 00 ; The user input verb
 
-verb:
-467C: 00
+verbGrammar:
+467D: 00 ; The phrase's grammar type
 
-grammar:
-467D: 00
-
-nextErrorString:
+nextErrorNum:
 467E: 00    ; Which error string do we show next? 0, 1, 2, or 3
 
 PtrErrorString1:
@@ -777,25 +779,25 @@ ErrorString4:
 4758: 49 20 44 4F 4E 27 54 20 4B 4E 4F 57 20 57 48 41 54 20 59 4F 55 20 4D 45 41 4E 2E 00
 
 keyWaitCounter:
-4774: 00 ; Entropy for random numbers
+4774: 00 ; Rapidly bumped waiting on a key (random)
 
 ; unused
 4775: 00 00 00 00
 
 currentParsePtr:
-4779: 00 00
+4779: 00 00 ; Pointer to word table entry while parsing
 
-startOfWord:
-477B: 00 00 ; Input buffer start of word we are tokenizing
+inputWordPtr:
+477B: 00 00 ; Pointer to word being tokenized
 
-charsInWord:
-477D: 00 ; Number of characters in the test word while tokenizing
+numCharsTest:
+477D: 00 ; Number of chars in test word (tokenizing)
 
 ; unused
 477E: 00 00 00
 
-wordBeingTested:
-4781: 00
+testWord:
+4781: 00 ; First byte of word data (tokenizing)
 
 ; "WELCOME TO PYRAMID!!"
 WelcomeMsg:
@@ -845,7 +847,10 @@ TopOfStack:
 47BF: 00
 
 EmptyString:
-47C0: 00 00 ; For objects that have no descriptions
+47C0: 00 ; For objects that have no descriptions
+
+; unused
+47C1: 00
 ```
 
 # Packed strings
@@ -895,13 +900,13 @@ Bringing us to "YOU_AR", and so on.
 UnpackStringToScreen:
 47C2: 32 84 48        LD      ($4884),A           ; {code.unpackNumWords} Number of words to unpack
 47C5: 3E 01           LD      A,$01               ; We are unpacking to ...
-47C7: 32 87 48        LD      ($4887),A           ; {code.unpackFlagToScreen} ... the screen
+47C7: 32 87 48        LD      ($4887),A           ; {code.unpackToScreen} ... the screen
 47CA: C3 D4 47        JP      $47D4               ; {} Do the unpack
 ;
 UnpackStringToBuffer:  ; Never used (but was in Haunted House)
 47CD: 32 84 48        LD      ($4884),A           ; {code.unpackNumWords} Number of words to unpack
 47D0: 97              SUB     A                   ; We are unpacking to ...
-47D1: 32 87 48        LD      ($4887),A           ; {code.unpackFlagToScreen} ... the buffer
+47D1: 32 87 48        LD      ($4887),A           ; {code.unpackToScreen} ... the buffer
 ;
 ; HL points to data to unpack
 ; DE points to unpack buffer (just 3 bytes if going to screen)
@@ -968,7 +973,7 @@ shiftCount:
 4823: 2B              DEC     HL                  ; Working backwards in sets of 3
 4824: 05              DEC     B                   ; All 3 values extracted?
 4825: C2 E2 47        JP      NZ,$47E2            ; {} No, go get them all
-4828: 3A 87 48        LD      A,($4887)           ; {code.unpackFlagToScreen} Unpacking to ...
+4828: 3A 87 48        LD      A,($4887)           ; {code.unpackToScreen} Unpacking to ...
 482B: A7              AND     A                   ; ... a buffer?
 482C: CA 44 48        JP      Z,$4844             ; {} Yes, skip screen printing
 ;
@@ -991,7 +996,7 @@ shiftCount:
 ;
 4844: EB              EX      DE,HL               ; Now HL=data and DE=buffer
 4845: 13              INC     DE                  ; Will be next in buffer
-4846: 3A 87 48        LD      A,($4887)           ; {code.unpackFlagToScreen} Are we unpacking ...
+4846: 3A 87 48        LD      A,($4887)           ; {code.unpackToScreen} Are we unpacking ...
 4849: A7              AND     A                   ; ... to the screen?
 484A: C2 50 48        JP      NZ,$4850            ; {} Yes ... reuse this 3-byte buffer
 484D: 13              INC     DE                  ; No, move to the ...
@@ -1015,13 +1020,13 @@ CharTable:
 4877: 51 52 53 54 55 56 57 58 59 5A 2D 2C 2E           ; QRSTUVWXYZ-,.
 
 unpackNumWords:
-4884: 00
+4884: 00 ; Number of words to unpack (2-byte words)
 
-valueOfForty:  ; Used in dividing by 40
+valueOfForty: ; Used in dividing by 40 in unpack
 4885: 00 00
 
-unpackFlagToScreen:
-4887: 00 ; Set to 1 to print the characters or 0 to buffer unpack to the buffer
+unpackToScreen:
+4887: 00 ; 1 to print to screen, 0 to given buffer
 ```
 
 # Room Table
@@ -1060,99 +1065,97 @@ Which of these 4 were made the port? My best guesses above
 
 ```code
 RoomTable:
+;     Descr Scrpt   RoomName                         String   Notes
+4888: DB 5B CC 49 ; RM_01_BEFORE_ENTRANCE            PS_00    new "before entrance"
+488C: 10 5C E1 49 ; RM_02_IN_ENTRANCE                PS_01    new "in entrance" (wood's woodsRoom3 wellhouse)
+4890: 57 5C F2 49 ; RM_03_DESERT1                    PS_02    new "desert"
+4894: 57 5C 03 4A ; RM_04_DESERT2                    PS_02    new "desert"
+4898: 57 5C 14 4A ; RM_05_DESERT3                    PS_02    new "desert"
+489C: 57 5C 25 4A ; RM_06_DESERT4                    PS_02    new "desert"
 ;
-; 81 rooms numbered starting at 1
-;      Description   Script
-4888: DB 5B CC 49 ; PS_00 room_1    new "before entrance"
-488C: 10 5C E1 49 ; PS_01 room_2    new "in entrance" (wood's woodsRoom3 wellhouse)
-4890: 57 5C F2 49 ; PS_02 room_3    new "desert"
-4894: 57 5C 03 4A ; PS_02 room_4    new "desert"
-4898: 57 5C 14 4A ; PS_02 room_5    new "desert"
-489C: 57 5C 25 4A ; PS_02 room_6    new "desert"
+48A0: 68 5C 36 4A ; RM_07_BENEATH_A_HOLE             PS_03    woodsRoom9
+48A4: E2 5C 47 4A ; RM_08_CRAWLING_OVER_PEBBLES      PS_04    woodsRoom10
+48A8: 28 5D 58 4A ; RM_09_BROKEN_POTTERY             PS_05    woodsRoom11
+48AC: 7D 5D 69 4A ; RM_0A_AWKWARD_SLOPING            PS_06    woodsRoom12
+48B0: A0 5D 7E 4A ; RM_0B_SPLENDID_CHAMBER           PS_07    woodsRoom13
+48B4: 1E 5E 87 4A ; RM_0C_SMALL_PIT_WHITE_MIST       PS_08    woodsRoom14
+48B8: 8E 5E 9D 4A ; RM_0D_STEPS_LEAD_UP_DOME         PS_09    woodsRoom15
+48BC: 69 5F C8 4A ; RM_0E_LOW_ROOM_HIEROGLYPH        PS_0A    woodsRoom18
+48C0: AB 5F D1 4A ; RM_0F_EAST_BANK_BOTTOMLESS_PIT   PS_0B    woodsRoom17
+48C4: 08 60 0D 4B ; RM_10_PHARAOHS_CHAMBER           PS_0C    woodsRoom19
+48C8: 3C 60 48 4B ; RM_11_SOUTH_SIDE_CHAMBER         PS_0D    woodsRoom29
+48CC: 55 60 51 4B ; RM_12_HALL_OF_GODS               PS_0E    woodsRoom27
+48D0: 85 60 90 4B ; RM_13_LITTLE_PASSAGE_SIX_FEET    PS_0F    woodsRoom41
+48D4: F1 60 A9 4B ; RM_14_EAST_END_LONG_HALL         PS_10    woodsRoom60
+48D8: 5F 61 BE 4B ; RM_15_WEST_END_FEATURELESS_HALL  PS_11    woodsRoom61
+48DC: AC 61 C7 4B ; RM_16_CROSSOVER                  PS_12    woodsRoom62
+48E0: D8 61 D8 4B ; RM_17_DEAD_END1                  PS_13    woodsRoom63
+48E4: E0 61 E1 4B ; RM_18_THRONE_CHAMBER             PS_14    woodsRoom30
+48E8: 18 62 F2 4B ; RM_19_LOW_NS_PASSAGE             PS_15    woodsRoom28
+48EC: 58 62 07 4C ; RM_1A_PANEL_NORTH_WALL           PS_16    woodsRoom33
+48F0: B0 62 14 4C ; RM_1B_CHAMBER_OF_ANUBIS          PS_17    woodsRoom34
 ;
-48A0: 68 5C 36 4A ; PS_03 room_7    woodsRoom9
-48A4: E2 5C 47 4A ; PS_04 room_8    woodsRoom10
-48A8: 28 5D 58 4A ; PS_05 room_9    woodsRoom11
-48AC: 7D 5D 69 4A ; PS_06 room_10   woodsRoom12
-48B0: A0 5D 7E 4A ; PS_07 room_11   woodsRoom13
-48B4: 1E 5E 87 4A ; PS_08 room_12   woodsRoom14
-48B8: 8E 5E 9D 4A ; PS_09 room_13   woodsRoom15
-48BC: 69 5F C8 4A ; PS_0A room_14   woodsRoom18
-48C0: AB 5F D1 4A ; PS_0B room_15   woodsRoom17
-48C4: 08 60 0D 4B ; PS_0C room_16   woodsRoom19
-48C8: 3C 60 48 4B ; PS_0D room_17   woodsRoom29
-48CC: 55 60 51 4B ; PS_0E room_18   woodsRoom27
-48D0: 85 60 90 4B ; PS_0F room_19   woodsRoom41
-48D4: F1 60 A9 4B ; PS_10 room_20   woodsRoom60
-48D8: 5F 61 BE 4B ; PS_11 room_21   woodsRoom61
-48DC: AC 61 C7 4B ; PS_12 room_22   woodsRoom62
-48E0: D8 61 D8 4B ; PS_13 room_23   woodsRoom63
-48E4: E0 61 E1 4B ; PS_14 room_24   woodsRoom30
-48E8: 18 62 F2 4B ; PS_15 room_25   woodsRoom28
-48EC: 58 62 07 4C ; PS_16 room_26   woodsRoom33
-48F0: B0 62 14 4C ; PS_17 room_27   woodsRoom34
+48F4: C8 62 21 4C ; RM_1C_TWISTY_PASSAGES1           PS_18    woodsRoom42
+48F8: C8 62 36 4C ; RM_1D_TWISTY_PASSAGES2           PS_18    woodsRoom80
+48FC: C8 62 47 4C ; RM_1E_TWISTY_PASSAGES3           PS_18    woodsRoom45
+4900: C8 62 60 4C ; RM_1F_TWISTY_PASSAGES4           PS_18    woodsRoom87
+4904: C8 62 69 4C ; RM_20_TWISTY_PASSAGES5           PS_18    woodsRoom43
+4908: C8 62 76 4C ; RM_21_TWISTY_PASSAGES6           PS_18    woodsRoom44
+490C: C8 62 87 4C ; RM_22_TWISTY_PASSAGES7           PS_18    woodsRoom50
+4910: C8 62 98 4C ; RM_23_TWISTY_PASSAGES8           PS_18    woodsRoom52
+4914: C8 62 B1 4C ; RM_24_TWISTY_PASSAGES9           PS_18    woodsRoom55
+4918: C8 62 C2 4C ; RM_25_TWISTY_PASSAGES10          PS_18    woodsRoom49
+491C: C8 62 CB 4C ; RM_26_TWISTY_PASSAGES11          PS_18    woodsRoom51
+4920: C8 62 DC 4C ; RM_27_TWISTY_PASSAGES12          PS_18    woodsRoom53
+4924: C8 62 E9 4C ; RM_28_TWISTY_PASSAGES13          PS_18    woodsRoom84
+4928: C8 62 F6 4C ; RM_29_TWISTY_PASSAGES14          PS_18    woodsRoom83
+492C: D8 61 03 4D ; RM_2A_DEAD_END2                  PS_13    woodsRoom46
+4930: D8 61 08 4D ; RM_2B_DEAD_END3                  PS_13    woodsRoom47
+4934: D8 61 0D 4D ; RM_2C_DEAD_END4                  PS_13    woodsRoom82
+4938: D8 61 12 4D ; RM_2D_DEAD_END5                  PS_13    woodsRoom48
+493C: D8 61 17 4D ; RM_2E_DEAD_END6                  PS_13    woodsRoom54
+4940: D8 61 1C 4D ; RM_2F_DEAD_END7                  PS_13    woodsRoom86
+4944: D8 61 21 4D ; RM_30_DEAD_END8                  PS_13    woodsRoom56
+4948: D8 61 26 4D ; RM_31_DEAD_END9                  PS_13    woodsRoom58
+494C: D8 61 2B 4D ; RM_32_DEAD_END10                 PS_13    woodsRoom85
+4950: D8 61 30 4D ; RM_33_DEAD_END11                 PS_13    woodsRoom81
+4954: EA 62 41 4D ; RM_34_BRINK_OF_LARGE_PIT         PS_19    woodsRoom57
+4958: D8 61 56 4D ; RM_35_DEAD_END12                 PS_13    woodsRoom114
 ;
-48F4: C8 62 21 4C ; PS_18 room_28   woodsRoom42
-48F8: C8 62 36 4C ; PS_18 room_29   woodsRoom80
-48FC: C8 62 47 4C ; PS_18 room_30   woodsRoom45
-4900: C8 62 60 4C ; PS_18 room_31   woodsRoom87
-4904: C8 62 69 4C ; PS_18 room_32   woodsRoom43
-4908: C8 62 76 4C ; PS_18 room_33   woodsRoom44
-490C: C8 62 87 4C ; PS_18 room_34   woodsRoom50
-4910: C8 62 98 4C ; PS_18 room_35   woodsRoom52
-4914: C8 62 B1 4C ; PS_18 room_36   woodsRoom55
-4918: C8 62 C2 4C ; PS_18 room_37   woodsRoom49
-491C: C8 62 CB 4C ; PS_18 room_38   woodsRoom51
-4920: C8 62 DC 4C ; PS_18 room_39   woodsRoom53
-4924: C8 62 E9 4C ; PS_18 room_40   woodsRoom84
-4928: C8 62 F6 4C ; PS_18 room_41   woodsRoom83
-492C: D8 61 03 4D ; PS_13 room_42   woodsRoom46
-4930: D8 61 08 4D ; PS_13 room_43   woodsRoom47
-4934: D8 61 0D 4D ; PS_13 room_44   woodsRoom82
-4938: D8 61 12 4D ; PS_13 room_45   woodsRoom48
-493C: D8 61 17 4D ; PS_13 room_46   woodsRoom54
-4940: D8 61 1C 4D ; PS_13 room_47   woodsRoom86
-4944: D8 61 21 4D ; PS_13 room_48   woodsRoom56
-4948: D8 61 26 4D ; PS_13 room_49   woodsRoom58
-494C: D8 61 2B 4D ; PS_13 room_50   woodsRoom85
-4950: D8 61 30 4D ; PS_13 room_51   woodsRoom81
-4954: EA 62 41 4D ; PS_19 room_52   woodsRoom57
-4958: D8 61 56 4D ; PS_13 room_53   woodsRoom114
-;
-495C: 49 63 5B 4D ; PS_1A room_54   woodsRoom36
-4960: A6 63 68 4D ; PS_1B room_55   woodsRoom37
-4964: DA 63 75 4D ; PS_1C room_56   woodsRoom38
-4968: 1F 64 93 4D ; PS_1D room_57   woodsRoom39
-496C: 7A 64 9C 4D ; PS_1E room_58   woodsRoom64
-4970: 0A 65 B1 4D ; PS_1F room_59   woodsRoom106
-4974: A1 65 BE 4D ; PS_20 room_60   woodsRoom108
-4978: D5 65 06 4E ; PS_21 room_61   woodsRoom103
-497C: 82 66 21 4E ; PS_22 room_62   woodsRoom102
-4980: E0 66 2A 4E ; PS_23 room_63   woodsRoom104
-4984: 07 67 33 4E ; PS_24 room_64   woodsRoom105
-4988: 29 67 3C 4E ; PS_25 room_65   woodsRoom65
-498C: 89 67 65 4E ; PS_26 room_66   woodsRoom68
-4990: 00 00 00 00 ; unused 67           ?woodsRoom66
-4994: D2 6B 3B 4F ; PS_31 room_68   woodsRoom94
-4998: 00 00 00 00 ; unused 69           ?woodsRoom69
-499C: B1 6B 32 4F ; PS_30 room_70   woodsRoom93
-49A0: 5C 6B 25 4F ; PS_2F room_71   woodsRoom92
-49A4: 25 68 6E 4E ; PS_27 room_72   woodsRoom96
-49A8: 82 68 77 4E ; PS_28 room_73   woodsRoom99
+495C: 49 63 5B 4D ; RM_36_DIRTY_BROKEN_PASSAGE       PS_1A    woodsRoom36
+4960: A6 63 68 4D ; RM_37_BRINK_OF_CLEAN_PIT         PS_1B    woodsRoom37
+4964: DA 63 75 4D ; RM_38_PIT_LITTLE_STREAM          PS_1C    woodsRoom38
+4968: 1F 64 93 4D ; RM_39_ROOM_OF_BES                PS_1D    woodsRoom39
+496C: 7A 64 9C 4D ; RM_3A_COMPLEX_JUNCTION           PS_1E    woodsRoom64
+4970: 0A 65 B1 4D ; RM_3B_ANTEROOM_OF_SEKER          PS_1F    woodsRoom106
+4974: A1 65 BE 4D ; RM_3C_LAND_OF_DEAD               PS_20    woodsRoom108
+4978: D5 65 06 4E ; RM_3D_ANCIENT_DRAWINGS           PS_21    woodsRoom103
+497C: 82 66 21 4E ; RM_3E_MOON_GOD                   PS_22    woodsRoom102
+4980: E0 66 2A 4E ; RM_3F_RAGGED_WALLS               PS_23    woodsRoom104
+4984: 07 67 33 4E ; RM_40_CUL_DE_SAC                 PS_24    woodsRoom105
+4988: 29 67 3C 4E ; RM_41_CHAMBER_OF_HORUS           PS_25    woodsRoom65
+498C: 89 67 65 4E ; RM_42_FALLEN_SLAB                PS_26    woodsRoom68
+4990: 00 00 00 00 ;                                           ?woodsRoom66
+4994: D2 6B 3B 4F ; RM_44_CHAMBER_OF_NEKHEBET        PS_31    woodsRoom94
+4998: 00 00 00 00 ;                                           ?woodsRoom69
+499C: B1 6B 32 4F ; RM_46_BLOCKED_FALLEN_BLOCK       PS_30    woodsRoom93
+49A0: 5C 6B 25 4F ; RM_47_CHAMBER_OF_OSIRIS          PS_2F    woodsRoom92
+49A4: 25 68 6E 4E ; RM_48_PRIESTS_BEDROOM            PS_27    woodsRoom96
+49A8: 82 68 77 4E ; RM_49_HIGH_PRIEST                PS_28    woodsRoom99
 ;
 ; Rooms 73 and 76 are the "tight squeeze" with the emerald. In the
 ; In the Woods implementation, there are 5 rooms here. His ORIENT
 ; room (97) and his DARK room (101) are dead-ends with one passage
 ; each. I suspect these were the two
-49AC: 00 00 00 00 ; unused 74         ?
-49B0: 00 00 00 00 ; unused 75         ?woodsRoom91,95,  97,98,101
+49AC: 00 00 00 00 ;                                           ?
+49B0: 00 00 00 00 ;                                           ?woodsRoom91,95,  97,98,101
 ;
-49B4: F6 68 86 4E ; PS_29 room_76   woodsRoom100
-49B8: F3 6A 0E 4F ; PS_2E room_77   woodsRoom88
-49BC: 3F 69 9B 4E ; PS_2A room_78   woodsRoom67
-49C0: 21 6A A8 4E ; PS_2B room_79   woodsRoom24
-49C4: 4B 6A B1 4E ; PS_2C room_80   woodsRoom23
-49C8: 9D 6A BE 4E ; PS_2D room_81   woodsRoom25
+49B4: F6 68 86 4E ; RM_4C_EERIE_GREEN_LIGHT          PS_29    woodsRoom100
+49B8: F3 6A 0E 4F ; RM_4D_PROFUSION_OF_LEAVES        PS_2E    woodsRoom88
+49BC: 3F 69 9B 4E ; RM_4E_WEAST_END_TWOPIT           PS_2A    woodsRoom67
+49C0: 21 6A A8 4E ; RM_4F_BOTTOM_EASTERN_PIT         PS_2B    woodsRoom24
+49C4: 4B 6A B1 4E ; RM_50_WEST_END_TWOPIT            PS_2C    woodsRoom23
+49C8: 9D 6A BE 4E ; RM_51_BOTTOM_WEST_PIT            PS_2D    woodsRoom25
 ```
 
 # Room Scripts
@@ -2351,9 +2354,8 @@ room_68: ; woodsRoom94
 When we calculate the score, we look at the upper bit in each room. If the bit is set, the second value
 is added to the score. This mechanism is not used by the existing code -- probably an old feature.
 
-This is the beginning of the save-to-tape. Maybe at one time, the ambient light changed?
-It doesn't now, and there is no need to save this table. We could have just started
-saving with the object data.
+This is the beginning of the save-to-tape. The room-score values would need to be saved. Thus the
+save-to-tape begins here even though nothing changes.
 
 ```code
 ; 2 bytes per room
@@ -2363,87 +2365,88 @@ saving with the object data.
 ; 2nd byte is BCD score if upper bit is set of 1st byte
 
 AmbientLightTable:
-4F45: 40 00    ;  1 (has natural light)
-4F47: 40 00    ;  2 (has natural light)
-4F49: 40 00    ;  3 (has natural light)
-4F4B: 40 00    ;  4 (has natural light)
-4F4D: 40 00    ;  5 (has natural light)
-4F4F: 40 00    ;  6 (has natural light)
-4F51: 40 00    ;  7 (has natural light)
-4F53: 00 00    ;  8
-4F55: 00 00    ;  9
-4F57: 00 00    ;  10
-4F59: 00 00    ;  11
-4F5B: 00 00    ;  12
-4F5D: 00 00    ;  13
-4F5F: 00 00    ;  14
-4F61: 00 00    ;  15
-4F63: 00 00    ;  16
-4F65: 00 00    ;  17
-4F67: 00 00    ;  18
-4F69: 00 00    ;  19
-4F6B: 00 00    ;  20
-4F6D: 00 00    ;  21
-4F6F: 00 00    ;  22
-4F71: 00 00    ;  23
-4F73: 00 00    ;  24
-4F75: 00 00    ;  25
-4F77: 00 00    ;  26
-4F79: 00 00    ;  27
-4F7B: 00 00    ;  28
-4F7D: 00 00    ;  29
-4F7F: 00 00    ;  30
-4F81: 00 00    ;  31
-4F83: 00 00    ;  32
-4F85: 00 00    ;  33
-4F87: 00 00    ;  34
-4F89: 00 00    ;  35
-4F8B: 00 00    ;  36
-4F8D: 00 00    ;  37
-4F8F: 00 00    ;  38
-4F91: 00 00    ;  39
-4F93: 00 00    ;  40
-4F95: 00 00    ;  41
-4F97: 00 00    ;  42
-4F99: 00 00    ;  43
-4F9B: 00 00    ;  44
-4F9D: 00 00    ;  45
-4F9F: 00 00    ;  46
-4FA1: 00 00    ;  47
-4FA3: 00 00    ;  48
-4FA5: 00 00    ;  49
-4FA7: 00 00    ;  50
-4FA9: 00 00    ;  51
-4FAB: 00 00    ;  52
-4FAD: 00 00    ;  53
-4FAF: 00 00    ;  54
-4FB1: 00 00    ;  55
-4FB3: 00 00    ;  56
-4FB5: 00 00    ;  57
-4FB7: 00 00    ;  58
-4FB9: 00 00    ;  59
-4FBB: 00 00    ;  60
-4FBD: 00 00    ;  61
-4FBF: 00 00    ;  62
-4FC1: 00 00    ;  63
-4FC3: 00 00    ;  64
-4FC5: 00 00    ;  65
-4FC7: 00 00    ;  66
-4FC9: 00 00    ;  67
-4FCB: 00 00    ;  68
-4FCD: 00 00    ;  69
-4FCF: 00 00    ;  70
-4FD1: 00 00    ;  71
-4FD3: 00 00    ;  72
-4FD5: 00 00    ;  73
-4FD7: 00 00    ;  74
-4FD9: 00 00    ;  75
-4FDB: 40 00    ;  76 (has light -- "LIT_BY_AN_ERRIE_GREEN_LIGHT")
-4FDD: 00 00    ;  77
-4FDF: 00 00    ;  78
-4FE1: 00 00    ;  79
-4FE3: 00 00    ;  80
-4FE5: 00 00    ;  81
+;                 Room                            Light
+4F45: 40 00 ; RM_01_BEFORE_ENTRANCE               natural light
+4F47: 40 00 ; RM_02_IN_ENTRANCE                   natural light
+4F49: 40 00 ; RM_03_DESERT1                       natural light
+4F4B: 40 00 ; RM_04_DESERT2                       natural light
+4F4D: 40 00 ; RM_05_DESERT3                       natural light
+4F4F: 40 00 ; RM_06_DESERT4                       natural light
+4F51: 40 00 ; RM_07_BENEATH_A_HOLE                natural light
+4F53: 00 00 ; RM_08_CRAWLING_OVER_PEBBLES         dark
+4F55: 00 00 ; RM_09_BROKEN_POTTERY                dark
+4F57: 00 00 ; RM_0A_AWKWARD_SLOPING               dark
+4F59: 00 00 ; RM_0B_SPLENDID_CHAMBER              dark
+4F5B: 00 00 ; RM_0C_SMALL_PIT_WHITE_MIST          dark
+4F5D: 00 00 ; RM_0D_STEPS_LEAD_UP_DOME            dark
+4F5F: 00 00 ; RM_0E_LOW_ROOM_HIEROGLYPH           dark
+4F61: 00 00 ; RM_0F_EAST_BANK_BOTTOMLESS_PIT      dark
+4F63: 00 00 ; RM_10_PHARAOHS_CHAMBER              dark
+4F65: 00 00 ; RM_11_SOUTH_SIDE_CHAMBER            dark
+4F67: 00 00 ; RM_12_HALL_OF_GODS                  dark
+4F69: 00 00 ; RM_13_LITTLE_PASSAGE_SIX_FEET       dark
+4F6B: 00 00 ; RM_14_EAST_END_LONG_HALL            dark
+4F6D: 00 00 ; RM_15_WEST_END_FEATURELESS_HALL     dark
+4F6F: 00 00 ; RM_16_CROSSOVER                     dark
+4F71: 00 00 ; RM_17_DEAD_END1                     dark
+4F73: 00 00 ; RM_18_THRONE_CHAMBER                dark
+4F75: 00 00 ; RM_19_LOW_NS_PASSAGE                dark
+4F77: 00 00 ; RM_1A_PANEL_NORTH_WALL              dark
+4F79: 00 00 ; RM_1B_CHAMBER_OF_ANUBIS             dark
+4F7B: 00 00 ; RM_1C_TWISTY_PASSAGES1              dark
+4F7D: 00 00 ; RM_1D_TWISTY_PASSAGES2              dark
+4F7F: 00 00 ; RM_1E_TWISTY_PASSAGES3              dark
+4F81: 00 00 ; RM_1F_TWISTY_PASSAGES4              dark
+4F83: 00 00 ; RM_20_TWISTY_PASSAGES5              dark
+4F85: 00 00 ; RM_21_TWISTY_PASSAGES6              dark
+4F87: 00 00 ; RM_22_TWISTY_PASSAGES7              dark
+4F89: 00 00 ; RM_23_TWISTY_PASSAGES8              dark
+4F8B: 00 00 ; RM_24_TWISTY_PASSAGES9              dark
+4F8D: 00 00 ; RM_25_TWISTY_PASSAGES10             dark
+4F8F: 00 00 ; RM_26_TWISTY_PASSAGES11             dark
+4F91: 00 00 ; RM_27_TWISTY_PASSAGES12             dark
+4F93: 00 00 ; RM_28_TWISTY_PASSAGES13             dark
+4F95: 00 00 ; RM_29_TWISTY_PASSAGES14             dark
+4F97: 00 00 ; RM_2A_DEAD_END2                     dark
+4F99: 00 00 ; RM_2B_DEAD_END3                     dark
+4F9B: 00 00 ; RM_2C_DEAD_END4                     dark
+4F9D: 00 00 ; RM_2D_DEAD_END5                     dark
+4F9F: 00 00 ; RM_2E_DEAD_END6                     dark
+4FA1: 00 00 ; RM_2F_DEAD_END7                     dark
+4FA3: 00 00 ; RM_30_DEAD_END8                     dark
+4FA5: 00 00 ; RM_31_DEAD_END9                     dark
+4FA7: 00 00 ; RM_32_DEAD_END10                    dark
+4FA9: 00 00 ; RM_33_DEAD_END11                    dark
+4FAB: 00 00 ; RM_34_BRINK_OF_LARGE_PIT            dark
+4FAD: 00 00 ; RM_35_DEAD_END12                    dark
+4FAF: 00 00 ; RM_36_DIRTY_BROKEN_PASSAGE          dark
+4FB1: 00 00 ; RM_37_BRINK_OF_CLEAN_PIT            dark
+4FB3: 00 00 ; RM_38_PIT_LITTLE_STREAM             dark
+4FB5: 00 00 ; RM_39_ROOM_OF_BES                   dark
+4FB7: 00 00 ; RM_3A_COMPLEX_JUNCTION              dark
+4FB9: 00 00 ; RM_3B_ANTEROOM_OF_SEKER             dark
+4FBB: 00 00 ; RM_3C_LAND_OF_DEAD                  dark
+4FBD: 00 00 ; RM_3D_ANCIENT_DRAWINGS              dark
+4FBF: 00 00 ; RM_3E_MOON_GOD                      dark
+4FC1: 00 00 ; RM_3F_RAGGED_WALLS                  dark
+4FC3: 00 00 ; RM_40_CUL_DE_SAC                    dark
+4FC5: 00 00 ; RM_41_CHAMBER_OF_HORUS              dark
+4FC7: 00 00 ; RM_42_FALLEN_SLAB                   dark
+4FC9: 00 00 ; RM_43_
+4FCB: 00 00 ; RM_44_CHAMBER_OF_NEKHEBET           dark
+4FCD: 00 00 ; RM_45_
+4FCF: 00 00 ; RM_46_BLOCKED_FALLEN_BLOCK          dark
+4FD1: 00 00 ; RM_47_CHAMBER_OF_OSIRIS             dark
+4FD3: 00 00 ; RM_48_PRIESTS_BEDROOM               dark
+4FD5: 00 00 ; RM_49_HIGH_PRIEST                   dark
+4FD7: 00 00 ; RM_4A_
+4FD9: 00 00 ; RM_4B_
+4FDB: 40 00 ; RM_4C_EERIE_GREEN_LIGHT             "LIT_BY_AN_ERRIE_GREEN_LIGHT"
+4FDD: 00 00 ; RM_4D_PROFUSION_OF_LEAVES           dark
+4FDF: 00 00 ; RM_4E_WEAST_END_TWOPIT              dark
+4FE1: 00 00 ; RM_4F_BOTTOM_EASTERN_PIT            dark
+4FE3: 00 00 ; RM_50_WEST_END_TWOPIT               dark
+4FE5: 00 00 ; RM_51_BOTTOM_WEST_PIT               dark
 ```
 
 # Object Data
@@ -2466,77 +2469,76 @@ AmbientLightTable:
 ;   RRRRRRRR - Second byte is the object's location (containing object or room number).
 
 ObjectData:
-; Object data table (2 bytes)
-;             MCT             #    Name                 Start location
-4FE7: 00 00 ; 000_00000 00  ; 1    obj_bridge_15        *
-4FE9: 00 00 ; 000_00000 00  ; 2    obj_bridge_18        *
-4FEB: 00 00 ;               ; 3
-4FED: 00 00 ;               ; 4
-4FEF: 00 00 ;               ; 5
-4FF1: 00 33 ; 000_00000 33  ; 6    obj_MACHINE          (Room 51)
-4FF3: 00 51 ; 000_00000 51  ; 7    obj_PLANT_A          (Room 81)
-4FF5: 00 00 ; 000_00000 00  ; 8    obj_PLANT_B          *
-4FF7: 00 00 ; 000_00000 00  ; 9    obj_PLANT_C          *
-4FF9: 00 00 ;               ; 10
-4FFB: 00 10 ; 000_00000 10  ; 11   obj_SERPENT          (Room 16)
-4FFD: 00 00 ;               ; 12
-4FFF: 00 00 ;               ; 13
-5001: 40 02 ; 010_00000 02  ; 14   obj_LAMP_off         (Room 2)
-5003: 40 00 ; 010_00000 00  ; 15   obj_LAMP_on          *
-5005: 40 08 ; 010_00000 08  ; 16   obj_BOX              (Room 8)
-5007: 40 09 ; 010_00000 09  ; 17   obj_SCEPTER          (Room 9)
-5009: 40 48 ; 010_00000 48  ; 18   obj_PILLOW           (Room 72)
-500B: 40 0B ; 010_00000 0B  ; 19   obj_BIRD             (Room 11)
-500D: 00 00 ; 000_00000 00  ; 20   obj_BIRD_boxed       *
-500F: 00 00 ; 000_00000 00  ; 21   obj_POTTERY          *
-5011: 60 00 ; 011_00000 00  ; 22   obj_PEARL            *
-5013: 40 3D ; 010_00000 3D  ; 23   obj_SARCOPH_full     (Room 61)
-5015: 40 00 ; 010_00000 00  ; 24   obj_SARCOPH_empty    *
-5017: 40 3B ; 010_00000 3B  ; 25   obj_MAGAZINES        (Room 59)
-5019: 40 02 ; 010_00000 02  ; 26   obj_FOOD             (Room 2)
-501B: 40 02 ; 010_00000 02  ; 27   obj_BOTTLE           (Room 2)
-501D: C0 1B ; 110_00000 1B  ; 28   obj_WATER            (Room 27)
-501F: 00 00 ;               ; 29 ? oil (in the bottle) from the easter pit
-5021: 00 38 ; 000_00000 38  ; 30   obj_STREAM_56        (Room 56)
-5023: 60 4C ; 011_00000 4C  ; 31   obj_EMERALD          (Room 76)
-5025: 60 00 ; 011_00000 00  ; 32   obj_VASE_pillow      *
-5027: 60 49 ; 011_00000 49  ; 33   obj_VASE_solo        (Room 73)
-5029: 60 44 ; 011_00000 44  ; 34   obj_KEY              (Room 68)
-502B: 40 00 ; 010_00000 00  ; 35   obj_BATTERIES_fresh  *
-502D: 40 00 ; 010_00000 00  ; 36   obj_BATTERIES_worn   *
-502F: 60 0E ; 011_00000 0E  ; 37   obj_GOLD             (Room 14)
-5031: 60 11 ; 011_00000 11  ; 38   obj_DIAMNODS         (Room 17)
-5033: 60 19 ; 011_00000 19  ; 39   obj_SILVER           (Room 25)
-5035: 60 12 ; 011_00000 12  ; 40   obj_JEWELRY          (Room 18)
-5037: 60 18 ; 011_00000 18  ; 41   obj_COINS            (Room 24)
-5039: 60 00 ; 011_00000 00  ; 42   obj_CHEST            *
-503B: 60 47 ; 011_00000 47  ; 43   obj_NEST             (Room 71)
-503D: 40 00 ; 010_00000 00  ; 44   obj_LAMP_dead        *
+;             MCT      Name                     Start location
+4FE7: 00 00 ; 000..... OBJ_01_BRIDGE_ROOM_0E    *
+4FE9: 00 00 ; 000..... OBJ_02_BRIDGE_ROOM_12    *
+4FEB: 00 00 ;
+4FED: 00 00 ;
+4FEF: 00 00 ;
+4FF1: 00 33 ; 000..... OBJ_06_VENDING_MACHINE   RM_33_DEAD_END11
+4FF3: 00 51 ; 000..... OBJ_07_PLANT_SMALL       RM_51_BOTTOM_WEST_PIT
+4FF5: 00 00 ; 000..... OBJ_08_PLANT_MEDIUM      *
+4FF7: 00 00 ; 000..... OBJ_09_PLANT_LARGE       *
+4FF9: 00 00 ;
+4FFB: 00 10 ; 000..... OBJ_0B_SERPENT           RM_10_PHARAOHS_CHAMBER
+4FFD: 00 00 ;
+4FFF: 00 00 ;
+5001: 40 02 ; 010..... OBJ_0E_LAMP_OFF          RM_02_IN_ENTRANCE
+5003: 40 00 ; 010..... OBJ_0F_LAMP_ON           *
+5005: 40 08 ; 010..... OBJ_10_BOX               RM_08_CRAWLING_OVER_PEBBLES
+5007: 40 09 ; 010..... OBJ_11_SCEPTER           RM_09_BROKEN_POTTERY
+5009: 40 48 ; 010..... OBJ_12_PILLOW            RM_48_PRIESTS_BEDROOM
+500B: 40 0B ; 010..... OBJ_13_BIRD              RM_0B_SPLENDID_CHAMBER
+500D: 00 00 ; 000..... OBJ_14_BIRD_IN_BOX       *
+500F: 00 00 ; 000..... OBJ_15_POTTERY           *
+5011: 60 00 ; 011..... OBJ_16_PEARL             *
+5013: 40 3D ; 010..... OBJ_17_SARCOPH_FULL      RM_3D_ANCIENT_DRAWINGS
+5015: 40 00 ; 010..... OBJ_18_SARCOPH_EMPTY     *
+5017: 40 3B ; 010..... OBJ_19_MAGAZINES         RM_3B_ANTEROOM_OF_SEKER
+5019: 40 02 ; 010..... OBJ_1A_FOOD              RM_02_IN_ENTRANCE
+501B: 40 02 ; 010..... OBJ_1B_BOTTLE            RM_02_IN_ENTRANCE
+501D: C0 1B ; 110..... OBJ_1C_WATER             RM_1B_CHAMBER_OF_ANUBIS
+501F: 00 00 ;          oil (in the bottle) from the eastern pit ??
+5021: 00 38 ; 000..... OBJ_1E_STREAM_ROOM_38    RM_38_PIT_LITTLE_STREAM
+5023: 60 4C ; 011..... OBJ_1F_EMERALD           RM_4C_EERIE_GREEN_LIGHT
+5025: 60 00 ; 011..... OBJ_20_VASE_ON_PILLOW    *
+5027: 60 49 ; 011..... OBJ_21_VASE              RM_49_HIGH_PRIEST
+5029: 60 44 ; 011..... OBJ_22_KEY               RM_44_CHAMBER_OF_NEKHEBET
+502B: 40 00 ; 010..... OBJ_23_BATTERIES_FRESH   *
+502D: 40 00 ; 010..... OBJ_24_BATTERIES_WORN    *
+502F: 60 0E ; 011..... OBJ_25_GOLD              RM_0E_LOW_ROOM_HIEROGLYPH
+5031: 60 11 ; 011..... OBJ_26_DIAMONDS          RM_11_SOUTH_SIDE_CHAMBER
+5033: 60 19 ; 011..... OBJ_27_SILVER            RM_19_LOW_NS_PASSAGE
+5035: 60 12 ; 011..... OBJ_28_JEWELRY           RM_12_HALL_OF_GODS
+5037: 60 18 ; 011..... OBJ_29_COINS             RM_18_THRONE_CHAMBER
+5039: 60 00 ; 011..... OBJ_2A_CHEST             *
+503B: 60 47 ; 011..... OBJ_2B_NEST_EGGS         RM_47_CHAMBER_OF_OSIRIS
+503D: 40 00 ; 010..... OBJ_2C_LAMP_DEAD         *
 ```
 
 # Game Variables
 
 ```code
 currentRoom:
-503F: 01
+503F: 01 ; The room the player is in
 
 bcdTurnCountLSB:
-5040: 00
+5040: 00 ; Number of turns LSB
 
 bcdTurnCountMSB:
-5041: 00
+5041: 00 ; Number of turns MSB
 
 lampOnTurnCount:
-5042: 00 00 ; Number of turns the lamp has been on
+5042: 00 00 ; Number of turns the lamp has burned
 
 lastRoom:
-5044: 00
+5044: 00 ; Last room the player was in
 
 numObjInPack:
-5045: 00
+5045: 00 ; Number of objects in the pack
 
 numResurrected:
-5046: 00 ; Number of times resurrected?
+5046: 00 ; Number of times player resurrected
 ```
 
 # Object Info
@@ -3070,7 +3072,7 @@ COM_0C_move_to_room_if_was_last:
 
 ```code
 COM_16_get_users_object_print_ok:
-5343: 3A 7B 46        LD      A,($467B)           ; {code.noun} Get the object number the player requested
+5343: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Get the object number the player requested
 5346: 1E FF           LD      E,$FF               ; Get the ...
 5348: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... target object's info
 534B: C2 57 53        JP      NZ,$5357            ; {} It isn't in the backpack. No error here.
@@ -3078,7 +3080,7 @@ COM_16_get_users_object_print_ok:
 5351: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the error
 5354: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} Success (the object is in backpack as requested!)
 ;
-5357: 3A 7B 46        LD      A,($467B)           ; {code.noun} Get the input noun again
+5357: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Get the input noun again
 535A: 47              LD      B,A                 ; Handle the actual ...
 535B: C3 F4 53        JP      $53F4               ; {code.GetToBackpack} ... GET operation
 ```
@@ -3195,7 +3197,7 @@ COM_11_is_object_user_input:
 53E2: 46              LD      B,(HL)              ; Get the target object
 53E3: 23              INC     HL                  ; Update the ...
 53E4: E5              PUSH    HL                  ; ... script pointer
-53E5: 3A 7B 46        LD      A,($467B)           ; {code.noun} Does user noun ...
+53E5: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Does user noun ...
 53E8: B8              CP      B                   ; ... match the target object?
 53E9: C2 BE 43        JP      NZ,$43BE            ; {code.ScriptCommandFAIL} No, command fails
 53EC: C3 AB 43        JP      $43AB               ; {code.ScriptCommandPASS} yes, command passes
@@ -3239,7 +3241,7 @@ GetToBackpack:
 
 ```code
 COM_17_drop_users_object_print_ok:
-5424: 3A 7B 46        LD      A,($467B)           ; {code.noun} Get the player's ...
+5424: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Get the player's ...
 5427: 47              LD      B,A                 ; ... noun input
 5428: C3 6F 53        JP      $536F               ; {} Continue with drop
 ```
@@ -3287,13 +3289,13 @@ COM_05_death_and_resurrect:
 ;
 ; First time we initialize the message pointer
 545A: 21 B4 7E        LD      HL,$7EB4            ; {+code.PS_BC} "ALL_RIGHT.__BUT_DON'T_BLAME_ME"
-545D: 22 C5 54        LD      ($54C5),HL          ; {code.NextResurrectMessage} Next resurrection message
+545D: 22 C5 54        LD      ($54C5),HL          ; {code.nextResurrectMessage} Next resurrection message
 5460: 21 AA 7D        LD      HL,$7DAA            ; {+code.PS_B9} "YOU_SEEM_TO_HAVE_GOTTEN_YOURSELF_KILLED."
 5463: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the message
 5466: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Wait for the user
 5469: FE 59           CP      $59                 ; Is it a "Y" for yes to continuing on?
 546B: C2 EF 55        JP      NZ,$55EF            ; {code.COM_09_end_of_game} No, print score and stop
-546E: 2A C5 54        LD      HL,($54C5)          ; {code.NextResurrectMessage} Print resurrection ...
+546E: 2A C5 54        LD      HL,($54C5)          ; {code.nextResurrectMessage} Print resurrection ...
 5471: CD AE 45        CALL    $45AE               ; {code.PrintPacked} ... message
 5474: 21 02 50        LD      HL,$5002            ; {+} obj_LAMP_off to ...
 5477: 36 01           LD      (HL),$01            ; ... room_1
@@ -3327,7 +3329,7 @@ COM_05_death_and_resurrect:
 
 SecondResurrection:
 54B0: 21 4E 7F        LD      HL,$7F4E            ; {+code.PS_BD} Next resurrection ...
-54B3: 22 C5 54        LD      ($54C5),HL          ; {code.NextResurrectMessage} ... message "WHERE_DID_I_PUT_ORANGE_SMOKE"
+54B3: 22 C5 54        LD      ($54C5),HL          ; {code.nextResurrectMessage} ... message "WHERE_DID_I_PUT_ORANGE_SMOKE"
 54B6: 21 1D 7E        LD      HL,$7E1D            ; {+code.PS_BA} "YOU_CLUMBSY_OAF,_YOU'VE_DONE_IT_AGAIN
 54B9: C3 63 54        JP      $5463               ; {} Print the message and ressurect
 
@@ -3336,8 +3338,9 @@ ThirdResurrection:
 54BF: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
 54C2: C3 EF 55        JP      $55EF               ; {code.COM_09_end_of_game} All lives gone. Print score and stop.
 
-NextResurrectMessage:
-54C5: 00 00
+; !! This is not saved to tape. Check to see if die/reload can mess up the sequence.
+nextResurrectMessage:
+54C5: 00 00 ; Next resurrection message
 ```
 
 # COM_08_print_score()
@@ -3437,12 +3440,12 @@ PrintScore:
 5578: 3E 20           LD      A,$20               ; Space means "+" ...
 557A: 32 BF 55        LD      ($55BF),A           ; {code.scoreSign} ... in the score message
 ;
-557D: 21 C0 55        LD      HL,$55C0            ; {+code.scoreSpot} Turn count in the score message
+557D: 21 C0 55        LD      HL,$55C0            ; {+code.scoreMsg} Turn count in the score message
 5580: 3A B3 55        LD      A,($55B3)           ; {code.scoreTempMSB} MSB of calculated score
 5583: CD A2 55        CALL    $55A2               ; {code.BinaryToASCII} Add MSB of score to string
 5586: 3A B2 55        LD      A,($55B2)           ; {code.scoreTempLSB} LSB of calculated score
 5589: CD A2 55        CALL    $55A2               ; {code.BinaryToASCII} Add LSB of score to string
-558C: 21 E3 55        LD      HL,$55E3            ; {+code.turnSpot} Turn count spot in string
+558C: 21 E3 55        LD      HL,$55E3            ; {+code.turnMsg} Turn count spot in string
 558F: 3A 41 50        LD      A,($5041)           ; {code.bcdTurnCountMSB} Add MSB of turn ...
 5592: CD A2 55        CALL    $55A2               ; {code.BinaryToASCII} ... count to string
 5595: 3A 40 50        LD      A,($5040)           ; {code.bcdTurnCountLSB} Add LSB of turn ...
@@ -3467,20 +3470,20 @@ BinaryToASCII:
 55B1: C9              RET                         
 
 scoreTempLSB:
-55B2: 00
+55B2: 00 ; Used in calculating/printing score
 
 scoreTempMSB:
-55B3: 00
+55B3: 00 ; Used in calculating/printing score
 
 ScoreString:
 ; YOU_SCORED_______OUT_OF_A_POSSIBLE_0220,_USING______TURNS.
 55B4: 59 4F 55 20 53 43 4F 52 45 44 20
 scoreSign:
 55BF: 20
-scoreSpot:
+scoreMsg:
 55C0: 20 20 20 20 20 4F 55 54 20 4F 46 20 41 20 50 4F 53 53 49 42
 55D4: 4C 45 20 30 32 32 30 2C 20 55 53 49 4E 47 20
-turnSpot:
+turnMsg:
 55E3: 20 20 20 20 20 54 55 52 4E 53 2E 00
 ```
 
@@ -3927,11 +3930,12 @@ GeneralCommandHandler:
 5AB6: 04 75 7C  ;        Print(PS_B3:"YOU_HAVE_TAKEN_THE_VASE_AND_HURLED_IT_DELICATELY_TO_THE_GROUND.")
 5AB9: 17        ;    DropUserInputObject
 5ABA: 29 36     ; OPEN
-5ABC: 07 1C     ;    StopIfPassElseContinue
+5ABC: 07 1C     ;    StopIfPassElseContinue next=5AD9
 5ABE: 11 17     ;        AssertObjectMatchesUserInput(obj_SARCOPH_full)
-5AC0: 07 06     ;        StopIfPassElseContinue
+5AC0: 07 06     ;        StopIfPassElseContinue next=5AC7
 5AC2: 02 17     ;            AssertObjectIsInPack(obj_SARCOPH_full)
 5AC4: 04 01 77  ;            Print(PS_94:"I'D_ADVISE_YOU_TO_PUT_DOWN_THE_SARCOPHAGUS_BEFORE_OPENING_IT!!")
+;               ;            end_of_list
 5AC7: 07 0E     ;        StopIfPassElseContinue
 5AC9: 02 22     ;            AssertObjectIsInPack(obj_KEY)
 5ACB: 04 BE 76  ;            Print(PS_93:"A_GLISTENING_PEARL_FALLS_OUT_OF_THE_SARCOPHAGUS_AND_ROLLS_AWAY._
@@ -3939,7 +3943,9 @@ GeneralCommandHandler:
 5ACE: 15 16 40  ;            MoveObjectToRoom(obj_PEARL, room_64)
 5AD1: 15 17 00  ;            MoveObjectToRoom(obj_SARCOPH_full, room_0)
 5AD4: 18 18     ;            MoveObjectToCurrentRoom(obj_SARCOPH_empty)
+;               ;            end_of_list
 5AD6: 04 6B 77  ;        Print(PS_96:"YOU_DON'T_HAVE_ANYTHING_STRONG_ENOUGH_TO_OPEN_THE_SARCOPHAGUS.")
+;               ;        end_of_list_54BC
 5AD9: 07 14     ;    StopIfPassElseContinue
 5ADB: 11 18     ;        AssertObjectMatchesUserInput(obj_SARCOPH_empty)
 5ADD: 07 06     ;        StopIfPassElseContinue
@@ -4064,7 +4070,7 @@ GeneralCommandHandler:
 ; adventure.dat ??
 ; YOU_ARE_STANDING_BEFORE_THE_ENTRANCE_OF_A_PYRAMID.__AROUND_YOU__
 ; IS_A_DESERT.
-PS_00: ; room_1
+PS_00: ; RM_01_BEFORE_ENTRANCE
 5BDB: 19 C7 DE 94 14 55 5E 50 BD 90 5A C4 6A 59 60 5B
 5BEB: B1 5F BE 30 15 EB BF 17 98 B8 16 7B 14 14 A8 6B
 5BFB: 48 9B 5D 94 14 30 A1 1B 58 1B A1 D5 15 7B 14 F5
@@ -4073,7 +4079,7 @@ PS_00: ; room_1
 ; adventure.dat ??
 ; YOU_ARE_IN_THE_ENTRANCE_TO_THE_PYRAMID.__A_HOLE_IN_THE_FLOOR____
 ; LEADS_TO_A_PASSAGE_BENEATH_THE_SURFACE.
-PS_01: ; room_2
+PS_01: ; RM_02_IN_ENTRANCE
 5C10: 22 C7 DE 94 14 4B 5E 96 96 DB 72 9E 61 D0 B0 9B
 5C20: 53 6B BF 5F BE F3 16 CF B0 17 79 43 13 A9 15 DB
 5C30: 8B 83 7A 5F BE 56 15 44 A0 3B 13 3F 16 0D 47 89
@@ -4082,7 +4088,7 @@ PS_01: ; room_2
 
 ; adventure.dat ??
 ; YOU_ARE_IN_THE_DESERT.
-PS_02: ; room_3, room_4, room_5, room_6
+PS_02: ; RM_03_DESERT1, RM_04, RM_05, RM_06
 5C57: 07 C7 DE 94 14 4B 5E 96 96 DB 72 F5 59 3E 62 2E
 5C67: 00
 
@@ -4093,7 +4099,7 @@ PS_02: ; room_3, room_4, room_5, room_6
 ; YOU_ARE_IN_A_SMALL_CHAMBER_BENEATH_A_HOLE_FROM_THE_SURFACE.__A__
 ; LOW_CRAWL_LEADS_INWARD_TO_THE_WEST.__HIEROGLYPHICS_ON_THE_WALL__
 ; TRANSLATE,_"CURSE_ALL_WHO_ENTER_THIS_SACRED_CRYPT."
-PS_03: ; room_7
+PS_03: ; RM_07_BENEATH_A_HOLE
 5C68: 3B C7 DE 94 14 4B 5E 83 96 5F 17 46 48 DA 14 64
 5C78: 48 23 62 70 4D 96 5F 03 71 A9 15 DB 8B 79 68 56
 5C88: 90 DB 72 34 BA C5 65 DB 63 7B 14 49 16 C5 CE D9
@@ -4109,7 +4115,7 @@ PS_03: ; room_7
 ;
 ; YOU_ARE_CRAWLING_OVER_PEBBLES_IN_A_LOW_PASSAGE.__THERE_IS_A_DIM_
 ; LIGHT_AT_THE_EAST_END_OF_THE_PASSAGE.
-PS_04: ; room_8
+PS_04: ; RM_08_CRAWLING_OVER_PEBBLES
 5CE2: 21 C7 DE 94 14 45 5E D9 B0 90 8C D1 6A 74 CA DF
 5CF2: 16 F6 4C 4B 62 83 7A 4E 45 6B A1 55 A4 09 B7 DB
 5D02: 63 82 17 2F 62 D5 15 7B 14 8F 5A 43 16 2E 6D 96
@@ -4125,7 +4131,7 @@ PS_04: ; room_8
 ;
 ; YOU_ARE_IN_A_ROOM_FILLED_WITH_BROKEN_POTTERY_SHARDS_OF_ANCIENT__
 ; EGYPTIAN_CRAFTS.__AN_AWKWARD_CORRIDOR_LEADS_UPWARD_AND_WEST.
-PS_05: ; room_9
+PS_05: ; RM_09_BROKEN_POTTERY
 5D28: 29 C7 DE 94 14 4B 5E 83 96 39 17 DB 9F 0E 67 E6
 5D38: 8B FB 17 53 BE 79 4F B0 85 E9 16 3F C0 7B B4 1B
 5D48: B8 4D B1 B8 16 90 14 47 54 B3 9A 29 15 EE DE 90
@@ -4137,7 +4143,7 @@ PS_05: ; room_9
 ; woods12
 ;
 ; YOU_ARE_IN_AN_AWKWARD_SLOPING_EAST/WEST_CORRIDOR.
-PS_06: ; room_10
+PS_06: ; RM_0A_AWKWARD_SLOPING
 5D7D: 10 C7 DE 94 14 4B 5E 83 96 83 96 A9 D1 2E 49 5E
 5D8D: 17 63 A0 AB 98 95 5F E1 BC 66 62 E1 14 73 B3 84
 5D9D: 5B 2E 00
@@ -4150,7 +4156,7 @@ PS_06: ; room_10
 ; YOU_ARE_IN_A_SPLENDID_CHAMBER_THIRTY_FEET_HIGH.__THE_WALLS_ARE__
 ; FROZEN_RIVERS_OF_ORANGE_STONE.__AN_AWKWARD_CORRIDOR_AND_A_GOOD__
 ; PASSAGE_EXIT_FROM_THE_EAST_AND_WEST_SIDES_OF_THE_CHAMBER.
-PS_07: ; room_11
+PS_07: ; RM_0B_SPLENDID_CHAMBER
 5DA0: 3D C7 DE 94 14 4B 5E 83 96 62 17 F0 8B 86 5A DA
 5DB0: 14 64 48 23 62 63 BE D3 B3 4F 15 73 62 89 73 9B
 5DC0: 76 82 17 59 5E 46 48 C3 B5 5B B1 5C 15 EF A1 94
@@ -4167,7 +4173,7 @@ PS_07: ; room_11
 ; AT_YOUR_FEET_IS_A_SMALL_PIT_BREATHING_TRACES_OF_WHITE_MIST.__AN_
 ; EAST_PASSAGE_ENDS_HERE_EXCEPT_FOR_A_SMALL_CRACK_LEADING_ON._____
 ; ROUGH_STONE_STEPS_LEAD_DOWN_THE_PIT.
-PS_08: ; room_12
+PS_08: ; RM_0C_SMALL_PIT_WHITE_MIST
 5E1E: 36 73 49 C7 DE 88 AF 36 60 D5 15 7B 14 E3 B8 F3
 5E2E: 8C 96 A5 BC 14 96 5F 90 73 D6 6A C5 B0 4B 62 C3
 5E3E: 9E 23 D1 DB BD D5 92 9B C1 90 14 23 15 F3 B9 55
@@ -4190,7 +4196,7 @@ PS_08: ; room_12
 ; AND_A_COLD_WIND_BLOWS_UP_THE_STAIRCASE.__THERE_IS_A_PASSAGE_AT__
 ; THE_TOP_OF_A_DOME_BEHIND_YOU.__ROUGH_STONE_STEPS_LEAD_UP_THE____
 ; DOME.
-PS_09: ; room_13
+PS_09: ; RM_0D_STEPS_LEAD_UP_DOME
 5E8E: 6C C7 DE 94 14 43 5E 11 BC 5B 98 8E 61 B8 16 7B
 5E9E: 14 D5 C9 0A BC 46 48 66 17 76 B1 23 54 AB 98 04
 5EAE: 68 14 D0 11 58 73 C6 C3 9E 3B 13 5B 17 2E 6D 89
@@ -4212,7 +4218,7 @@ PS_09: ; room_13
 ;
 ; THIS_IS_A_LOW_ROOM_WITH_A_HIEROGLYPH_ON_THE_WALL.__IT_TRANSLATES
 ; "YOU_WON'T_GET_IT_UP_THE_STEPS".
-PS_0A: ; room_14
+PS_0A: ; RM_0E_LOW_ROOM_HIEROGLYPH
 5F69: 20 63 BE CB B5 C3 B5 49 16 D4 CE 3F A0 FB 17 53
 5F79: BE 4A 45 34 79 FE 9E E2 DE C0 16 82 17 59 5E 46
 5F89: 48 3B F4 73 7B EB BF 9E 9A 7F 49 03 B6 1B A1 40
@@ -4227,7 +4233,7 @@ PS_0A: ; room_14
 ; YOU_ARE_ON_THE_EAST_BANK_OF_A_BOTTOMLESS_PIT_STRETCHING_ACROSS__
 ; THE_HALL.__THE_MIST_IS_QUITE_THICK_HERE,_AND_THE_PIT_IS_TOO_WIDE
 ; TO_JUMP.
-PS_0B: ; room_15
+PS_0B: ; RM_0F_EAST_BANK_BOTTOMLESS_PIT
 5FAB: 2D C7 DE 94 14 51 5E 96 96 DB 72 95 5F 04 BC 95
 5FBB: 48 B8 16 7B 14 06 4F 7F BF F5 8B D2 B5 73 7B 0C
 5FCB: BA 7D 62 90 73 C3 6A B9 55 CB B9 82 17 4A 5E 46
@@ -4241,7 +4247,7 @@ PS_0B: ; room_15
 ;
 ; YOU_ARE_IN_THE_PHARAOH'S_CHAMBER,_WITH_PASSAGES_OFF_IN_ALL______
 ; DIRECTIONS.
-PS_0C: ; room_16
+PS_0C: ; RM_10_PHARAOHS_CHAMBER
 6008: 19 C7 DE 94 14 4B 5E 96 96 DB 72 5B A5 D1 B0 65
 6018: 71 DA 14 64 48 46 62 FB 17 53 BE 55 A4 09 B7 4B
 6028: 62 D0 9E D0 15 8E 14 FB 89 3B 13 03 15 65 B1 91
@@ -4251,7 +4257,7 @@ PS_0C: ; room_16
 ; woods29
 ;
 ; YOU_ARE_IN_THE_SOUTH_SIDE_CHAMBER.
-PS_0D: ; room_17
+PS_0D: ; RM_11_SOUTH_SIDE_CHAMBER
 603C: 0B C7 DE 94 14 4B 5E 96 96 DB 72 47 B9 53 BE 46
 604C: B8 45 5E 4F 72 74 4D 2E 00
 
@@ -4260,7 +4266,7 @@ PS_0D: ; room_17
 ;
 ; YOU_ARE_ON_THE_WEST_SIDE_OF_THE_BOTTOMLESS_PIT_IN_THE_HALL_OF___
 ; GODS.
-PS_0E: ; room_18
+PS_0E: ; RM_12_HALL_OF_GODS
 6055: 17 C7 DE 94 14 51 5E 96 96 DB 72 B5 D0 15 BC FF
 6065: 78 B8 16 82 17 44 5E 0E A1 EE 9F 65 62 E3 16 0B
 6075: BC 96 96 DB 72 4E 72 11 8A 7B 64 81 15 2F 5C 00
@@ -4272,7 +4278,7 @@ PS_0E: ; room_18
 ; YOU_ARE_AT_THE_WEST_END_OF_THE_HALL_OF_GODS.___A_LOW_WIDE_PASS__
 ; CONTINUES_WEST_AND_ANOTHER_GOES_NORTH.__TO_THE_SOUTH_IS_A_LITTLE
 ; PASSAGE_SIX_FEET_OFF_THE_FLOOR.
-PS_0F: ; room_19
+PS_0F: ; RM_13_LITTLE_PASSAGE_SIX_FEET
 6085: 35 C7 DE 94 14 43 5E 16 BC DB 72 B5 D0 07 BC 33
 6095: 98 C3 9E 5F BE 9B 15 F3 8C C3 9E 36 6E 5B BB 43
 60A5: 13 49 16 D9 CE FF 78 DB 16 CB B9 E1 14 C3 9A E7
@@ -4288,7 +4294,7 @@ PS_0F: ; room_19
 ; YOU_ARE_AT_EAST_END_OF_A_VERY_LONG_HALL_APPARENTLY_WITHOUT_SIDE_
 ; CHAMBERS.__TO_THE_EAST_A_LOW_WIDE_CRAWL_SLANTS_UP.__TO_THE_NORTH
 ; A_ROUND_TWO_FOOT_HOLE_SLANTS_DOWN.
-PS_10: ; room_20
+PS_10: ; RM_14_EAST_END_LONG_HALL
 60F1: 36 C7 DE 94 14 43 5E 07 BC 66 49 30 15 11 58 83
 6101: 64 CF 17 7B B4 80 8D CA 6A 46 48 92 14 54 A4 9E
 6111: 61 FB 8E 56 D1 87 74 15 BC FF 78 DA 14 64 48 3D
@@ -4301,7 +4307,7 @@ PS_10: ; room_20
 ;
 ; YOU_ARE_AT_THE_WEST_END_OF_A_VERY_LONG_FEATURELESS_HALL.__THE___
 ; HALL_JOINS_UP_WITH_A_NARROW_NORTH/SOUTH_PASSAGE.
-PS_11: ; room_21
+PS_11: ; RM_15_WEST_END_FEATURELESS_HALL
 615F: 25 C7 DE 94 14 43 5E 16 BC DB 72 B5 D0 07 BC 33
 616F: 98 C3 9E 58 45 43 62 49 16 AB 98 63 66 74 C0 3F
 617F: 61 CB B9 4E 72 9B 8F 82 17 3B 5E 9B 15 F3 8C FB
@@ -4311,7 +4317,7 @@ PS_11: ; room_21
 ; 62	 YOU ARE AT A CROSSOVER OF A HIGH N/S PASSAGE AND A LOW E/W ONE.
 ;
 ; YOU_ARE_AT_A_CROSSOVER_OF_A_HIGH_N/S_PASSAGE_AND_A_LOW_E/W_ONE.
-PS_12: ; room_22
+PS_12: ; RM_16_CROSSOVER
 61AC: 15 C7 DE 94 14 43 5E 03 BC E4 14 E5 A0 4F A1 91
 61BC: AF 83 64 A3 15 13 6D 5D 97 DB 16 D3 B9 9B 6C 8E
 61CC: 48 7B 14 89 8D 20 15 D1 CE 7F 98 00
@@ -4319,7 +4325,7 @@ PS_12: ; room_22
 ; 63	 DEAD END
 ;
 ; DEAD_END.
-PS_13: ; room_23, room_42, room_43, room_44, room_45, room_46, room_47, room_48, room_49, room_50, room_51, room_53
+PS_13: ; RM_17_DEAD_END1, RM_2A, RM_2B, RM_2C, RM_2D, RM_2E, RM_2F, RM_30, RM_31, RM_32, RM_33, RM_35
 61D8: 03 E3 59 07 58 57 98 00
 
 ; 30	 YOU ARE IN THE WEST SIDE CHAMBER OF HALL OF MT KING.
@@ -4328,7 +4334,7 @@ PS_13: ; room_23, room_42, room_43, room_44, room_45, room_46, room_47, room_48,
 ;
 ; YOU_ARE_IN_THE_WEST_THRONE_CHAMBER.__A_PASSAGE_CONTINUES_WEST___
 ; AND_UP_FROM_HERE.
-PS_14: ; room_24
+PS_14: ; RM_18_THRONE_CHAMBER
 61E0: 1B C7 DE 94 14 4B 5E 96 96 DB 72 B5 D0 16 BC F9
 61F0: 74 5B 98 1B 54 AF 91 1B B5 7B 14 55 A4 09 B7 45
 6200: 5E 1E A0 9F 7A 4B 62 B5 D0 FB BB 90 14 17 58 08
@@ -4340,7 +4346,7 @@ PS_14: ; room_24
 ;
 ; YOU_ARE_IN_A_LOW_N/S_PASSAGE_AT_A_HOLE_IN_THE_FLOOR.__THE_HOLE__
 ; GOES_DOWN_TO_AN_E/W_PASSAGE.
-PS_15: ; room_25
+PS_15: ; RM_19_LOW_NS_PASSAGE
 6218: 1E C7 DE 94 14 4B 5E 83 96 49 16 D0 CE 8B 36 55
 6228: A4 09 B7 43 5E 03 BC A9 15 DB 8B 83 7A 5F BE 56
 6238: 15 44 A0 3B F4 5F BE A9 15 DB 8B 81 15 4B 62 89
@@ -4353,7 +4359,7 @@ PS_15: ; room_25
 ;
 ; YOU_ARE_IN_A_LARGE_ROOM,_WITH_A_PASSAGE_TO_THE_SOUTH,_AND_A_WALL
 ; OF_BROKEN_ROCK_TO_THE_EAST.__THERE_IS_A_PANEL_ON_THE_NORTH_WALL.
-PS_16: ; room_26
+PS_16: ; RM_1A_PANEL_NORTH_WALL
 6258: 2A C7 DE 94 14 4B 5E 83 96 3B 16 B7 B1 39 17 FE
 6268: 9F FB 17 53 BE 52 45 65 49 77 47 89 17 82 17 55
 6278: 5E 36 A1 73 76 8E 48 7B 14 0E D0 78 8D BC 14 97
@@ -4363,12 +4369,12 @@ PS_16: ; room_26
 
 ; adventure.dat ??
 ; YOU_ARE_IN_THE_CHAMBER_OF_ANUBIS.
-PS_17: ; room_27
+PS_17: ; RM_1B_CHAMBER_OF_ANUBIS
 62B0: 0B C7 DE 94 14 4B 5E 96 96 DB 72 1B 54 AF 91 91
 62C0: AF 83 64 E4 9A 6F 7B 00
 
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
-PS_18: ; room_28, room_29, room_30, room_31, room_32, room_33, room_34, room_35, room_36, room_37, room_38, room_39, room_40, room_41
+PS_18: ; RM_1C_TWISTY_PASSAGES1, RM_1D, RM_1E, RM_1F, RM_20, RM_21, RM_22, RM_23, RM_24, RM_25, RM_26, RM_27, RM_28, RM_29
 62C8: 10 C7 DE 94 14 4B 5E 83 96 63 16 5B E3 C3 9E BB
 62D8: C0 13 BA DB 16 D3 B9 B5 6C 03 EE F3 8C 43 48 BF
 62E8: 85 00
@@ -4376,7 +4382,7 @@ PS_18: ; room_28, room_29, room_30, room_31, room_32, room_33, room_34, room_35,
 ; YOU_ARE_ON_THE_BRINK_OF_A_LARGE_PIT.__YOU_COULD_CLIMB_DOWN,_BUT_
 ; YOU_WOULD_NOT_BE_ABLE_TO_CLIMB_BACK_UP.__THE_MAZE_CONTINUES_ON__
 ; THIS_LEVEL.
-PS_19: ; room_52
+PS_19: ; RM_34_BRINK_OF_LARGE_PIT
 62EA: 2E C7 DE 94 14 51 5E 96 96 DB 72 73 4F 4B 99 C3
 62FA: 9E 4E 45 31 49 52 5E 97 7B 5B 13 1B A1 47 55 B3
 630A: 8B C3 54 A3 91 89 5B F3 9B F6 4F 51 18 59 C2 2E
@@ -4392,7 +4398,7 @@ PS_19: ; room_52
 ; YOU_ARE_IN_A_DIRTY_BROKEN_PASSAGE.__TO_THE_EAST_IS_A_CRAWL.__TO_
 ; THE_WEST_IS_A_LARGE_PASSAGE.__ABOVE_YOU_IS_A_HOLE_TO_ANOTHER____
 ; PASSAGE.
-PS_1A: ; room_54
+PS_1A: ; RM_36_DIRTY_BROKEN_PASSAGE
 6349: 2D C7 DE 94 14 4B 5E 83 96 03 15 D3 B3 BC 14 97
 6359: 9F 92 96 65 49 77 47 3B F4 6B BF 5F BE 23 15 F3
 6369: B9 4B 7B 45 45 D9 B0 9B 8F 89 17 82 17 59 5E 66
@@ -4405,7 +4411,7 @@ PS_1A: ; room_54
 ;
 ; YOU_ARE_ON_THE_BRINK_OF_A_SMALL_CLEAN_CLIMBABLE_PIT.__A_CRAWL___
 ; LEADS_WEST.
-PS_1B: ; room_55
+PS_1B: ; RM_37_BRINK_OF_CLEAN_PIT
 63A6: 19 C7 DE 94 14 51 5E 96 96 DB 72 73 4F 4B 99 C3
 63B6: 9E 55 45 8E 91 05 8A E3 8B 85 96 8F 8C C4 4C DB
 63C6: 8B 96 A5 3B F4 45 45 D9 B0 FB 89 3F 16 0D 47 F7
@@ -4416,7 +4422,7 @@ PS_1B: ; room_55
 ;
 ; YOU_ARE_IN_THE_BOTTOM_OF_A_SMALL_PIT_WITH_A_LITTLE_STREAM,_WHICH
 ; ENTERS_AND_EXITS_THROUGH_TINY_SLITS.
-PS_1C: ; room_56
+PS_1C: ; RM_38_PIT_LITTLE_STREAM
 63DA: 21 C7 DE 94 14 4B 5E 96 96 DB 72 06 4F 7F BF B8
 63EA: 16 7B 14 E3 B8 F3 8C 96 A5 FB 17 53 BE 4E 45 8E
 63FA: 7B DB 8B 0C BA 8F 5F 19 EE 85 73 F0 72 F4 BD C3
@@ -4426,7 +4432,7 @@ PS_1C: ; room_56
 ; YOU_ARE_IN_A_THE_ROOM_OF_BES,_WHOSE_PICTURE_IS_ON_THE_WALL._____
 ; THERE_IS_A_BIG_HOLE_IN_THE_FLOOR.__THERE_IS_A_PASSAGE_LEADING___
 ; EAST.
-PS_1D: ; room_57
+PS_1D: ; RM_39_ROOM_OF_BES
 641F: 2C C7 DE 94 14 4B 5E 83 96 82 17 54 5E 3F A0 B8
 642F: 16 AF 14 33 BB 29 D1 9B B7 85 A5 74 C0 4B 5E D1
 643F: B5 96 96 DB 72 0E D0 9B 8F 3B 13 82 17 2F 62 D5
@@ -4445,7 +4451,7 @@ PS_1D: ; room_57
 ; FROM_THE_NORTH_JOINS_A_HIGHER_CRAWL_FROM_THE_EAST_TO_MAKE_A_____
 ; WALKING_PASSAGE_GOING_WEST.__THERE_IS_ALSO_A_LARGE_ROOM_ABOVE.__
 ; THE_AIR_IS_DAMP_HERE.
-PS_1E: ; room_58
+PS_1E: ; RM_3A_COMPLEX_JUNCTION
 647A: 47 C7 DE 94 14 43 5E 03 BC E1 14 E6 93 13 63 F0
 648A: 81 03 56 27 A0 43 13 49 16 CA CE 8E 48 C3 B5 33
 649A: 98 0F 87 4B 62 55 A4 09 B7 3B 5E 5C 15 DB 9F 5F
@@ -4460,7 +4466,7 @@ PS_1E: ; room_58
 ; WEST,_AND_UP.__HUMAN_BONES_ARE_STREWN_ABOUT_ON_THE_FLOOR._______
 ; HIEROGLYPHICS_ON_THE_WALL_ROUGHLY_TRANSLATE_TO_"THOSE_WHO_______
 ; PROCEED_EAST_MAY_NEVER_RETURN."
-PS_1F: ; room_59
+PS_1F: ; RM_3B_ANTEROOM_OF_SEKER
 650A: 4A C7 DE 94 14 4B 5E 96 96 DB 72 8E C5 41 62 B6
 651A: A0 03 58 BF 9A 01 B3 51 90 95 64 17 61 1B B5 DB
 652A: 16 D3 B9 B5 6C 81 15 23 15 16 BA F7 17 16 BA 90
@@ -4474,7 +4480,7 @@ PS_1F: ; room_59
 
 ; YOU_ARE_AT_THE_LAND_OF_DEAD.__PASSAGES_LEAD_OFF_IN_>ALL<________
 ; DIRECTIONS.
-PS_20: ; room_60
+PS_20: ; RM_3C_LAND_OF_DEAD
 65A1: 19 C7 DE 94 14 43 5E 16 BC DB 72 50 8B 11 58 86
 65B1: 64 86 5F 3B F4 55 A4 09 B7 4B 62 E3 8B 11 58 83
 65C1: 66 83 7A 8E 2D 73 8A 3B 13 3B 13 03 15 65 B1 91
@@ -4484,7 +4490,7 @@ PS_20: ; room_60
 ; THE_PICTURES_DEPICT_ATUM,_A_PHARAOH_WEARING_THE_DOUBLE_CROWN.___
 ; A_SHALLOW_PASSAGE_PROCEEDS_DOWNWARD,_AND_A_SOMEWHAT_STEEPER_ONE_
 ; LEADS_UP.__A_LOW_HANDS_AND_KNEES_PASSAGE_ENTERS_FROM_THE_SOUTH.
-PS_21: ; room_61
+PS_21: ; RM_3D_ANCIENT_DRAWINGS
 65D5: 55 C7 DE AF 23 D0 15 7B 14 54 8B 9B 6C 01 B3 59
 65E5: 90 82 7B 90 14 47 54 B3 9A EB 5B 50 D1 CB 6E 03
 65F5: A0 46 48 F3 17 0D 8D 3B F4 3B 13 82 17 52 5E E6
@@ -4500,7 +4506,7 @@ PS_21: ; room_61
 ; YOU_ARE_IN_A_CHAMBER_WHOSE_WALL_CONTAINS_A_PICTURE_OF_A_MAN_____
 ; WEARING_THE_LUNAR_DISK_ON_HIS_HEAD.__HE_IS_THE_GOD_KHONS,_THE___
 ; MOON_GOD.
-PS_22: ; room_62
+PS_22: ; RM_3E_MOON_GOD
 6682: 2D C7 DE 94 14 4B 5E 83 96 DA 14 64 48 23 62 29
 6692: D1 9B B7 0E D0 05 8A 1E A0 D0 47 C3 B5 E3 16 0F
 66A2: 56 5B B1 C3 9E 4F 45 83 48 3B 13 F7 17 33 49 AB
@@ -4509,13 +4515,13 @@ PS_22: ; room_62
 66D2: A0 16 EE DB 72 4F 13 40 A0 81 15 44 2E 00
 
 ; YOU_ARE_IN_A_LONG_SLOPING_CORRIDOR_WITH_RAGGED_WALLS._
-PS_23: ; room_63
+PS_23: ; RM_3F_RAGGED_WALLS
 66E0: 12 C7 DE 94 14 4B 5E 83 96 49 16 AB 98 C9 B8 90
 66F0: A5 C5 6A BC A0 09 79 99 AF 82 7B 2B 17 F7 6C 19
 6700: 58 46 48 5B BB 20 00
 
 ; YOU_ARE_IN_A_CUL-DE-SAC_ABOUT_EIGHT_FEET_ACROSS.
-PS_24: ; room_64
+PS_24: ; RM_40_CUL_DE_SAC
 6707: 10 C7 DE 94 14 4B 5E 83 96 E7 14 56 8F A5 63 CB
 6717: 46 B9 46 73 C6 C9 60 33 75 67 66 03 BC B9 55 EF
 6727: B9 00
@@ -4526,7 +4532,7 @@ PS_24: ; room_64
 ; YOU_ARE_IN_THE_CHAMBER_OF_HORUS,_A_LONG_EAST/WEST_PASSAGE_WITH__
 ; HOLES_EVERYWHERE.__TO_EXPLORE_AT_RANDOM,_SELECT_NORTH,_SOUTH,___
 ; UP,_OR_DOWN.
-PS_25: ; room_65
+PS_25: ; RM_41_CHAMBER_OF_HORUS
 6729: 2E C7 DE 94 14 4B 5E 96 96 DB 72 1B 54 AF 91 91
 6739: AF 8A 64 BF A0 33 BB 4E 45 11 A0 23 15 F8 B9 B5
 6749: D0 12 BC 65 49 77 47 FB 17 53 BE A9 15 F5 8B 38
@@ -4544,7 +4550,7 @@ PS_25: ; room_65
 ; IMMENSE_SLAB_FALLEN_FROM_THE_CEILING.__EAST_AND_WEST_THERE_ONCE_
 ; WHERE_LARGE_PASSAGES,_BUT_THEY_ARE_NOW_FILLED_WITH_SAND.________
 ; LOW_SMALL_PASSAGES_GO_NORTH_AND_SOUTH.
-PS_26: ; room_66
+PS_26: ; RM_42_FALLEN_SLAB
 6789: 4C C7 DE 94 14 4B 5E 83 96 3B 16 B7 B1 49 16 C5
 6799: CE 2D 7B 3B C5 85 AF 4F 72 74 4D FA 17 D7 A0 56
 67A9: 15 44 A0 D5 15 90 14 3B 13 3B 13 CF 15 30 92 9B
@@ -4559,7 +4565,7 @@ PS_26: ; room_66
 ; YOU_ARE_IN_THE_PRIEST'S_BEDROOM.__THE_WALLS_ARE_COVERED_WITH____
 ; CURTAINS,_THE_FLOOR_WITH_A_THICK_PILE_CARPET.__MOSS_COVERS_THE__
 ; CEILING.
-PS_27: ; room_72
+PS_27: ; RM_48_PRIESTS_BEDROOM
 6825: 2D C7 DE 94 14 4B 5E 96 96 DB 72 F3 A6 66 62 CB
 6835: 23 66 4D 01 B3 DB 95 82 17 59 5E 46 48 C3 B5 5B
 6845: B1 48 55 2F 62 19 58 82 7B 3B 13 E7 14 BB B3 9D
@@ -4570,7 +4576,7 @@ PS_27: ; room_72
 ; THIS_IS_THE_CHAMBER_OF_THE_HIGH_PRIEST.___ANCIENT_DRAWINGS_COVER
 ; THE_WALLS.__AN_EXTREMELY_TIGHT_TUNNEL_LEADS_WEST.__IT_LOOKS_LIKE
 ; A_TIGHT_SQUEEZE.__ANOTHER_PASSAGE_LEADS_SE.
-PS_28: ; room_73
+PS_28: ; RM_49_HIGH_PRIEST
 6882: 39 63 BE CB B5 D6 B5 DB 72 1B 54 AF 91 91 AF 96
 6892: 64 DB 72 89 73 12 71 07 B2 17 BA 3B 13 8D 48 30
 68A2: 79 06 BC D9 B0 91 7A C5 B5 4F A1 C2 B3 59 5E 46
@@ -4582,7 +4588,7 @@ PS_28: ; room_73
 
 ; YOU_ARE_IN_THE_HIGH_PRIEST'S_TREASURE_ROOM_LIT_BY_AN_EERIE_GREEN
 ; LIGHT.__A_NARROW_TUNNEL_EXITS_TO_THE_EAST.
-PS_29: ; room_76
+PS_29: ; RM_4C_EERIE_GREEN_LIGHT
 68F6: 23 C7 DE 94 14 4B 5E 96 96 DB 72 89 73 12 71 07
 6906: B2 F5 B9 D6 B5 63 B1 34 BA 54 5E 3F A0 43 16 04
 6916: BC 43 DB 87 96 33 62 49 5E 67 B1 83 99 2E 6D 3B
@@ -4602,7 +4608,7 @@ PS_29: ; room_76
 ; PASSAGES_EAST_AND_WEST.__THERE_ARE_HOLES_ALL_OVER,_BUT_THE_ONLY_
 ; BIG_ONE_IS_ON_THE_WALL_DIRECTLY_OVER_THE_WEST_PIT_WHERE_YOU_____
 ; CAN'T_GET_TO_IT.
-PS_2A: ; room_78
+PS_2A: ; RM_4E_WEAST_END_TWOPIT
 693F: 70 C7 DE 94 14 43 5E 16 BC DB 72 95 5F 07 BC 33
 694F: 98 C3 9E 5F BE 91 17 63 A0 14 BC 3F A0 3B F4 5F
 695F: BE 56 15 44 A0 9F 15 5B B1 4B 7B 43 16 3F C0 66
@@ -4623,7 +4629,7 @@ PS_2A: ; room_78
 ; woods24 A SMALL POOL OF OIL IN ONE CORNER OF THE PIT.
 ;
 ; YOU_ARE_AT_THE_BOTTOM_OF_THE_EASTERN_PIT_IN_THE_TWOPIT_ROOM.
-PS_2B: ; room_79
+PS_2B: ; RM_4F_BOTTOM_EASTERN_PIT
 6A21: 14 C7 DE 94 14 43 5E 16 BC DB 72 06 4F 7F BF B8
 6A31: 16 82 17 47 5E 66 49 38 62 E3 16 0B BC 96 96 DB
 6A41: 72 C1 C0 96 A5 39 17 FF 9F 00
@@ -4633,7 +4639,7 @@ PS_2B: ; room_79
 ;
 ; YOU_ARE_AT_THE_WEST_END_OF_THE_TWOPIT_ROOM.__THERE_IS_A_LARGE___
 ; HOLE_IN_THE_WALL_ABOVE_THE_PIT_AT_THIS_END_OF_THE_ROOM.
-PS_2C: ; room_80
+PS_2C: ; RM_50_WEST_END_TWOPIT
 6A4B: 27 C7 DE 94 14 43 5E 16 BC DB 72 B5 D0 07 BC 33
 6A5B: 98 C3 9E 5F BE 91 17 63 A0 14 BC 3F A0 3B F4 5F
 6A6B: BE 5B B1 4B 7B 4E 45 31 49 3B 5E A9 15 DB 8B 83
@@ -4647,7 +4653,7 @@ PS_2C: ; room_80
 ;
 ; YOU_ARE_AT_THE_BOTTOM_OF_THE_WEST_PIT_IN_THE_TWOPIT_ROOM.__THERE
 ; IS_A_LARGE_HOLE_IN_THE_WALL_ABOUT_TWENTY_FIVE_FEET_ABOVE_YOU.
-PS_2D: ; room_81
+PS_2D: ; RM_51_BOTTOM_WEST_PIT
 6A9D: 29 C7 DE 94 14 43 5E 16 BC DB 72 06 4F 7F BF B8
 6AAD: 16 82 17 59 5E 66 62 E3 16 0B BC 96 96 DB 72 C1
 6ABD: C0 96 A5 39 17 FF 9F 56 13 F4 72 D5 60 7B 14 54
@@ -4658,7 +4664,7 @@ PS_2D: ; room_81
 ; YOU_ARE_IN_A_LONG,_NARROW_CORRIDOR_STRETCHING_OUT_OF_SIGHT_TO___
 ; THE_WEST.__AT_THE_EASTERN_END_IS_A_HOLE_THROUGH_WHICH_YOU_CAN___
 ; SEE_A_PROFUSION_OF_LEAVES.
-PS_2E: ; room_77
+PS_2E: ; RM_4D_PROFUSION_OF_LEAVES
 6AF3: 33 C7 DE 94 14 4B 5E 83 96 49 16 CE 98 8B 16 79
 6B03: B3 C5 CE BC A0 09 79 95 AF EF BF 9A BD 91 7A C7
 6B13: 16 11 BC 95 64 7A 79 16 BC BB 9C 82 17 59 5E 66
@@ -4669,7 +4675,7 @@ PS_2E: ; room_77
 
 ; YOU_ARE_IN_THE_CHAMBER_OF_OSIRIS._THE_CEILING_IS_TOO_HIGH_UP_FOR
 ; YOUR_LAMP_TO_SHOW_IT.__PASSAGES_LEAD_EAST,_NORTH,_AND_SOUTH.
-PS_2F: ; room_71
+PS_2F: ; RM_47_CHAMBER_OF_OSIRIS
 6B5C: 29 C7 DE 94 14 4B 5E 96 96 DB 72 1B 54 AF 91 91
 6B6C: AF 91 64 54 B8 6F 7B 82 17 45 5E CE 60 91 7A D5
 6B7C: 15 89 17 CA 9C 7A 79 B2 17 59 15 91 B4 23 C6 4F
@@ -4678,7 +4684,7 @@ PS_2F: ; room_71
 6BAC: 17 82 C6 2E 00
 
 ; THE_PASSAGE_HERE_IS_BLOCKED_BY_A_FALLEN_BLOCK.
-PS_30: ; room_70
+PS_30: ; RM_46_BLOCKED_FALLEN_BLOCK
 6BB1: 0F 5F BE DB 16 D3 B9 9B 6C F4 72 4B 5E C4 B5 75
 6BC1: 8D A6 85 C3 14 7B 14 CE 65 F0 8B B6 14 5D 9E 2E
 6BD1: 00
@@ -4686,7 +4692,7 @@ PS_30: ; room_70
 ; YOU_ARE_IN_THE_CHAMBER_OF_NEKHEBET,_A_WOMAN_WITH_THE_HEAD_OF_A__
 ; VULTURE,_WEARING_THE_CROWN_OF_EGYPT.__A_PASSAGE_EXITS_TO_THE____
 ; SOUTH.
-PS_31: ; room_68
+PS_31: ; RM_44_CHAMBER_OF_NEKHEBET
 6BD2: 2C C7 DE 94 14 4B 5E 96 96 DB 72 1B 54 AF 91 91
 6BE2: AF 90 64 1A 61 AF 5F 73 C1 59 45 E3 9F 99 96 82
 6BF2: 7B 82 17 4A 5E 86 5F B8 16 7B 14 DF 17 4F 8E 7E
