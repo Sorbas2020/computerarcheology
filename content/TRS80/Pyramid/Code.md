@@ -77,7 +77,7 @@ GetObjectInfo:
 435B: C2 50 43        JP      NZ,$4350            ; {code.GetObjectInfo} If this is being carried, recurse to the carrier
 435E: 2B              DEC     HL                  ; Back to first entry for return
 435F: BB              CP      E                   ; Room number matches E?
-4360: C9              RET                         
+4360: C9              RET
 
 TableOffsetTwoBytes:
 ; HL = HL + (A-1)*2
@@ -113,7 +113,7 @@ SetObjectLocation:
 4379: 23              INC     HL                  ; Second entry is location
 437A: 73              LD      (HL),E              ; Set the room number of the parent container
 437B: 2B              DEC     HL                  ; Back to 1st entry
-437C: C9              RET                         
+437C: C9              RET
 ```
 
 # Process Room Scripts
@@ -192,7 +192,7 @@ ScriptCommandPASS:
 43B3: BB              CP      E                   ; ... end of the script (MSB)?
 43B4: C2 BA 43        JP      NZ,$43BA            ; {} No ... keep going
 43B7: F6 01           OR      $01                 ; Z=0 PASS
-43B9: C9              RET                         
+43B9: C9              RET
 ;
 43BA: D5              PUSH    DE                  ; Put the calculated end of script back on stack
 43BB: C3 9D 43        JP      $439D               ; {code.RunScriptCommand} Run the next command
@@ -208,7 +208,7 @@ ScriptCommandFAIL:
 43BE: E1              POP     HL                  ; Pop the script pointer
 43BF: E1              POP     HL                  ; Pop the calculated end of the script
 43C0: AF              XOR     A                   ; Z=1 FAIL
-43C1: C9              RET                         
+43C1: C9              RET
 ```
 
 # COM_07_stop_if_pass()
@@ -521,7 +521,7 @@ CopyWord:
 45A2: 13              INC     DE                  ; ... storage ...
 45A3: 05              DEC     B                   ; ... with ...
 45A4: C2 9F 45        JP      NZ,$459F            ; {} ... the "@" character
-45A7: C9              RET                         
+45A7: C9              RET
 
 nounDataSize:
 45A8: 00 ; Number of bytes in noun's data area
@@ -588,7 +588,7 @@ PrintCarriageReturn:
 45E7: 06 0D           LD      B,$0D               ; Print ...
 45E9: 78              LD      A,B                 ; ... carriage ...
 45EA: CD FF 45        CALL    $45FF               ; {code.PrintChar} ... return
-45ED: C9              RET                         
+45ED: C9              RET
 ```
 
 # Wait for key
@@ -613,7 +613,7 @@ PrintChar:
 45FF: D5              PUSH    DE                  ; ROM routine mangles this
 4600: CD 33 00        CALL    $0033               ; {hard.PrintChar} Send character A to the screen
 4603: D1              POP     DE                  ; Restore our DE
-4604: C9              RET                         
+4604: C9              RET
 ```
 
 # Prompt And Read Line
@@ -670,7 +670,7 @@ BackSpace:
 
 InputDone:
 4657: 36 00           LD      (HL),$00            ; Put the null terminator on the end of the input
-4659: C9              RET                         
+4659: C9              RET
 ```
 
 # Input Buffer
@@ -946,14 +946,14 @@ UnpackStringToBuffer:  ; Never used (but was in Haunted House)
 4800: CE 00           ADC     $00                 ; ... to A
 4802: 29              ADD     HL,HL               ; Value = value * 2
 4803: 44              LD      B,H                 ; MSB
-4804: 85              ADD     A,L                 ; 
+4804: 85              ADD     A,L                 ;
 4805: 2A 85 48        LD      HL,($4885)          ; {code.valueOfForty}
-4808: 95              SUB     L                   ; 
-4809: 4F              LD      C,A                 ; 
+4808: 95              SUB     L                   ;
+4809: 4F              LD      C,A                 ;
 480A: 78              LD      A,B                 ; TODO figure out the exact math here
-480B: 9C              SBC     H                   ; 
-480C: 47              LD      B,A                 ; 
-480D: C5              PUSH    BC                  ; 
+480B: 9C              SBC     H                   ;
+480C: 47              LD      B,A                 ;
+480D: C5              PUSH    BC                  ;
 480E: D2 13 48        JP      NC,$4813            ; {} Less than 40 ... skip adding
 4811: 09              ADD     HL,BC               ; Greater or equal, add to the extracted value
 4812: E3              EX      (SP),HL             ; New value back to stack
@@ -1007,7 +1007,7 @@ shiftCount:
 4854: 32 84 48        LD      ($4884),A           ; {code.unpackNumWords} ... words
 4857: C2 D5 47        JP      NZ,$47D5            ; {} Go back for all the words
 485A: E1              POP     HL                  ; Point to the next character after the words in the string
-485B: C9              RET                         
+485B: C9              RET
 ```
 
 # Character Table
@@ -2546,56 +2546,58 @@ numResurrected:
 The LoadGame code restores the 1st four bytes of this table even though only the 1st byte
 is mangled (bug in code?).
 
+Object descriptions (44 objects)
+
+For packable objects each slot points to a message pair. The first is the long
+description and the second is the short description for the backpack.
+
 ```code
 ObjectDescriptions:
-; Object descriptions (44 objects)
-; For packable objects each slot points to a message pair. The first is the long
-; description and the second is the short description for the backpack.
-;                  # Name              Description
-5047: 58 6D     ;  1 obj_bridge_15        PS_40 Stone bridge room 15
-5049: 58 6D     ;  2 obj_bridge_18        PS_40 Stone bridge room 18
-504B: C0 47     ;  3                   -Never used (points to empty string)
-504D: C0 47     ;  4                   -Never used (points to empty string)
-504F: C0 47     ;  5                   -Never used (points to empty string)
-5051: E1 6E     ;  6 obj_MACHINE          PS_4E Vending Machine
-5053: 45 6E     ;  7 obj_PLANT_A          PS_4B Tiny plant
-5055: 71 6E     ;  8 obj_PLANT_B          PS_4C Twelve foot beanstalk
-5057: B1 6E     ;  9 obj_PLANT_C          PS_4D Giant beanstalk
-5059: 00 00     ; 10                   -Never used (points to null)
-505B: 3A 6D     ; 11 obj_SERPENT          PS_3F Serpent bars the way
-505D: 00 00     ; 12                   -Never used (points to null)
-505F: 00 00     ; 13                   -Never used (points to null)
-5061: 2E 6C     ; 14 obj_LAMP_off         PS_32 Lamp (not lit)
-5063: 53 6C     ; 15 obj_LAMP_on          PS_34 Lamp (lit)
-5065: 75 6C     ; 16 obj_BOX              PS_36 Statue box
-5067: 9E 6C     ; 17 obj_SCEPTER          PS_38 Scepter
-5069: 12 6D     ; 18 obj_PILLOW           PS_3D Pillow
-506B: CD 6C     ; 19 obj_BIRD             PS_3A Statue
-506D: EB 6C     ; 20 obj_BIRD_boxed       PS_3B Statue in box
-506F: ED 70     ; 21 obj_POTTERY          PS_66 Pottery
-5071: 47 71     ; 22 obj_PEARL            PS_69 Pearl
-5073: 78 6D     ; 23 obj_SARCOPH_full     PS_41 Sarcophagus with pearl
-5075: 78 6D     ; 24 obj_SARCOPH_empty    PS_41 Sarcophagus empty
-5077: B1 6D     ; 25 obj_MAGAZINES        PS_43 Magazines
-5079: EC 6D     ; 26 obj_FOOD             PS_45 Food
-507B: 04 6E     ; 27 obj_BOTTLE           PS_47 Bottle
-507D: 20 6E     ; 28 obj_WATER            PS_49 Water in the bottle
-507F: C0 47     ; 29                   -Never used (points to empty string)
-5081: C0 47     ; 30 obj_STREAM_56        EmptyString Stream in room 56
-5083: 14 71     ; 31 obj_EMERALD          PS_67 Emerald
-5085: C5 70     ; 32 obj_VASE_pillow      PS_65 Vase on pillow
-5087: A2 70     ; 33 obj_VASE_solo        PS_63 Vase
-5089: 7E 70     ; 34 obj_KEY              PS_61 Key
-508B: 30 6F     ; 35 obj_BATTERIES_fresh  PS_4F Batteries
-508D: 4F 6F     ; 36 obj_BATTERIES_worn   PS_51 Worn-out batteries
-508F: 7B 6F     ; 37 obj_GOLD             PS_53 Gold Nugget
-5091: AB 6F     ; 38 obj_DIAMNODS         PS_55 Diamonds
-5093: CA 6F     ; 39 obj_SILVER           PS_57 Silver
-5095: EA 6F     ; 40 obj_JEWELRY          PS_59 Jewelry
-5097: 0E 70     ; 41 obj_COINS            PS_5B Coins
-5099: 2B 70     ; 42 obj_CHEST            PS_5D Chest
-509B: 52 70     ; 43 obj_NEST             PS_5F Nest of golden eggs
-509D: 2E 6C     ; 44 obj_LAMP_dead        PS_32 Lamp (dead)
+;             Name                        Desc      Notes
+5047: 58 6D ; OBJ_01_BRIDGE_ROOM_0E       PS_40     Stone bridge in RM_0F_EAST_BANK_BOTTOMLESS_PIT
+5049: 58 6D ; OBJ_02_BRIDGE_ROOM_12       PS_40     Stone bridge in RM_12_HALL_OF_GODS
+504B: C0 47 ;                     -Never used (points to empty string)
+504D: C0 47 ;                     -Never used (points to empty string)
+504F: C0 47 ;                     -Never used (points to empty string)
+5051: E1 6E ; OBJ_06_VENDING_MACHINE      PS_4E     Vending Machine
+5053: 45 6E ; OBJ_07_PLANT_SMALL          PS_4B     Tiny plant
+5055: 71 6E ; OBJ_08_PLANT_MEDIUM         PS_4C     Twelve foot beanstalk
+5057: B1 6E ; OBJ_09_PLANT_LARGE          PS_4D     Giant beanstalk
+5059: 00 00 ;                     -Never used (points to null)
+505B: 3A 6D ; OBJ_0B_SERPENT              PS_3F     Serpent bars the way
+505D: 00 00 ;                     -Never used (points to null)
+505F: 00 00 ;                     -Never used (points to null)
+5061: 2E 6C ; OBJ_0E_LAMP_OFF             PS_32     Lamp (not lit)
+5063: 53 6C ; OBJ_0F_LAMP_ON              PS_34     Lamp (lit)
+5065: 75 6C ; OBJ_10_BOX                  PS_36     Statue box
+5067: 9E 6C ; OBJ_11_SCEPTER              PS_38     Scepter
+5069: 12 6D ; OBJ_12_PILLOW               PS_3D     Pillow
+506B: CD 6C ; OBJ_13_BIRD                 PS_3A     Statue
+506D: EB 6C ; OBJ_14_BIRD_IN_BOX          PS_3B     Statue in box
+506F: ED 70 ; OBJ_15_POTTERY              PS_66     Pottery
+5071: 47 71 ; OBJ_16_PEARL                PS_69     Pearl
+5073: 78 6D ; OBJ_17_SARCOPH_FULL         PS_41     Sarcophagus with pearl
+5075: 78 6D ; OBJ_18_SARCOPH_EMPTY        PS_41     Sarcophagus empty
+5077: B1 6D ; OBJ_19_MAGAZINES            PS_43     Magazines
+5079: EC 6D ; OBJ_1A_FOOD                 PS_45     Food
+507B: 04 6E ; OBJ_1B_BOTTLE               PS_47     Bottle
+507D: 20 6E ; OBJ_1C_WATER                PS_49     Water in the bottle
+507F: C0 47 ;                     -Never used (points to empty string)
+5081: C0 47 ; OBJ_1E_STREAM_ROOM_38           Empty (no description)
+5083: 14 71 ; OBJ_1F_EMERALD              PS_67     Emerald
+5085: C5 70 ; OBJ_20_VASE_ON_PILLOW       PS_65     Vase on pillow
+5087: A2 70 ; OBJ_21_VASE                 PS_63     Vase
+5089: 7E 70 ; OBJ_22_KEY                  PS_61     Key
+508B: 30 6F ; OBJ_23_BATTERIES_FRESH      PS_4F     Batteries
+508D: 4F 6F ; OBJ_24_BATTERIES_WORN       PS_51     Worn-out batteries
+508F: 7B 6F ; OBJ_25_GOLD                 PS_53     Gold Nugget
+5091: AB 6F ; OBJ_26_DIAMONDS             PS_55     Diamonds
+5093: CA 6F ; OBJ_27_SILVER               PS_57     Silver
+5095: EA 6F ; OBJ_28_JEWELRY              PS_59     Jewelry
+5097: 0E 70 ; OBJ_29_COINS                PS_5B     Coins
+5099: 2B 70 ; OBJ_2A_CHEST                PS_5D     Chest
+509B: 52 70 ; OBJ_2B_NEST_EGGS            PS_5F     Nest of golden eggs
+509D: 2E 6C ; OBJ_2C_LAMP_DEAD            PS_32     Lamp (dead)
 ```
 
 # Script Commands
@@ -2727,7 +2729,7 @@ BumpBCDTurnCount:
 5183: CE 00           ADC     $00                 ; Add any ...
 5185: 27              DAA                         ; ... carry from lower
 5186: 32 41 50        LD      ($5041),A           ; {code.bcdTurnCountMSB} Update upper BCD count
-5189: C9              RET                         
+5189: C9              RET
 ```
 
 # COM_01_move_look(room_num)
@@ -3420,20 +3422,20 @@ PrintScore:
 5550: 3E 2D           LD      A,$2D               ; Add a "-" to ...
 5552: 32 BF 55        LD      ($55BF),A           ; {code.scoreSign} ... the score string
 5555: 3A B3 55        LD      A,($55B3)           ; {code.scoreTempMSB}
-5558: 47              LD      B,A                 ; 
+5558: 47              LD      B,A                 ;
 5559: 3E 99           LD      A,$99               ; TODO decode the math
 555B: 90              SUB     B                   ; Negative values need fixing up to make them right
 555C: 32 B3 55        LD      ($55B3),A           ; {code.scoreTempMSB}
 555F: 3A B2 55        LD      A,($55B2)           ; {code.scoreTempLSB}
-5562: 47              LD      B,A                 ; 
+5562: 47              LD      B,A                 ;
 5563: 3E 99           LD      A,$99               ; TODO BCD math for negatives
-5565: 90              SUB     B                   ; 
-5566: C6 01           ADD     $01                 ; 
-5568: 27              DAA                         ; 
+5565: 90              SUB     B                   ;
+5566: C6 01           ADD     $01                 ;
+5568: 27              DAA                         ;
 5569: 32 B2 55        LD      ($55B2),A           ; {code.scoreTempLSB}
 556C: 3A B3 55        LD      A,($55B3)           ; {code.scoreTempMSB}
-556F: CE 00           ADC     $00                 ; 
-5571: 27              DAA                         ; 
+556F: CE 00           ADC     $00                 ;
+5571: 27              DAA                         ;
 5572: 32 B3 55        LD      ($55B3),A           ; {code.scoreTempMSB}
 5575: C3 7D 55        JP      $557D               ; {} Now update the turns
 ;
@@ -3452,7 +3454,7 @@ PrintScore:
 5598: CD A2 55        CALL    $55A2               ; {code.BinaryToASCII} ... count to string
 559B: 21 B4 55        LD      HL,$55B4            ; {+code.ScoreString} The string we just built
 559E: CD D0 45        CALL    $45D0               ; {code.PrintPlain} Print the constructed score
-55A1: C9              RET                         
+55A1: C9              RET
 
 BinaryToASCII:
 55A2: F5              PUSH    AF                  ; Hold the lower nibble
@@ -3467,7 +3469,7 @@ BinaryToASCII:
 55AD: C6 30           ADD     $30                 ; Binary to ASCII digit
 55AF: 77              LD      (HL),A              ; Store in buffer
 55B0: 23              INC     HL                  ; Bump buffer
-55B1: C9              RET                         
+55B1: C9              RET
 
 scoreTempLSB:
 55B2: 00 ; Used in calculating/printing score

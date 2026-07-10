@@ -58,7 +58,7 @@ COMMANDS_HAUNTEDHOUSE = {
 ADDRESSES = {
     "TRS80": {
         "PYRAMID_L1": {
-            "File": "/git/ComputerArcheology/content/trs80/pyramid/code1.md",
+            "File": "../../../content/TRS80/Pyramid/Code1.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
             "Rooms": specifics_pyramid.ROOMS,
@@ -73,7 +73,7 @@ ADDRESSES = {
             "GeneralScript": (0x5904, 0x5B2E)
         },
         "PYRAMID_L2": {
-            "File": "/git/ComputerArcheology/content/trs80/pyramid/code.md",
+            "File": "../../../content/TRS80/Pyramid/Code.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
             "Rooms": specifics_pyramid.ROOMS,
@@ -88,7 +88,7 @@ ADDRESSES = {
             "GeneralScript": (0x59B0, 0x5BDA)
         },
         "HAUNTEDHOUSE1": {
-            "File": "/git/ComputerArcheology/content/trs80/hauntedhouse/code1.md",
+            "File": "../../../content/TRS80/HauntedHouse/Code1.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
             "Rooms": specifics_hauntedhouse1.ROOMS,
@@ -103,7 +103,7 @@ ADDRESSES = {
             "GeneralScript": (0x4AF2, 0x4B34)
         },
         "HAUNTEDHOUSE2": {
-            "File": "/git/ComputerArcheology/content/trs80/hauntedhouse/code2.md",
+            "File": "../../../content/TRS80/HauntedHouse/Code2.md",
             "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
             "Rooms": specifics_hauntedhouse2.ROOMS,
@@ -120,7 +120,7 @@ ADDRESSES = {
     }, 
     "COCO": {
         "PYRAMID": {
-            "File": "/git/ComputerArcheology/content/coco/pyramid/code.md",
+            "File": "../../../content/CoCo/Pyramid/Code.md",
             "IsLittleEndian": False,
             "Commands": COMMANDS_PYRAMID,
             "Rooms": specifics_pyramid.ROOMS,
@@ -129,7 +129,7 @@ ADDRESSES = {
             "RoomScripts": (0x1272, 0x17E9),
             "AmbientLightTable": (0x17EB, 0x188B),
             "ObjectData": (0x188D, 0x18E3),
-            "ObjectInfo": (0x18ED, 0x1943),
+            "ObjectDescriptions": (0x18ED, 0x1943),
             "ScriptCommands": (0x0A17, 0x0A4F),
             "WordTable": (0x3C40, 0x3F15),
             "GeneralScript": (0x1945, 0x1B65)
@@ -301,7 +301,7 @@ def update_room_names(info):
     # Objects (elsewhere)
     # GeneralScript (elsewhere)
 
-    write_code_file(info["File"], lines) 
+    # write_code_file(info["File"], lines) 
 
 def update_objects(info):
     lines = read_code_file(info["File"])
@@ -310,6 +310,7 @@ def update_objects(info):
     onum = 0
     while ps < pe:
         line = lines[ps]
+        
         ps += 1
         if line.startswith(';'):            
             continue
@@ -317,6 +318,10 @@ def update_objects(info):
             raise Exception(f'Expected object data entry at {info["ObjectData"][0]:04X} (line {ps})')
         
         onum += 1
+        if onum not in info["Objects"]:
+            continue
+
+        obj_text = f'OBJ_{onum:02X}_{info["Objects"][onum]}'
 
         data = line[13:].strip()
         if not data:
@@ -327,14 +332,40 @@ def update_objects(info):
             rn_text = '*'
         else:
             rn_text = f'RM_{rn:02X}_{info["Rooms"][rn]}'
-        obj_text = f'OBJ_{onum:02X}_{info["Objects"][onum]}'
+        
 
         nl = f'{line[:22]} {obj_text.ljust(24)} {rn_text}'
         
         print(">>>",nl)
         lines[ps-1] = nl        
 
-    # TODO object descriptions
+    # object descriptions
+
+    ps,pe = find_start_and_end(lines, info["ObjectDescriptions"][0], info["ObjectDescriptions"][1])
+    if lines[ps-2] != 'ObjectDescriptions:':        
+        raise Exception(f'Expected ObjectDescriptions: label at {info["ObjectDescriptions"][0]:04X} (line {ps-2})')
+    
+    onum = 0
+    while ps < pe:
+        line = lines[ps]
+        ps += 1
+        if line.startswith(';'):
+            continue
+        onum += 1
+        if onum not in info["Objects"]:
+            continue
+
+        obj_text = f'OBJ_{onum:02X}_{info["Objects"][onum]}'
+
+        i = line.find('PS_')
+        if i<0:
+            continue
+        
+        end_text = line[i:].strip()
+        nl = f'{line[:11]} ; {obj_text.ljust(24)}    {end_text}'
+
+        print(">>>",nl)
+        lines[ps-1] = nl
 
     write_code_file(info["File"], lines)
 
@@ -361,5 +392,5 @@ info = ADDRESSES["TRS80"]["HAUNTEDHOUSE1"]
 
 info = ADDRESSES["TRS80"]["HAUNTEDHOUSE2"]
 # update_command_names(info)
-#update_room_names(info)
-update_objects(info)
+# update_room_names(info)
+# update_objects(info)

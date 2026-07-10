@@ -76,7 +76,7 @@ GetObjectInfo:
 4256: C2 4B 42        JP      NZ,$424B            ; {code.GetObjectInfo} If this is being carried, recurse to the carrier
 4259: 2B              DEC     HL                  ; Back to first entry for return
 425A: BB              CP      E                   ; Room number matches E?
-425B: C9              RET                         
+425B: C9              RET
 
 TableOffsetTwoBytes:
 ; HL = HL + (A-1)*2
@@ -111,7 +111,7 @@ SetObjectLocation:
 4274: 23              INC     HL                  ; Second entry is location
 4275: 73              LD      (HL),E              ; Set the room number of the parent container
 4276: 2B              DEC     HL                  ; Back to 1st entry
-4277: C9              RET                         
+4277: C9              RET
 ```
 
 # Process Room Scripts
@@ -207,7 +207,7 @@ ScriptCommandFAIL:
 42B9: E1              POP     HL                  ; Pop the script pointer
 42BA: E1              POP     HL                  ; Pop the calculated end of the script
 42BB: AF              XOR     A                   ; Set the ZERO flag meaning failure
-42BC: C9              RET                         
+42BC: C9              RET
 ```
 
 # COM_07_stop_if_pass()
@@ -229,7 +229,7 @@ COM_07_stop_if_pass:
 42C5: E1              POP     HL                  ; Pop the current pointer
 42C6: E1              POP     HL                  ; Pop the calculated end of list
 42C7: F6 01           OR      $01                 ; Return NOT ZERO ... a PASS
-42C9: C9              RET                         
+42C9: C9              RET
 ```
 
 # Parse User Input
@@ -506,7 +506,7 @@ CopyWord:
 449D: 13              INC     DE                  ; ... storage ...
 449E: 05              DEC     B                   ; ... with ...
 449F: C2 9A 44        JP      NZ,$449A            ; {} ... the "@" character
-44A2: C9              RET                         
+44A2: C9              RET
 
 numBytesWordData:
 44A3: 00
@@ -573,7 +573,7 @@ PrintCarriageReturn:
 44E2: 06 0D           LD      B,$0D               ; Print ...
 44E4: 78              LD      A,B                 ; ... carriage ...
 44E5: CD 92 45        CALL    $4592               ; {code.PrintChar} ... return
-44E8: C9              RET                         
+44E8: C9              RET
 ```
 
 # Wait for key
@@ -595,89 +595,89 @@ WaitForKey:
 ; was written first then back-ported to LEVEL 1. The fact that this routine
 ; appears after the above caller seems to suggest that.
 
-44FA: E5              PUSH    HL                  
-44FB: D5              PUSH    DE                  
-44FC: C5              PUSH    BC                  
+44FA: E5              PUSH    HL
+44FB: D5              PUSH    DE
+44FC: C5              PUSH    BC
 44FD: CD 04 45        CALL    $4504               ; {}
-4500: C1              POP     BC                  
-4501: D1              POP     DE                  
-4502: E1              POP     HL                  
-4503: C9              RET                         
+4500: C1              POP     BC
+4501: D1              POP     DE
+4502: E1              POP     HL
+4503: C9              RET
 
-4504: 21 8B 45        LD      HL,$458B            
-4507: 01 01 38        LD      BC,$3801            
-450A: 16 00           LD      D,$00               
-450C: 0A              LD      A,(BC)              
-450D: 5F              LD      E,A                 
-450E: AE              XOR     (HL)                
-450F: 73              LD      (HL),E              
-4510: A3              AND     E                   
+4504: 21 8B 45        LD      HL,$458B
+4507: 01 01 38        LD      BC,$3801
+450A: 16 00           LD      D,$00
+450C: 0A              LD      A,(BC)
+450D: 5F              LD      E,A
+450E: AE              XOR     (HL)
+450F: 73              LD      (HL),E
+4510: A3              AND     E
 4511: C2 1D 45        JP      NZ,$451D            ; {}
-4514: 14              INC     D                   
-4515: 2C              INC     L                   
-4516: CB 01           RLC     C                   
+4514: 14              INC     D
+4515: 2C              INC     L
+4516: CB 01           RLC     C
 4518: F2 0C 45        JP      P,$450C             ; {}
-451B: 97              SUB     A                   
-451C: C9              RET                         
+451B: 97              SUB     A
+451C: C9              RET
 
-451D: 5F              LD      E,A                 
-451E: C5              PUSH    BC                  
-451F: 01 DC 05        LD      BC,$05DC            
+451D: 5F              LD      E,A
+451E: C5              PUSH    BC
+451F: 01 DC 05        LD      BC,$05DC
 4522: CD 7C 45        CALL    $457C               ; {}
-4525: C1              POP     BC                  
-4526: 0A              LD      A,(BC)              
-4527: A3              AND     E                   
-4528: C8              RET     Z                   
+4525: C1              POP     BC
+4526: 0A              LD      A,(BC)
+4527: A3              AND     E
+4528: C8              RET     Z
 
-4529: 7A              LD      A,D                 
-452A: 07              RLCA                        
-452B: 07              RLCA                        
-452C: 07              RLCA                        
-452D: 57              LD      D,A                 
-452E: 0E 01           LD      C,$01               
-4530: 79              LD      A,C                 
-4531: A3              AND     E                   
+4529: 7A              LD      A,D
+452A: 07              RLCA
+452B: 07              RLCA
+452C: 07              RLCA
+452D: 57              LD      D,A
+452E: 0E 01           LD      C,$01
+4530: 79              LD      A,C
+4531: A3              AND     E
 4532: C2 3B 45        JP      NZ,$453B            ; {}
-4535: 14              INC     D                   
-4536: CB 01           RLC     C                   
+4535: 14              INC     D
+4536: CB 01           RLC     C
 4538: C3 30 45        JP      $4530               ; {}
-453B: 3A 80 38        LD      A,($3880)           
-453E: 47              LD      B,A                 
-453F: 7A              LD      A,D                 
-4540: C6 40           ADD     $40                 
-4542: FE 60           CP      $60                 
+453B: 3A 80 38        LD      A,($3880)
+453E: 47              LD      B,A
+453F: 7A              LD      A,D
+4540: C6 40           ADD     $40
+4542: FE 60           CP      $60
 4544: D2 51 45        JP      NC,$4551            ; {}
-4547: CB 08           RRC     B                   
+4547: CB 08           RRC     B
 4549: D2 71 45        JP      NC,$4571            ; {}
-454C: C6 20           ADD     $20                 
+454C: C6 20           ADD     $20
 454E: C3 71 45        JP      $4571               ; {}
-4551: D6 70           SUB     $70                 
+4551: D6 70           SUB     $70
 4553: D2 69 45        JP      NC,$4569            ; {}
-4556: C6 40           ADD     $40                 
-4558: FE 3C           CP      $3C                 
+4556: C6 40           ADD     $40
+4558: FE 3C           CP      $3C
 455A: DA 5F 45        JP      C,$455F             ; {}
-455D: EE 10           XOR     $10                 
-455F: CB 08           RRC     B                   
+455D: EE 10           XOR     $10
+455F: CB 08           RRC     B
 4561: D2 71 45        JP      NC,$4571            ; {}
-4564: EE 10           XOR     $10                 
+4564: EE 10           XOR     $10
 4566: C3 71 45        JP      $4571               ; {}
-4569: 21 83 45        LD      HL,$4583            
-456C: 4F              LD      C,A                 
-456D: 06 00           LD      B,$00               
-456F: 09              ADD     HL,BC               
-4570: 7E              LD      A,(HL)              
-4571: 57              LD      D,A                 
-4572: 01 AC 0D        LD      BC,$0DAC            
+4569: 21 83 45        LD      HL,$4583
+456C: 4F              LD      C,A
+456D: 06 00           LD      B,$00
+456F: 09              ADD     HL,BC
+4570: 7E              LD      A,(HL)
+4571: 57              LD      D,A
+4572: 01 AC 0D        LD      BC,$0DAC
 4575: CD 7C 45        CALL    $457C               ; {}
-4578: 7A              LD      A,D                 
-4579: FE 01           CP      $01                 
-457B: C9              RET                         
+4578: 7A              LD      A,D
+4579: FE 01           CP      $01
+457B: C9              RET
 
-457C: 0B              DEC     BC                  
-457D: 78              LD      A,B                 
-457E: B1              OR      C                   
+457C: 0B              DEC     BC
+457D: 78              LD      A,B
+457E: B1              OR      C
 457F: C2 7C 45        JP      NZ,$457C            ; {}
-4582: C9              RET                         
+4582: C9              RET
 
 4583: 0D 1F 01 5B 0A 08 09 20
 458B: 00 00 00 00 00 00 00
@@ -690,7 +690,7 @@ PrintChar:
 4592: D5              PUSH    DE                  ; ROM routine mangles this
 4593: CD 10 00        CALL    $0010               ; Send character A to the screen
 4596: D1              POP     DE                  ; Restore our DE
-4597: C9              RET                         
+4597: C9              RET
 ```
 
 # Prompt And Read Line
@@ -760,7 +760,7 @@ BackSpace:
 
 InputDone:
 45F4: 36 00           LD      (HL),$00            ; Put the null terminator on the end of the input
-45F6: C9              RET                         
+45F6: C9              RET
 ```
 
 # Input Buffer
@@ -1003,14 +1003,14 @@ UnpackStringToBuffer:  ; Never used
 479D: CE 00           ADC     $00                 ; ... to A
 479F: 29              ADD     HL,HL               ; Value = value * 2
 47A0: 44              LD      B,H                 ; MSB
-47A1: 85              ADD     A,L                 ; 
+47A1: 85              ADD     A,L                 ;
 47A2: 2A 22 48        LD      HL,($4822)          ; {code.valueOfForty}
-47A5: 95              SUB     L                   ; 
-47A6: 4F              LD      C,A                 ; 
+47A5: 95              SUB     L                   ;
+47A6: 4F              LD      C,A                 ;
 47A7: 78              LD      A,B                 ; TODO figure out the exact math here
-47A8: 9C              SBC     H                   ; 
-47A9: 47              LD      B,A                 ; 
-47AA: C5              PUSH    BC                  ; 
+47A8: 9C              SBC     H                   ;
+47A9: 47              LD      B,A                 ;
+47AA: C5              PUSH    BC                  ;
 47AB: D2 B0 47        JP      NC,$47B0            ; {} Less than 40 ... skip adding
 47AE: 09              ADD     HL,BC               ; Greater or equal, add to the extracted value
 47AF: E3              EX      (SP),HL             ; New value back to stack
@@ -1064,7 +1064,7 @@ shiftCount:
 47F1: 32 21 48        LD      ($4821),A           ; {code.unpackNumWords} ... words
 47F4: C2 72 47        JP      NZ,$4772            ; {} Go back for all the words
 47F7: E1              POP     HL                  ; Point to the next character after the words in the string
-47F8: C9              RET                         
+47F8: C9              RET
 ```
 
 # Character Table
@@ -2576,50 +2576,51 @@ description and the second is the short description for the backpack.
 
 ```code
 ObjectDescriptions:
-4FE4: AC 6C     ;  1 obj_bridge_15        PS_40 Stone bridge room 15
-4FE6: AC 6C     ;  2 obj_bridge_18        PS_40 Stone bridge room 18
-4FE8: 5D 47     ;  3                   -Never used (points to empty string)
-4FEA: 5D 47     ;  4                   -Never used (points to empty string)
-4FEC: 5D 47     ;  5                   -Never used (points to empty string)
-4FEE: 35 6E     ;  6 obj_MACHINE          PS_4E Vending Machine
-4FF0: 99 6D     ;  7 obj_PLANT_A          PS_4B Tiny plant
-4FF2: C5 6D     ;  8 obj_PLANT_B          PS_4C Twelve foot beanstalk
-4FF4: 05 6E     ;  9 obj_PLANT_C          PS_4D Giant beanstalk
-4FF6: 00 00     ; 10                   -Never used (points to null)
-4FF8: 8E 6C     ; 11 obj_SERPENT          PS_3F Serpent bars the way
-4FFA: 00 00     ; 12                   -Never used (points to null)
-4FFC: 00 00     ; 13                   -Never used (points to null)
-4FFE: 82 6B     ; 14 obj_LAMP_off         PS_32 Lamp (not lit)
-5000: A7 6B     ; 15 obj_LAMP_on          PS_34 Lamp (lit)
-5002: C9 6B     ; 16 obj_BOX              PS_36 Statue box
-5004: F2 6B     ; 17 obj_SCEPTER          PS_38 Scepter
-5006: 66 6C     ; 18 obj_PILLOW           PS_3D Pillow
-5008: 21 6C     ; 19 obj_BIRD             PS_3A Statue
-500A: 3F 6C     ; 20 obj_BIRD_boxed       PS_3B Statue in box
-500C: 41 70     ; 21 obj_POTTERY          PS_66 Pottery
-500E: 9B 70     ; 22 obj_PEARL            PS_69 Pearl
-5010: CC 6C     ; 23 obj_SARCOPH_full     PS_41 Sarcophagus with pearl
-5012: CC 6C     ; 24 obj_SARCOPH_empty    PS_41 Sarcophagus empty
-5014: 05 6D     ; 25 obj_MAGAZINES        PS_43 Magazines
-5016: 40 6D     ; 26 obj_FOOD             PS_45 Food
-5018: 58 6D     ; 27 obj_BOTTLE           PS_47 Bottle
-501A: 74 6D     ; 28 obj_WATER            PS_49 Water in the bottle
-501C: 5D 47     ; 29                   -Never used (points to empty string)
-501E: 5D 47     ; 30 obj_STREAM_56        EmptyString Stream in room 56
-5020: 68 70     ; 31 obj_EMERALD          PS_67 Emerald
-5022: 19 70     ; 32 obj_VASE_pillow      PS_65 Vase on pillow
-5024: F6 6F     ; 33 obj_VASE_solo        PS_63 Vase
-5026: D2 6F     ; 34 obj_KEY              PS_61 Key
-5028: 84 6E     ; 35 obj_BATTERIES_fresh  PS_4F Batteries
-502A: A3 6E     ; 36 obj_BATTERIES_worn   PS_51 Worn-out batteries
-502C: CF 6E     ; 37 obj_GOLD             PS_53 Gold Nugget
-502E: FF 6E     ; 38 obj_DIAMNODS         PS_55 Diamonds
-5030: 1E 6F     ; 39 obj_SILVER           PS_57 Silver
-5032: 3E 6F     ; 40 obj_JEWELRY          PS_59 Jewelry
-5034: 62 6F     ; 41 obj_COINS            PS_5B Coins
-5036: 7F 6F     ; 42 obj_CHEST            PS_5D Chest
-5038: A6 6F     ; 43 obj_NEST             PS_5F Nest of golden eggs
-503A: 82 6B     ; 44 obj_LAMP_dead        PS_32 Lamp (dead)
+;             Name                        Desc      Notes
+4FE4: AC 6C ; OBJ_01_BRIDGE_ROOM_0E       PS_40 Stone bridge room 15
+4FE6: AC 6C ; OBJ_02_BRIDGE_ROOM_12       PS_40 Stone bridge room 18
+4FE8: 5D 47     ;                 -Never used (points to empty string)
+4FEA: 5D 47     ;                 -Never used (points to empty string)
+4FEC: 5D 47     ;                 -Never used (points to empty string)
+4FEE: 35 6E ; OBJ_06_VENDING_MACHINE      PS_4E Vending Machine
+4FF0: 99 6D ; OBJ_07_PLANT_SMALL          PS_4B Tiny plant
+4FF2: C5 6D ; OBJ_08_PLANT_MEDIUM         PS_4C Twelve foot beanstalk
+4FF4: 05 6E ; OBJ_09_PLANT_LARGE          PS_4D Giant beanstalk
+4FF6: 00 00     ;                 -Never used (points to null)
+4FF8: 8E 6C ; OBJ_0B_SERPENT              PS_3F Serpent bars the way
+4FFA: 00 00     ;                 -Never used (points to null)
+4FFC: 00 00     ;                 -Never used (points to null)
+4FFE: 82 6B ; OBJ_0E_LAMP_OFF             PS_32 Lamp (not lit)
+5000: A7 6B ; OBJ_0F_LAMP_ON              PS_34 Lamp (lit)
+5002: C9 6B ; OBJ_10_BOX                  PS_36 Statue box
+5004: F2 6B ; OBJ_11_SCEPTER              PS_38 Scepter
+5006: 66 6C ; OBJ_12_PILLOW               PS_3D Pillow
+5008: 21 6C ; OBJ_13_BIRD                 PS_3A Statue
+500A: 3F 6C ; OBJ_14_BIRD_IN_BOX          PS_3B Statue in box
+500C: 41 70 ; OBJ_15_POTTERY              PS_66 Pottery
+500E: 9B 70 ; OBJ_16_PEARL                PS_69 Pearl
+5010: CC 6C ; OBJ_17_SARCOPH_FULL         PS_41 Sarcophagus with pearl
+5012: CC 6C ; OBJ_18_SARCOPH_EMPTY        PS_41 Sarcophagus empty
+5014: 05 6D ; OBJ_19_MAGAZINES            PS_43 Magazines
+5016: 40 6D ; OBJ_1A_FOOD                 PS_45 Food
+5018: 58 6D ; OBJ_1B_BOTTLE               PS_47 Bottle
+501A: 74 6D ; OBJ_1C_WATER                PS_49 Water in the bottle
+501C: 5D 47 ;                     -Never used (points to empty string)
+501E: 5D 47 ; OBJ_1E_STREAM_ROOM_38           Empty (no description)
+5020: 68 70 ; OBJ_1F_EMERALD              PS_67 Emerald
+5022: 19 70 ; OBJ_20_VASE_ON_PILLOW       PS_65 Vase on pillow
+5024: F6 6F ; OBJ_21_VASE                 PS_63 Vase
+5026: D2 6F ; OBJ_22_KEY                  PS_61 Key
+5028: 84 6E ; OBJ_23_BATTERIES_FRESH      PS_4F Batteries
+502A: A3 6E ; OBJ_24_BATTERIES_WORN       PS_51 Worn-out batteries
+502C: CF 6E ; OBJ_25_GOLD                 PS_53 Gold Nugget
+502E: FF 6E ; OBJ_26_DIAMONDS             PS_55 Diamonds
+5030: 1E 6F ; OBJ_27_SILVER               PS_57 Silver
+5032: 3E 6F ; OBJ_28_JEWELRY              PS_59 Jewelry
+5034: 62 6F ; OBJ_29_COINS                PS_5B Coins
+5036: 7F 6F ; OBJ_2A_CHEST                PS_5D Chest
+5038: A6 6F ; OBJ_2B_NEST_EGGS            PS_5F Nest of golden eggs
+503A: 82 6B ; OBJ_2C_LAMP_DEAD            PS_32 Lamp (dead)
 ```
 
 # Script Commands
@@ -2751,7 +2752,7 @@ BumpBCDTurnCount:
 5120: CE 00           ADC     $00                 ; Add any ...
 5122: 27              DAA                         ; ... carry from lower
 5123: 32 DE 4F        LD      ($4FDE),A           ; {code.bcdTurnCountMSB} Update upper BCD count
-5126: C9              RET                         
+5126: C9              RET
 ```
 
 # COM_01_move_look(room_num)
@@ -3442,20 +3443,20 @@ PrintScore:
 54ED: 3E 2D           LD      A,$2D               ; Add a "-" to ...
 54EF: 32 5C 55        LD      ($555C),A           ; {code.scoreSign} ... the score string
 54F2: 3A 50 55        LD      A,($5550)           ; {code.scoreTempMSB}
-54F5: 47              LD      B,A                 ; 
+54F5: 47              LD      B,A                 ;
 54F6: 3E 99           LD      A,$99               ; TODO decode the math
 54F8: 90              SUB     B                   ; Negative values need fixing up to make them right
 54F9: 32 50 55        LD      ($5550),A           ; {code.scoreTempMSB}
 54FC: 3A 4F 55        LD      A,($554F)           ; {code.scoreTempLSB}
-54FF: 47              LD      B,A                 ; 
+54FF: 47              LD      B,A                 ;
 5500: 3E 99           LD      A,$99               ; TODO BCD math for negatives
-5502: 90              SUB     B                   ; 
-5503: C6 01           ADD     $01                 ; 
-5505: 27              DAA                         ; 
+5502: 90              SUB     B                   ;
+5503: C6 01           ADD     $01                 ;
+5505: 27              DAA                         ;
 5506: 32 4F 55        LD      ($554F),A           ; {code.scoreTempLSB}
 5509: 3A 50 55        LD      A,($5550)           ; {code.scoreTempMSB}
-550C: CE 00           ADC     $00                 ; 
-550E: 27              DAA                         ; 
+550C: CE 00           ADC     $00                 ;
+550E: 27              DAA                         ;
 550F: 32 50 55        LD      ($5550),A           ; {code.scoreTempMSB}
 5512: C3 1A 55        JP      $551A               ; {} Now update the turns
 ;
@@ -3474,7 +3475,7 @@ PrintScore:
 5535: CD 3F 55        CALL    $553F               ; {code.BinaryToASCII} ... count to string
 5538: 21 51 55        LD      HL,$5551            ; {+code.ScoreString} The string we just built
 553B: CD CB 44        CALL    $44CB               ; {code.PrintPlain} Print the constructed score
-553E: C9              RET                         
+553E: C9              RET
 
 BinaryToASCII:
 553F: F5              PUSH    AF                  ; Hold the lower nibble
@@ -3489,7 +3490,7 @@ BinaryToASCII:
 554A: C6 30           ADD     $30                 ; Binary to ASCII digit
 554C: 77              LD      (HL),A              ; Store in buffer
 554D: 23              INC     HL                  ; Bump buffer
-554E: C9              RET                         
+554E: C9              RET
 
 scoreTempLSB:
 554F: 00
@@ -3523,23 +3524,23 @@ EndlessLoop:
 
 ```code
 COM_1B_load_game:
-5592: 21 F4 7E        LD      HL,$7EF4            
+5592: 21 F4 7E        LD      HL,$7EF4
 5595: CD A9 44        CALL    $44A9               ; {code.PrintPacked}
 5598: CD E9 44        CALL    $44E9               ; {code.WaitForKey}
-559B: FE 08           CP      $08                 ; 
+559B: FE 08           CP      $08                 ;
 559D: CA A6 42        JP      Z,$42A6             ; {code.ScriptCommandPASS}
-55A0: FE 0D           CP      $0D                 ; 
+55A0: FE 0D           CP      $0D                 ;
 55A2: C2 98 55        JP      NZ,$5598            ; {}
-55A5: CD F4 0E        CALL    $0EF4               ; 
+55A5: CD F4 0E        CALL    $0EF4               ;
 55A8: CA B4 55        JP      Z,$55B4             ; {}
-55AB: 21 00 7F        LD      HL,$7F00            ; 
+55AB: 21 00 7F        LD      HL,$7F00            ;
 55AE: CD A9 44        CALL    $44A9               ; {code.PrintPacked}
 55B1: C3 92 55        JP      $5592               ; {code.COM_1B_load_game}
-55B4: 21 AC 6C        LD      HL,$6CAC            ; 
+55B4: 21 AC 6C        LD      HL,$6CAC            ;
 55B7: 22 E4 4F        LD      ($4FE4),HL          ; {code.ObjectDescriptions}
 55BA: 22 E6 4F        LD      ($4FE6),HL          ; {}
 55BD: CD E2 51        CALL    $51E2               ; {code.DescribeRoom}
-55C0: 31 5C 47        LD      SP,$475C            ; 
+55C0: 31 5C 47        LD      SP,$475C            ;
 55C3: C3 14 42        JP      $4214               ; {code.GameLoop}
 ```
 
@@ -3547,17 +3548,17 @@ COM_1B_load_game:
 
 ```code
 COM_1C_save_game:
-55C6: 21 F4 7E        LD      HL,$7EF4            
+55C6: 21 F4 7E        LD      HL,$7EF4
 55C9: CD A9 44        CALL    $44A9               ; {code.PrintPacked}
 55CC: CD E9 44        CALL    $44E9               ; {code.WaitForKey}
-55CF: FE 08           CP      $08                 ; 
+55CF: FE 08           CP      $08                 ;
 55D1: CA A6 42        JP      Z,$42A6             ; {code.ScriptCommandPASS}
-55D4: FE 0D           CP      $0D                 ; 
+55D4: FE 0D           CP      $0D                 ;
 55D6: C2 CC 55        JP      NZ,$55CC            ; {}
-55D9: CD E9 0F        CALL    $0FE9               ; 
-55DC: 21 E2 4E        LD      HL,$4EE2            ; 
-55DF: 11 E6 4F        LD      DE,$4FE6            ; 
-55E2: CD 4B 0F        CALL    $0F4B               ; 
+55D9: CD E9 0F        CALL    $0FE9               ;
+55DC: 21 E2 4E        LD      HL,$4EE2            ;
+55DF: 11 E6 4F        LD      DE,$4FE6            ;
+55E2: CD 4B 0F        CALL    $0F4B               ;
 55E5: C3 A6 42        JP      $42A6               ; {code.ScriptCommandPASS}
 ```
 

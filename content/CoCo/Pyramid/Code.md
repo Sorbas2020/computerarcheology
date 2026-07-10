@@ -36,7 +36,7 @@ The game must be reloaded to start over.
 060B: 5A              DECB                        ; ... the ...
 060C: 26 FB           BNE     $0609               ; {} ... temporaries
 
-060E: 4F              CLRA                        
+060E: 4F              CLRA
 060F: 8E 04 00        LDX     #$0400              ; Start of screen
 0612: CE 60 60        LDU     #$6060              ; Space - Space
 0615: EF 81           STU     ,X++                ; Clear ...
@@ -615,7 +615,7 @@ Print MORE and wait for key.
 
 ```code
 MorePrompt:
-091E: 34 74           PSHS    U,Y,X,B             ; 
+091E: 34 74           PSHS    U,Y,X,B             ;
 0920: 86 0D           LDA     #$0D                ; Reset MORE ...
 0922: B7 01 B0        STA     $01B0               ; {ram.m01B0} ... row count
 0925: 8E 10 19        LDX     #$1019              ; " MORE" message
@@ -624,8 +624,8 @@ MorePrompt:
 092E: 9E 88           LDX     <$88                ; {ram.cursor} Back pointer ...
 0930: 30 19           LEAX    -7,X                ; ... up 7 over ...
 0932: 9F 88           STX     <$88                ; {ram.cursor} ... MORE prompt
-0934: 35 74           PULS    B,X,Y,U             ; 
-0936: 39              RTS                         ; 
+0934: 35 74           PULS    B,X,Y,U             ;
+0936: 39              RTS                         ;
 
 ReadKey:
 ; Read a key from keyboard
@@ -1540,7 +1540,7 @@ COM_1B_load_game:
 0F09: 7E 0E BB        JMP     $0EBB               ; {code.COM_1B_load_game} Try again
 0F0C: 86 34           LDA     #$34                ; Motor ...
 0F0E: B7 FF 21        STA     $FF21               ; {hard.PIA1_CA} ... off
-0F11: 39              RTS                         ; 
+0F11: 39              RTS                         ;
 ```
 
 # COM_08_print_score()
@@ -1709,17 +1709,17 @@ Bringing us to "YOU_AR", and so on.
 ```code
 UnpackMessage:
 1066: B7 01 C1        STA     $01C1               ; {ram.m01C1}
-1069: 86 01           LDA     #$01                ; 
+1069: 86 01           LDA     #$01                ;
 106B: B7 01 C5        STA     $01C5               ; {ram.m01C5}
 ;
-106E: 10 8E 02 04     LDY     #$0204              ; 
-1072: C6 03           LDB     #$03                ; 
+106E: 10 8E 02 04     LDY     #$0204              ;
+1072: C6 03           LDB     #$03                ;
 1074: F7 01 C2        STB     $01C2               ; {ram.m01C2}
 1077: A6 80           LDA     ,X+                 ; Next in message
 1079: B7 01 FE        STA     $01FE               ; {ram.m01FE} Save it
 107C: A6 80           LDA     ,X+                 ; Next in message
 107E: B7 01 FD        STA     $01FD               ; {ram.m01FD} Save it
-1081: 31 23           LEAY    3,Y                 ; 
+1081: 31 23           LEAY    3,Y                 ;
 ;
 1083: CE 00 28        LDU     #$0028              ; Number of characters in map
 1086: FF 01 C3        STU     $01C3               ; {ram.m01C3}
@@ -3190,7 +3190,6 @@ AmbientLightTable:
 ;   RRRRRRRR - Second byte is the object's location (containing object or room number).
 
 ObjectData:
-; Object data table (2 bytes)
 ;             MCT      Name                     Start location
 188D: 00 00 ; 000..... OBJ_01_BRIDGE_ROOM_0E    *
 188F: 00 00 ; 000..... OBJ_02_BRIDGE_ROOM_12    *
@@ -3265,8 +3264,7 @@ numObjInPack:
 
 ## Object Info
 
-```code
-ObjectDescriptions:
+```
 ; Object descriptions (44 objects)
 ; For packable objects each slot points to a message pair. The first is the long
 ; description and the second is the short description for the backpack.
@@ -3276,52 +3274,55 @@ ObjectDescriptions:
 ; a zero in the program itself. The CoCo version points to 0x01F9, which does
 ; contain a 0x0000. I'm not sure why the author used this particular double 0
 ; instead of one in the code.
-;
-;                  # Name              Description
-18ED: 2C 70     ;  1 obj_bridge_15        PS_40 Stone bridge room 15
-18EF: 2C 70     ;  2 obj_bridge_18        PS_40 Stone bridge room 18
-18F1:   01 F9   ;  3                   -Never used (points to empty string)
-18F3:   01 F9   ;  4                   -Never used (points to empty string)
-18F5:   01 F9   ;  5                   -Never used (points to empty string)
-18F7: 2D FA     ;  6 obj_MACHINE          PS_4E Vending Machine
-18F9: 2D 5E     ;  7 obj_PLANT_A          PS_4B Tiny plant
-18FB: 2D 8A     ;  8 obj_PLANT_B          PS_4C Twelve foot beanstalk
-18FD: 2D CA     ;  9 obj_PLANT_C          PS_4D Giant beanstalk
-18FF:   00 00   ; 10                   -Never used (points to null)
-1901: 2C 52     ; 11 obj_SERPENT          PS_3F Serpent bars the way
-1903:   00 00   ; 12                   -Never used (points to null)
-1905:   00 00   ; 13                   -Never used (points to null)
-1907: 2B 46     ; 14 obj_LAMP_off         PS_32 Lamp (not lit)
-1909: 2B 6B     ; 15 obj_LAMP_on          PS_34 Lamp (lit)
-190B: 2B 8D     ; 16 obj_BOX              PS_36 Statue box
-190D: 2B B6     ; 17 obj_SCEPTER          PS_38 Scepter
-190F: 2C 2A     ; 18 obj_PILLOW           PS_3D Pillow
-1911: 2B E5     ; 19 obj_BIRD             PS_3A Statue
-1913: 2C 03     ; 20 obj_BIRD_boxed       PS_3B Statue in box
-1915: 30 06     ; 21 obj_POTTERY          PS_66 Pottery
-1917: 30 60     ; 22 obj_PEARL            PS_69 Pearl
-1919: 2C 90     ; 23 obj_SARCOPH_full     PS_41 Sarcophagus with pearl
-191B: 2C 90     ; 24 obj_SARCOPH_empty    PS_41 Sarcophagus empty
-191D: 2C C9     ; 25 obj_MAGAZINES        PS_43 Magazines
-191F: 2D 05     ; 26 obj_FOOD             PS_45 Food
-1921: 2D 1D     ; 27 obj_BOTTLE           PS_47 Bottle
-1923: 2D 39     ; 28 obj_WATER            PS_49 Water in the bottle
-1925:   01 F9   ; 29                   -Never used (points to empty string)
-1927:   01 F9   ; 30 obj_STREAM_56        EmptyString Stream in room 56
-1929: 30 2D     ; 31 obj_EMERALD          PS_67 Emerald
-192B: 2F DE     ; 32 obj_VASE_pillow      PS_65 Vase on pillow
-192D: 2F BB     ; 33 obj_VASE_solo        PS_63 Vase
-192F: 2F 97     ; 34 obj_KEY              PS_61 Key
-1931: 2E 49     ; 35 obj_BATTERIES_fresh  PS_4F Batteries
-1933: 2E 68     ; 36 obj_BATTERIES_worn   PS_51 Worn-out batteries
-1935: 2E 94     ; 37 obj_GOLD             PS_53 Gold Nugget
-1937: 2E C4     ; 38 obj_DIAMNODS         PS_55 Diamonds
-1939: 2E E3     ; 39 obj_SILVER           PS_57 Silver
-193B: 2F 03     ; 40 obj_JEWELRY          PS_59 Jewelry
-193D: 2F 27     ; 41 obj_COINS            PS_5B Coins
-193F: 2F 44     ; 42 obj_CHEST            PS_5D Chest
-1941: 2F 6B     ; 43 obj_NEST             PS_5F Nest of golden eggs
-1943: 2B 46     ; 44 obj_LAMP_dead        PS_32 Lamp (dead)
+```
+
+```code
+ObjectDescriptions:
+;             Name                        Desc      Notes
+18ED: 2C 70 ; OBJ_01_BRIDGE_ROOM_0E       PS_40 Stone bridge room 15
+18EF: 2C 70 ; OBJ_02_BRIDGE_ROOM_12       PS_40 Stone bridge room 18
+18F1:   01 F9   ;                 -Never used (points to empty string)
+18F3:   01 F9   ;                 -Never used (points to empty string)
+18F5:   01 F9   ;                 -Never used (points to empty string)
+18F7: 2D FA ; OBJ_06_VENDING_MACHINE      PS_4E Vending Machine
+18F9: 2D 5E ; OBJ_07_PLANT_SMALL          PS_4B Tiny plant
+18FB: 2D 8A ; OBJ_08_PLANT_MEDIUM         PS_4C Twelve foot beanstalk
+18FD: 2D CA ; OBJ_09_PLANT_LARGE          PS_4D Giant beanstalk
+18FF:   00 00   ;                 -Never used (points to null)
+1901: 2C 52 ; OBJ_0B_SERPENT              PS_3F Serpent bars the way
+1903:   00 00   ;                 -Never used (points to null)
+1905:   00 00   ;                 -Never used (points to null)
+1907: 2B 46 ; OBJ_0E_LAMP_OFF             PS_32 Lamp (not lit)
+1909: 2B 6B ; OBJ_0F_LAMP_ON              PS_34 Lamp (lit)
+190B: 2B 8D ; OBJ_10_BOX                  PS_36 Statue box
+190D: 2B B6 ; OBJ_11_SCEPTER              PS_38 Scepter
+190F: 2C 2A ; OBJ_12_PILLOW               PS_3D Pillow
+1911: 2B E5 ; OBJ_13_BIRD                 PS_3A Statue
+1913: 2C 03 ; OBJ_14_BIRD_IN_BOX          PS_3B Statue in box
+1915: 30 06 ; OBJ_15_POTTERY              PS_66 Pottery
+1917: 30 60 ; OBJ_16_PEARL                PS_69 Pearl
+1919: 2C 90 ; OBJ_17_SARCOPH_FULL         PS_41 Sarcophagus with pearl
+191B: 2C 90 ; OBJ_18_SARCOPH_EMPTY        PS_41 Sarcophagus empty
+191D: 2C C9 ; OBJ_19_MAGAZINES            PS_43 Magazines
+191F: 2D 05 ; OBJ_1A_FOOD                 PS_45 Food
+1921: 2D 1D ; OBJ_1B_BOTTLE               PS_47 Bottle
+1923: 2D 39 ; OBJ_1C_WATER                PS_49 Water in the bottle
+1925: 01 F9 ;                     -Never used (points to empty string)
+1927: 01 F9 ; OBJ_1E_STREAM_ROOM_38           Empty (no description)
+1929: 30 2D ; OBJ_1F_EMERALD              PS_67 Emerald
+192B: 2F DE ; OBJ_20_VASE_ON_PILLOW       PS_65 Vase on pillow
+192D: 2F BB ; OBJ_21_VASE                 PS_63 Vase
+192F: 2F 97 ; OBJ_22_KEY                  PS_61 Key
+1931: 2E 49 ; OBJ_23_BATTERIES_FRESH      PS_4F Batteries
+1933: 2E 68 ; OBJ_24_BATTERIES_WORN       PS_51 Worn-out batteries
+1935: 2E 94 ; OBJ_25_GOLD                 PS_53 Gold Nugget
+1937: 2E C4 ; OBJ_26_DIAMONDS             PS_55 Diamonds
+1939: 2E E3 ; OBJ_27_SILVER               PS_57 Silver
+193B: 2F 03 ; OBJ_28_JEWELRY              PS_59 Jewelry
+193D: 2F 27 ; OBJ_29_COINS                PS_5B Coins
+193F: 2F 44 ; OBJ_2A_CHEST                PS_5D Chest
+1941: 2F 6B ; OBJ_2B_NEST_EGGS            PS_5F Nest of golden eggs
+1943: 2B 46 ; OBJ_2C_LAMP_DEAD            PS_32 Lamp (dead)
 ```
 
 ## General Command Handler
