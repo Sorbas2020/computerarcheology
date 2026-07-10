@@ -3621,7 +3621,6 @@ words. The game scripts are assured that the grammar is correct and the noun is 
 has access to (in the pack or room).
 
 ```code
-WordTable:
 ; Info + text + data
 ;   Info byte:
 ;   AA_BBB_CCC

@@ -4590,7 +4590,6 @@ words. The game scripts are assured that the grammar is correct and the noun is 
 has access to (in the pack or room).
 
 ```code
-WordTable:
 ; Info + text + data
 ;   Info byte:
 ;   AA_BBB_CCC
@@ -4612,7 +4611,7 @@ WordTable:
 ;   2) 0x0F lit lamp
 ;   3) 0x2C dead lamp
 ;
-wordTable:
+WordTable:
 ; Nouns
 ;                               Objects     AA BBB CCC Word
 3C40: 1C 4C 41 4D 50            0E 0F 2C  ; 00_011_100 LAMP

@@ -741,13 +741,12 @@ RoomTable:
 
 ```code
 RoomScripts:
-; Commands 1
-; All of these rooms look the same except for this first one you start in
-; on the second floor. In this room there is a hole in the floor, but climbing
-; down will kill you.
-;
 ; "Room_1"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.__THERE_IS_A_HOLE_IN_THE_FLOOR.",
+;;
+;; All of the 2nd floor rooms look the same except for this first one you start in. 
+;; In this room there is a hole in the floor, but climbing down will kill you.
+;;
 47A2: 02 03 01 02    ;     "E"    : ["GoToRoom(2)"],
 47A6: 03 03 01 03    ;     "S"    : ["GoToRoom(3)"],
 47AA: 04 03 01 04    ;     "W"    : ["GoToRoom(4)"],
@@ -755,23 +754,21 @@ RoomScripts:
 47B3: 07             ;               "EndlessLoop()"]
 47B4: 00             ; },
 
-; Commands 2
-; If you HIT the sword you get a message that you hurt your hand.
-;
-; This room either has GHOST1 (living) or GHOST5 (dead).
-; If GHOST1 (living) is in the room:
-;   You can KILL the GHOST if you have the sword. GHOST1 is moved out of play and GHOST5 is moved to this room.
-;   If you KILL GHOST without the sword you get a warning about your "BARE HANDS".
-; If GHOST5 (dead) is in the room:
-;   Any KILL command results in "THE POOR THING'S ALREADY DEAD". Bring the sign back to this room with the
-;   dead ghost and KILL SIGN.
-;
-; There is only one exit from this room, but the scripts will print "THE GHOST WILL NOT LET YOU PASS!" if
-; it is alive and you go in any invalid direction. This is a little trickery to make you think the ghost
-; is actually blocking you, when really there is nowhere to go.
-;
 ; "Room_2"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+;;
+;; This room either has GHOST1 (living) or GHOST5 (dead).
+;; If GHOST1 (living) is in the room:
+;;   You can KILL the GHOST if you have the sword. GHOST1 is moved out of play and GHOST5 is moved to this room.
+;;   If you KILL GHOST without the sword you get a warning about your "BARE HANDS".
+;; If GHOST5 (dead) is in the room:
+;;   Any KILL command results in "THE POOR THING'S ALREADY DEAD". Bring the sign back to this room with the
+;;   dead ghost and KILL SIGN.
+;;
+;; There is only one exit from this room, but the scripts will print "THE GHOST WILL NOT LET YOU PASS!" if
+;; it is alive and you go in any invalid direction. This is a little trickery to make you think the ghost
+;; is actually blocking you, when really there is nowhere to go.
+;;
 47B5: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
 47B9: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
 47BC: 04 03 01 01 ;     "W"    : ["GoToRoom(1)"],
@@ -792,23 +789,21 @@ RoomScripts:
 47EB: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!))"]
 47EE: 00          ; },
 
-; Commands 3
-; If you HIT the sword you get a message that you hurt your hand.
-;
-; This room either has GHOST2 (living) or GHOST6 (dead).
-; If GHOST2 (living) is in the room:
-;   If you KILL GHOST without the sword you get a warning about your "BARE HANDS".
-;   You can KILL the GHOST if you have the sword. GHOST2 is moved out of play and GHOST6 is moved to this room.
-; If GHOST6 (dead) is in the room:
-;   Any KILL command results in "THE POOR THING'S ALREADY DEAD". Bring the sign back to this room with the
-;   dead ghost and KILL SIGN.
-;
-; There is only one exit from this room, but the scripts will print "THE GHOST WILL NOT LET YOU PASS!" if
-; it is alive and you go in any invalid direction. This is a little trickery to make you think the ghost
-; is actually blocking you, when really there is nowhere to go.
-;
 ; "Room_3"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+;;
+;; This room either has GHOST2 (living) or GHOST6 (dead).
+;; If GHOST2 (living) is in the room:
+;;   If you KILL GHOST without the sword you get a warning about your "BARE HANDS".
+;;   You can KILL the GHOST if you have the sword. GHOST2 is moved out of play and GHOST6 is moved to this room.
+;; If GHOST6 (dead) is in the room:
+;;   Any KILL command results in "THE POOR THING'S ALREADY DEAD". Bring the sign back to this room with the
+;;   dead ghost and KILL SIGN.
+;;
+;; There is only one exit from this room, but the scripts will print "THE GHOST WILL NOT LET YOU PASS!" if
+;; it is alive and you go in an invalid direction. This is a little trickery to make you think the ghost
+;; is actually blocking you, when really there is nowhere to go.
+;;
 47EF: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
 47F3: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
 47F6: 01 03 01 01 ;     "N"    : ["GoToRoom(1)"],
@@ -829,22 +824,20 @@ RoomScripts:
 4825: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
 4828: 00
 
-; Commands 4
-; If you HIT the sword you get a message that you hurt your hand.
-;
-; This room either has GHOST3 (living) or GHOST7 (dead).
-; If GHOST3 (living) is in the room:
-;   If you KILL GHOST without the sword you get a warning about your "BARE HANDS".
-;   You can KILL the GHOST if you have the sword. GHOST3 is moved out of play and GHOST7 is moved to this room.
-; If GHOST7 (dead) is in the room:
-;   Any KILL command results in "THE POOR THING'S ALREADY DEAD". Bring the sign back to this room with the
-;   dead ghost and KILL SIGN.
-;
-; There are two exits from this room. You can go East any time, but this time the ghost does block your
-; passage. Once you kill the ghost you can go West.
-;
 ; "Room_4"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+;;
+;; This room either has GHOST3 (living) or GHOST7 (dead).
+;; If GHOST3 (living) is in the room:
+;;   If you KILL GHOST without the sword you get a warning about your "BARE HANDS".
+;;   You can KILL the GHOST if you have the sword. GHOST3 is moved out of play and GHOST7 is moved to this room.
+;; If GHOST7 (dead) is in the room:
+;;   Any KILL command results in "THE POOR THING'S ALREADY DEAD". Bring the sign back to this room with the
+;;   dead ghost and KILL SIGN.
+;;
+;; There are two exits from this room. You can go East any time, but this time the ghost does block your
+;; passage. Once you kill the ghost you can go West.
+;;
 4829: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
 482D: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
 4830: 02 03 01 01 ;     "E"    : ["GoToRoom(1)"],
@@ -866,19 +859,17 @@ RoomScripts:
 4862: 04 03 01 05 ;     "W"    : ["GoToRoom(5)"]
 4866: 00          ; },
 
-; Commands 5
-; If you HIT the sword you get a message that you hurt your hand.
-;
-; This room has GHOST4 (living) in it. Like the others, there is a "dead" version GHOST8 of it. But there
-; is no way to kill this ghost. You can "KILL" it with or without the SWORD. Either way you just
-; get a message.
-;
-; You can always go East back the way you came. If you have the SWORD in your pack on if it is on the
-; floor then the ghost blocks your other movements. You can go North if you drop the sword in a previous
-; room. South and West leave you in the current room.
-;
 ; "Room_5"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+;;
+;; This room has GHOST4 (living) in it. Like the others, there is a "dead" version GHOST8 of it. But there
+;; is no way to kill this ghost. You can "KILL" it with or without the SWORD. Either way you just
+;; get a message.
+;;
+;; You can always go East back the way you came. If you have the SWORD in your pack on if it is on the
+;; floor then the ghost blocks your other movements. You can go North if you drop the sword in a previous
+;; room. South and West leave you in the current room.
+;;
 4867: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
 486B: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
 486E: 02 03 01 04 ;     "E"    : ["GoToRoom(4)"],
@@ -900,17 +891,17 @@ RoomScripts:
 489D: 01 05       ;               "GoToRoom(5)"]
 489F: 00          ; },
 
-; Commands 6
-; This room has a live GHOST11 that has no dead version. It doesn't block you. You can't kill it.
-; It's just scenery.
-;
-; This room also intercepts all KILL commands. If you KILL SWORD you get the standard
-; "HURT YOUR HAND". If you KILL any other object you get the "GHOST WITH BARE HANDS"
-; message. Of course, you can't bring the SWORD to this room so you'll never get the
-; "HURT" message. Try bringing the SIGN to this room and KILL SIGN!
-;
 ; "Room_6"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+;;
+;; This room has a live GHOST11 that has no dead version. It doesn't block you. You can't kill it.
+;; It's just scenery.
+;;
+;; This room also intercepts all KILL commands. If you KILL SWORD you get the standard
+;; "HURT YOUR HAND". If you KILL any other object you get the "GHOST WITH BARE HANDS"
+;; message. Of course, you can't bring the SWORD to this room so you'll never get the
+;; "HURT" message. Try bringing the SIGN to this room and KILL SIGN!
+;;
 48A0: 11 06 0A 09    ;     "KILL" : ["AssertNounIs(SWORD)",
 48A4: 04 91 4C       ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
 48A7: 02 03 01 04    ;     "E"    : ["GoToRoom(4)"],
@@ -919,17 +910,17 @@ RoomScripts:
 48B3: 11 04 04 43 4C ;     "KILL" : ["Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.))"]
 48B8: 00             ; },
 
-; Commands 7
-; This room has a live GHOST12 that has no dead version. It doesn't block you. You can't kill it.
-; It's just scenery.
-;
-; This room also intercepts all KILL commands. If you KILL SWORD you get the standard
-; "HURT YOUR HAND". If you KILL any other object you get the "GHOST WITH BARE HANDS"
-; message. Of course, you can't bring the SWORD to this room so you'll never get the
-; "HURT" message. Try bringing the SIGN to this room and KILL SIGN!
-;
 ; "Room_7"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+;;
+;; This room has a live GHOST12 that has no dead version. It doesn't block you. You can't kill it.
+;; It's just scenery.
+;;
+;; This room also intercepts all KILL commands. If you KILL SWORD you get the standard
+;; "HURT YOUR HAND". If you KILL any other object you get the "GHOST WITH BARE HANDS"
+;; message. Of course, you can't bring the SWORD to this room so you'll never get the
+;; "HURT" message. Try bringing the SIGN to this room and KILL SIGN!
+;;
 48B9: 11 06 0A 09    ;     "KILL" : ["AssertNounIs(SWORD)",
 48BD: 04 91 4C       ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
 48C0: 02 03 01 06    ;     "E"    : ["GoToRoom(6)"],
@@ -937,17 +928,17 @@ RoomScripts:
 48C8: 11 04 04 43 4C ;     "KILL" : ["Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.))"]
 48CD: 00             ; },
 
-; Commands 8
-; When you READ SIGN from anywhere the exit object is moved to this room. This is handled in
-; the general script.
-;
-; You can always go back North.
-;
-; Every other direction is the end of the game. If you are holding the SIGN then you die. If you have not
-; READ SIGN then you die. If you have READ SIGN then the exit object is here and you escape.
-;
 ; "Room_8"   : {
 ;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+;;
+;; When you READ SIGN from anywhere the exit object is moved to this room. This is handled in
+;; the general script.
+;;
+;; You can always go back North.
+;;
+;; Every other direction is the end of the game. If you are holding the SIGN then you die. If you have not
+;; READ SIGN then you die. If you have READ SIGN then the exit object is here and you escape.
+;;
 48CE: 01 03 01 07 ;     "N"    : ["GoToRoom(7)"],
 48D2: 02 15 06 07 ;     "E"    : ["SubscriptAbortAllIfPass", [
 48D6: 02 0A       ;                   "AssertObjectIsInPack(SIGN)",
@@ -1341,7 +1332,7 @@ CommandTable:
 ; bbb = number of data bytes
 ; ccc = word text size
 ;
-wordTable:
+WordTable:
 ; Nouns
 ;                            Objects            ; AA_BBB_CCC Word
 4A9A: 0C 53 49 47 4E                         0A ; 00_001_100  SIGN

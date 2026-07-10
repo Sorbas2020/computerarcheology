@@ -841,8 +841,6 @@ RoomTable:
 
 ```code
 RoomScripts:
-; Commands 1 FORYER
-; This room just has directional changes.
 ; "Room_1"   : {
 ;     "Description" : "YOU_ARE_AT_THE_FORYER.",
 47BF: 02 03 01 02 ;     "E"    : ["GoToRoom(2)"],
@@ -850,16 +848,16 @@ RoomScripts:
 47C7: 04 03 01 09 ;     "W"    : ["GoToRoom(9)"]
 47CB: 00          ; },
 
-; Commands 2 LIVING ROOM
-; You can safely go EAST or WEST. You can also issue a GET command. If you enter any other
-; command and the KNIFE is in the room then you die. Note that you can't pick up the KNIFE
-; unless you have the PAPER.
-;
-; This KNIFE behavior is part of the LIVING ROOM script. Anywhere else the KNIFE is just an
-; ordinary, non-dangerous object.
-;
 ; "Room_2"   : {
 ;     "Description" : "YOU_ARE_AT_THE_LIVING_ROOM.",
+;;
+;; You can safely go EAST or WEST. You can also issue a GET command. If you enter any other
+;; command and the KNIFE is in the room then you die. Note that you can't pick up the KNIFE
+;; unless you have the PAPER.
+;;
+;; This KNIFE behavior is part of the LIVING ROOM script. Anywhere else the KNIFE is just an
+;; ordinary, non-dangerous object.
+;;
 47CC: 02 03 01 03 ;     "E"    : ["GoToRoom(3)"],
 47D0: 04 03 01 01 ;     "W"    : ["GoToRoom(1)"],
 47D4: 06 0E 06 0B ;     "GET"  : ["SubscriptAbortAllIfPass", [
@@ -874,22 +872,19 @@ RoomScripts:
 47EA: 07          ;               "EndlessLoop()"]
 47EB: 00          ; },
 
-; Commands 3 DINING ROOM
-; This room just has directional changes.
-;
 ; "Room_3"   : {
 ;     "Description" : "YOU_ARE_AT_THE_DINING_ROOM.",
 47EC: 03 03 01 04 ;     "S"    : ["GoToRoom(4)"],
 47F0: 04 03 01 02 ;     "W"    : ["GoToRoom(2)"]
 47F4: 00          ; },
 
-; Commands 4 KITCHEN
-; The ARMOR is an invisible object in this room (it has no description). If you have the KNIFE in your pack then
-; it runs off (out of game-play). If you don't have the knife and the ARMOR is in the room then it prevents you
-; from going SOUTH.
-;
 ; "Room_4"   : {
 ;     "Description" : "YOU_ARE_AT_THE_KITCHEN.",
+;;
+;; The ARMOR is an invisible object in this room (it has no description). If you have the KNIFE in your pack then
+;; it runs off (out of game-play). If you don't have the knife and the ARMOR is in the room then it prevents you
+;; from going SOUTH.
+;;
 47F5: 01 03 01 03 ;     "N"    : ["GoToRoom(3)"],
 47F9: 04 03 01 08 ;     "W"    : ["GoToRoom(8)"],
 47FD: 03 17 06 13 ;     "S"    : ["SubscriptAbortAllIfPass", [
@@ -904,18 +899,12 @@ RoomScripts:
 4813: 01 05       ;               "GoToRoom(5)"
 4815: 00          ; },
 
-; Commands 5 BREAKFAST ROOM
-; This room just has directional changes.
-;
 ; "Room_5"   : {
 ;     "Description" : "YOU_ARE_AT_THE_BREAKFAST_ROOM.",
 4816: 01 03 01 04 ;     "N"    : ["GoToRoom(4)"],
 481A: 02 03 01 06 ;     "E"    : ["GoToRoom(6)"],
 481E: 00          ; },
 
-; Commands 6 SERVANTS QUARTERS
-; This room has the empty CABINET. If you open the CABINET you get the message.
-;
 ; "Room_6"   : {
 ;     "Description" : "YOU_ARE_AT_THE_SERVANTS_QUARTERS.",
 481F: 01 03 01 07 ;     "N"    : ["GoToRoom(7)"],
@@ -924,32 +913,26 @@ RoomScripts:
 482B: 04 AA 4E    ;               "Print(IT'S_EMPTY.)"]
 482E: 00          ; },
 
-; Commands 7 SERVANTS QUARTERS
-; This room has the same description as Room_6 ... very sneaky. This room has the
-; CABINET WITH KEY in it. Whenever you open this CABINET the KEY appears in the
-; room. If the key is already in your pack or dropped in some other room then it
-; magically moves here.
-;
 ; "Room_7"   : {
 ;     "Description" : "YOU_ARE_AT_THE_SERVANTS_QUARTERS.",
+;;
+;; This room has the same description as Room_6 ... very sneaky. This room has the
+;; CABINET WITH KEY in it. Whenever you open this CABINET the KEY appears in the
+;; room. If the key is already in your pack or dropped in some other room then it
+;; magically moves here.
+;;
 482F: 03 03 01 06 ;     "S"    : ["GoToRoom(6)"],
 4833: 05 08 0A 0B ;     "OPEN" : ["AssertNounIs(CABINETKEY)",
 4837: 08 03       ;               "MoveObjectToCurrentRoom(KEY)",
 4839: 04 FC 4E    ;               "Print(THERE_IS_A_KEY_IN_IT.)"]
 483C: 00          ; },
 
-; Commands 8 DEN
-; This room just has directional changes.
-;
 ; "Room_8"   : {
 ;     "Description" : "YOU_ARE_AT_THE_DEN.",
 483D: 01 03 01 01 ;     "N"    : ["GoToRoom(1)"],
 4841: 02 03 01 04 ;     "E"    : ["GoToRoom(4)"]
 4845: 00          ; },
 
-; Commands 9 EAST END OF THE HALL
-; This room just has directional changes.
-;
 ; "Room_9"   : {
 ;     "Description" : "YOU_ARE_AT_THE_EAST_END_OF_THE_HALL.",
 4846: 01 03 01 0B ;     "N"    : ["GoToRoom(11)"],
@@ -957,12 +940,12 @@ RoomScripts:
 484E: 04 03 01 0A ;     "W"    : ["GoToRoom(10)"],
 4852: 00          ; },
 
-; Commands 10 WEST END OF THE HALL
-; You can OPEN DOOR or go S to the LIBRARY -- but only if you have the KEY in the pack. Otherwise you
-; get an error message.
-;
 ; "Room_10"  : {
 ;     "Description" : "YOU_ARE_AT_THE_WEST_END_OF_THE_HALL.",
+;;
+;; You can OPEN DOOR or go S to the LIBRARY -- but only if you have the KEY in the pack. Otherwise you
+;; get an error message.
+;;
 4853: 01 03 01 0D ;     "N"    : ["GoToRoom(13)"],
 4857: 02 03 01 09 ;     "E"    : ["GoToRoom(9)"],
 485B: 03 0A 06 05 ;     "S"    : ["SubscriptAbortAllIfPass", [
@@ -976,38 +959,32 @@ RoomScripts:
 4870: 04 B4 4E    ;               "Print(YOU'LL_NEED_A_KEY_TO_GET_THROUGH_THAT_DOOR.)"]
 4873: 00          ; },
 
-; Commands 11 GREEN BEDROOM. THERE'S A PANEL ON THE WEST WALL
-; This room just has directional changes.
-;
 ; "Room_11"  : {
 ;     "Description" : "YOU_ARE_AT_THE_GREEN_BEDROOM._THERE'S_A_PANEL_ON_THE_WEST_WALL.",
 4874: 03 03 01 09 ;     "S"    : ["GoToRoom(9)"],
 4878: 0E 03 01 0C ;     "PANE" : ["GoToRoom(12)"]
 487C: 00          ; },
 
-; Commands 12 SECRET PASSAGE
-; This room just has directional changes.
-;
 ; "Room_12"  : {
 ;     "Description" : "YOU_ARE_AT_THE_SECRET_PASSAGE.",
 487D: 02 03 01 0B ;     "E"    : ["GoToRoom(11)"],
 4881: 04 03 01 0D ;     "W"    : ["GoToRoom(13)"],
 4885: 00          ; },
 
-; Commands 13 BLUE BEDROOM. THERE'S A PANEL ON THE EAST WALL
 ; "Room_13"  : {
 ;     "Description" : "YOU_ARE_AT_THE_BLUE_BEDROOM.__THERE'S_A_PANEL_ON_THE_WEST_WALL.",
 4886: 03 03 01 0A ;     "S"    : ["GoToRoom(10)"],
 488A: 0E 03 01 0C ;     "PANE" : ["GoToRoom(12)"]
 488E: 00          ; },
 
-; Commands 14 MASTER BEDROOM
-; The YES command takes you east at any time (even if you haven't seen the "are you sure?"). The E command
-; always prints a "are you sure?" message. The NO command prints "a wise decision", but it isn't really.
-; Very sneaky game.
 ;
 ; "Room_14"  : {
 ;     "Description" : "YOU_ARE_AT_THE_MASTER_BEDROOM.",
+;;
+;; The YES command takes you east at any time (even if you haven't seen the "are you sure?"). The E command
+;; always prints a "are you sure?" message. The NO command prints "a wise decision", but it isn't really.
+;; Very sneaky game.
+;;
 488F: 01 03 01 0A    ;     "N"    : ["GoToRoom(11)"],
 4893: 02 04 04 D3 4E ;     "E"    : ["Print(ARE_YOU_JUST_GOING_TO_WALK_RIGHT_THROUGH_THAT_RAGING_FIRE?)"],
 4898: 12 04 0C       ;     "YES"  : ["PrintOK()",
@@ -1015,13 +992,13 @@ RoomScripts:
 489D: 13 04 04 D0 4F ;     "NO"   : ["Print(A_WISE_DECISION.)"]
 48A2: 00
 
-; Commands 15 LIBRARY. THERE IS A HOLE IN THE CEILING
-; If you DROP the ROPE in this room then the ROPE object goes out of game-play and the ROPE TO CEILING is
-; moved to this room. If the ROPE TO CEILING is in this room then the CLIMB command loads the second floor
-; from tape.
-;
 ; "Room_15"  : {
 ;     "Description" : "YOU_ARE_AT_THE_LIBRARY._THERE IS A HOLE IN THE CEILING.",
+;;
+;; If you DROP the ROPE in this room then the ROPE object goes out of game-play and the ROPE TO CEILING is
+;; moved to this room. If the ROPE TO CEILING is in this room then the CLIMB command loads the second floor
+;; from tape.
+;;
 48A3: 04 03 01 0E    ;     "W"    : ["GoToRoom(13)"],
 48A7: 07 0B 0A 07    ;     "DROP" : ["AssertInputNounIs(ROPE)",
 48AB: 0D 07 00       ;               "MoveObjectToRoom(ROPE,0)"
@@ -1031,13 +1008,13 @@ RoomScripts:
 48B7: 11             ;               "LoadSecondFloorFromTape"]
 48B8: 00             ; },
 
-; Commands 16 OUTSIDE OF THE HOUSE
-; There is a DOOR here, but you can't open it. You have to use the PLUGH command to "poof" inside the house.
-; Be sure to pick up the PAPER here or you can't get the KNIFE later. The PAPER has a message you can
-; READ, but that is handled by the general script (later).
-;
 ; "Room_16"  : {
 ;     "Description" : "YOU_ARE_AT_THE_OUTSIDE_OF_THE_HOUSE.",
+;;
+;; There is a DOOR here, but you can't open it. You have to use the PLUGH command to "poof" inside the house.
+;; Be sure to pick up the PAPER here or you can't get the KNIFE later. The PAPER has a message you can
+;; READ, but that is handled by the general script (later).
+;;
 48B9: 0A 06 04 23 4E ; "PLUG" : ["Print(YOU_MATERIALIZE_INSIDE_THE_DOOR.)",
 48BE: 01 01          ;           "GoToRoom(1)"],
 48C0: 05 06 0A 02    ; "OPEN" : ["AssertInputNounIs(DOOR)"
@@ -1396,7 +1373,7 @@ COM_07_end_of_game:
 ; bbb = number of data bytes
 ; ccc = word text size
 ;
-wordTable:
+WordTable:
 ; Nouns
 ;                               Objects   ; AA_BBB_CCC  Word
 4A4B: 0B 4B 45 59               03        ; 00_001_011  KEY
