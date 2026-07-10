@@ -1163,13 +1163,16 @@ RoomTable:
 ```code
 RoomScripts:
 
-room_1:
+Script_RM_01_BEFORE_ENTRANCE:
 ; PS_00
 ; YOU_ARE_STANDING_BEFORE_THE_ENTRANCE_OF_A_PYRAMID.__AROUND_YOU__
 ; IS_A_DESERT.
 ;
+;;
+;; Keep these
+;;
 49CC: 01 03     ; N
-49CE: 01 02     ;     MoveToRoom(room_2) new
+49CE: 01 02     ;     MoveToRoom(room_2) new  ;; and these
 49D0: 02 03     ; E
 49D2: 01 03     ;     MoveToRoom(room_3) new
 49D4: 03 03     ; S
@@ -1180,7 +1183,7 @@ room_1:
 49DE: 01 02     ;     MoveToRoom(room_2) new
 49E0: 00
 
-room_2:
+RM_02:
 ; PS_01
 ; YOU_ARE_IN_THE_ENTRANCE_TO_THE_PYRAMID.__A_HOLE_IN_THE_FLOOR____
 ; LEADS_TO_A_PASSAGE_BENEATH_THE_SURFACE.
@@ -1195,7 +1198,7 @@ room_2:
 49EF: 01 1A     ;    MoveToRoom(room_26) woodsRoom33
 49F1: 00
 
-room_3:
+RM_03:
 ; PS_02
 ; YOU_ARE_IN_THE_DESERT.
 ;
@@ -1209,7 +1212,7 @@ room_3:
 4A00: 01 01     ;    MoveToRoom(room_1) new
 4A02: 00
 
-room_4:
+RM_04:
 ; PS_02
 ; YOU_ARE_IN_THE_DESERT.
 ;
@@ -1223,7 +1226,7 @@ room_4:
 4A11: 01 05     ;    MoveToRoom(room_5) new
 4A13: 00
 
-room_5:
+RM_05:
 ; PS_02
 ; YOU_ARE_IN_THE_DESERT.
 ;
@@ -1237,7 +1240,7 @@ room_5:
 4A22: 01 05     ;    MoveToRoom(room_5) new
 4A24: 00
 
-room_6:
+RM_06:
 ; PS_02
 ; YOU_ARE_IN_THE_DESERT.
 ;
@@ -1251,7 +1254,7 @@ room_6:
 4A33: 01 05     ;    MoveToRoom(room_5) new
 4A35: 00
 
-room_7: ; woodsRoom9
+RM_07: ; woodsRoom9
 ; PS_03
 ; YOU_ARE_IN_A_SMALL_CHAMBER_BENEATH_A_HOLE_FROM_THE_SURFACE.__A__
 ; LOW_CRAWL_LEADS_INWARD_TO_THE_WEST.__HIEROGLYPHICS_ON_THE_WALL__
@@ -1267,7 +1270,7 @@ room_7: ; woodsRoom9
 4A44: 01 08     ;    MoveToRoom(room_8) woodsRoom10
 4A46: 00
 
-room_8: ; woodsRoom10
+RM_08: ; woodsRoom10
 ; PS_04
 ; YOU_ARE_CRAWLING_OVER_PEBBLES_IN_A_LOW_PASSAGE.__THERE_IS_A_DIM_
 ; LIGHT_AT_THE_EAST_END_OF_THE_PASSAGE.
@@ -1282,7 +1285,7 @@ room_8: ; woodsRoom10
 4A55: 01 09     ;    MoveToRoom(room_9) woodsRoom11
 4A57: 00
 
-room_9: ; woodsRoom11
+RM_09: ; woodsRoom11
 ; PS_05
 ; YOU_ARE_IN_A_ROOM_FILLED_WITH_BROKEN_POTTERY_SHARDS_OF_ANCIENT__
 ; EGYPTIAN_CRAFTS.__AN_AWKWARD_CORRIDOR_LEADS_UPWARD_AND_WEST.
@@ -1297,7 +1300,7 @@ room_9: ; woodsRoom11
 4A66: 01 0A     ;    MoveToRoom(room_10) woodsRoom12
 4A68: 00
 
-room_10: ; woodsRoom12
+RM_0A: ; woodsRoom12
 ; PS_06
 ; YOU_ARE_IN_AN_AWKWARD_SLOPING_EAST/WEST_CORRIDOR.
 ;

@@ -1,6 +1,7 @@
 import specifics_pyramid
 import specifics_hauntedhouse1
 import specifics_hauntedhouse2
+import engine_com
 
 COMMANDS_PYRAMID = {
 0x01:     ['move_look',                          'room_num'],
@@ -137,43 +138,11 @@ ADDRESSES = {
     }
 }
 
-def read_code_file(file_name):
-    ret = []
-    with open(file_name, "r") as f:
-        for line in f:
-            ret.append(line.strip())
-    return ret
-
-def write_code_file(file_name, code):
-    # Please, please, please use github to back this up first
-    with open(file_name, "w") as f:
-        for line in code:
-            f.write(line + "\n")
-
-def find_start_and_end(lines, start_addr, end_addr=None):
-    if end_addr is None:
-        end_addr = start_addr
-    ps = 0
-    while not lines[ps].startswith(f'{start_addr:04X}:'):
-        ps += 1
-    pe = ps
-    while not lines[pe].startswith(f'{end_addr:04X}:'):
-        pe += 1
-    pe += 1
-    return ps, pe
-
-def split_comment(line):
-    i = line.find(';')
-    if i > -1:
-        return line[:i].rstrip(), line[i:].lstrip()
-    else:
-        return line, ''
-
 def update_command_names(info):
-    lines = read_code_file(info["File"])
+    lines = engine_com.read_code_file(info["File"])
 
     # Update the command table itself
-    ps, pe = find_start_and_end(lines, info["ScriptCommands"][0], info["ScriptCommands"][1])
+    ps, pe = engine_com.find_start_and_end(lines, info["ScriptCommands"][0], info["ScriptCommands"][1])
     if lines[ps-1] != 'ScriptCommands:':
         raise Exception(f'Expected ScriptCommands: label at {info["ScriptCommands"][0]:04X} (line {ps})')
     addresses = {}
@@ -197,7 +166,7 @@ def update_command_names(info):
             # Special syntax for these two in the CoCo because they are one command
             continue
         # The label 
-        ps,pe = find_start_and_end(lines, addr, addr)
+        ps,pe = engine_com.find_start_and_end(lines, addr, addr)
         lab = lines[ps-1]
         if lab.startswith('COM_') and lab.endswith(':'):
             labn = f'COM_{i:02X}_{info["Commands"][i][0]}:'
@@ -216,12 +185,12 @@ def update_command_names(info):
 
         # TODO updae all the comments and headers for all the commands. Make TRS80LV2 Pyramid the reference
 
-    write_code_file(info["File"], lines)
+    engine_com.write_code_file(info["File"], lines)
 
 def update_room_names(info):
     # RoomTable
-    lines = read_code_file(info["File"])
-    ps,pe = find_start_and_end(lines, info["RoomTable"][0], info["RoomTable"][1])
+    lines = engine_com.read_code_file(info["File"])
+    ps,pe = engine_com.find_start_and_end(lines, info["RoomTable"][0], info["RoomTable"][1])
 
     if lines[ps-2] != 'RoomTable:':        
         raise Exception(f'Expected RoomTable: label at {info["RoomTable"][0]:04X} (line {ps-2})')
@@ -258,7 +227,7 @@ def update_room_names(info):
 
     if info["AmbientLightTable"] is not None:
 
-        ps,pe = find_start_and_end(lines, info["AmbientLightTable"][0], info["AmbientLightTable"][1])
+        ps,pe = engine_com.find_start_and_end(lines, info["AmbientLightTable"][0], info["AmbientLightTable"][1])
         if lines[ps-2] != 'AmbientLightTable:':        
             raise Exception(f'Expected AmbientLightTable: label at {info["AmbientLightTable"][0]:04X} (line {ps-2})')
         
@@ -304,8 +273,8 @@ def update_room_names(info):
     # write_code_file(info["File"], lines) 
 
 def update_objects(info):
-    lines = read_code_file(info["File"])
-    ps,pe = find_start_and_end(lines, info["ObjectData"][0], info["ObjectData"][1])
+    lines = engine_com.read_code_file(info["File"])
+    ps,pe = engine_com.find_start_and_end(lines, info["ObjectData"][0], info["ObjectData"][1])
 
     onum = 0
     while ps < pe:
@@ -341,7 +310,7 @@ def update_objects(info):
 
     # object descriptions
 
-    ps,pe = find_start_and_end(lines, info["ObjectDescriptions"][0], info["ObjectDescriptions"][1])
+    ps,pe = engine_com.find_start_and_end(lines, info["ObjectDescriptions"][0], info["ObjectDescriptions"][1])
     if lines[ps-2] != 'ObjectDescriptions:':        
         raise Exception(f'Expected ObjectDescriptions: label at {info["ObjectDescriptions"][0]:04X} (line {ps-2})')
     
@@ -367,11 +336,44 @@ def update_objects(info):
         print(">>>",nl)
         lines[ps-1] = nl
 
-    write_code_file(info["File"], lines)
+    engine_com.write_code_file(info["File"], lines)
 
 def update_room_scripts(info):
-    lines = read_code_file(info["File"])
-    ps,pe = find_start_and_end(lines, info["RoomScripts"][0], info["RoomScripts"][1])    
+
+    coms = engine_com.collect_script_comments(info)
+
+    ps_info = engine_com.get_packed_strings(info)
+    room_ptrs = engine_com.get_room_info(info)
+
+    lines = engine_com.read_code_file(info["File"])    
+
+    ps,pe = engine_com.find_start_and_end(lines, info["RoomScripts"][0], info["RoomScripts"][1])
+    while lines[ps].strip():
+        ps -= 1
+    ps += 1
+
+    while ps < pe:
+        addr = engine_com.get_address_for(lines,ps)
+        sc_info = room_ptrs[addr]
+        rn = sc_info['number']
+        nl = f'Script_RM_{rn:02X}_{info["Rooms"][rn]}:'
+        print('>>>',nl)
+        pi = sc_info['description']
+        nl = f'; PS_{pi['ps_num']:02X}'        
+        print('>>>',nl)
+        if 'Haunted' in info['File']:
+            tt = pi['text'][:]
+            tt[0] = 'you_are_at_the_'+tt[0]
+        else:
+            tt = pi['text']
+        for t in tt:
+            print('>>>', '; '+t)
+
+        while lines[ps].strip():
+            ps += 1
+        ps += 1
+        
+        #raise "STOP"
     
 
 
@@ -385,18 +387,22 @@ info = ADDRESSES["TRS80"]["PYRAMID_L1"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
+# update_room_scripts(info)
 
 info = ADDRESSES["COCO"]["PYRAMID"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
+# update_room_scripts(info)
 
 info = ADDRESSES["TRS80"]["HAUNTEDHOUSE1"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
+# update_room_scripts(info)
 
 info = ADDRESSES["TRS80"]["HAUNTEDHOUSE2"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
+# update_room_scripts(info)
