@@ -83,7 +83,7 @@ ROOMS = {
 }
 
 OBJECTS = {
-    0x01: 'BRIDGE_ROOM_0E',
+    0x01: 'BRIDGE_ROOM_0F',
     0x02: 'BRIDGE_ROOM_12',
     # 0x03: '',
     # 0x04: '',
@@ -159,6 +159,7 @@ WORDS = {
         28: ['LOOK'],
         29: ['HELP'],
         30: ['FIND'],
+        32: ['??20??'],
         33: ['DROP', 'RELEAS', 'FREE', 'DISCAR'],
         35: ['WAVE', 'SHAKE', 'SWING'],
         36: ['POUR'],

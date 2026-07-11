@@ -36,7 +36,7 @@ The game must be reloaded to start over.
 060B: 5A              DECB                        ; ... the ...
 060C: 26 FB           BNE     $0609               ; {} ... temporaries
 
-060E: 4F              CLRA
+060E: 4F              CLRA                        
 060F: 8E 04 00        LDX     #$0400              ; Start of screen
 0612: CE 60 60        LDU     #$6060              ; Space - Space
 0615: EF 81           STU     ,X++                ; Clear ...
@@ -615,7 +615,7 @@ Print MORE and wait for key.
 
 ```code
 MorePrompt:
-091E: 34 74           PSHS    U,Y,X,B             ;
+091E: 34 74           PSHS    U,Y,X,B             ; 
 0920: 86 0D           LDA     #$0D                ; Reset MORE ...
 0922: B7 01 B0        STA     $01B0               ; {ram.m01B0} ... row count
 0925: 8E 10 19        LDX     #$1019              ; " MORE" message
@@ -624,8 +624,8 @@ MorePrompt:
 092E: 9E 88           LDX     <$88                ; {ram.cursor} Back pointer ...
 0930: 30 19           LEAX    -7,X                ; ... up 7 over ...
 0932: 9F 88           STX     <$88                ; {ram.cursor} ... MORE prompt
-0934: 35 74           PULS    B,X,Y,U             ;
-0936: 39              RTS                         ;
+0934: 35 74           PULS    B,X,Y,U             ; 
+0936: 39              RTS                         ; 
 
 ReadKey:
 ; Read a key from keyboard
@@ -1540,7 +1540,7 @@ COM_1B_load_game:
 0F09: 7E 0E BB        JMP     $0EBB               ; {code.COM_1B_load_game} Try again
 0F0C: 86 34           LDA     #$34                ; Motor ...
 0F0E: B7 FF 21        STA     $FF21               ; {hard.PIA1_CA} ... off
-0F11: 39              RTS                         ;
+0F11: 39              RTS                         ; 
 ```
 
 # COM_08_print_score()
@@ -1709,17 +1709,17 @@ Bringing us to "YOU_AR", and so on.
 ```code
 UnpackMessage:
 1066: B7 01 C1        STA     $01C1               ; {ram.m01C1}
-1069: 86 01           LDA     #$01                ;
+1069: 86 01           LDA     #$01                ; 
 106B: B7 01 C5        STA     $01C5               ; {ram.m01C5}
 ;
-106E: 10 8E 02 04     LDY     #$0204              ;
-1072: C6 03           LDB     #$03                ;
+106E: 10 8E 02 04     LDY     #$0204              ; 
+1072: C6 03           LDB     #$03                ; 
 1074: F7 01 C2        STB     $01C2               ; {ram.m01C2}
 1077: A6 80           LDA     ,X+                 ; Next in message
 1079: B7 01 FE        STA     $01FE               ; {ram.m01FE} Save it
 107C: A6 80           LDA     ,X+                 ; Next in message
 107E: B7 01 FD        STA     $01FD               ; {ram.m01FD} Save it
-1081: 31 23           LEAY    3,Y                 ;
+1081: 31 23           LEAY    3,Y                 ; 
 ;
 1083: CE 00 28        LDU     #$0028              ; Number of characters in map
 1086: FF 01 C3        STU     $01C3               ; {ram.m01C3}

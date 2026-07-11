@@ -36,6 +36,10 @@ def parse_word(info, s):
         return int(s[3:5]+s[0:2], 16)
     else:
         return int(s[0:2]+s[3:5], 16)
+    
+def read_binary(info):
+    with open(info["ROM"], "rb") as f:
+        return f.read()
         
     
 def get_room_info(info):
@@ -110,6 +114,8 @@ def collect_script_comments(info):
             else:
                 ret['line_comments'][addr] = [line]
         elif i>0:
+            while line[i-1]==' ':
+                i -= 1
             ret['end_comments'][addr] = line[i:]
     
     return ret    

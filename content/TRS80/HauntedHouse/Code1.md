@@ -330,7 +330,7 @@ ParseUserInput:
 4486: FE 40           CP      $40                 ; 01 ... noun must be in pack
 4488: CA 9C 44        JP      Z,$449C             ; {} Validate noun
 448B: 2A AC 45        LD      HL,($45AC)          ; {ram.NounData} Pointer to noun data
-448E: 2B              DEC     HL                  ;
+448E: 2B              DEC     HL                  ; 
 448F: 3A E2 48        LD      A,($48E2)           ; {ram.CurrentRoom} Current room
 4492: 5F              LD      E,A                 ; For find
 4493: 7E              LD      A,(HL)              ; Back up data pointer
@@ -532,7 +532,7 @@ PrintPacked:
 45C5: E1              POP     HL                  ; Restore HL
 45C6: 7E              LD      A,(HL)              ; Get next byte from unpacked
 45C7: FE 0A           CP      $0A                 ; Mark for another packing?
-45C9: 23              INC     HL                  ;
+45C9: 23              INC     HL                  ; 
 45CA: CA AE 45        JP      Z,$45AE             ; {code.PrintPacked} Yes ... start again
 45CD: C3 B8 45        JP      $45B8               ; {} No ... continue this packing
 ```
@@ -563,7 +563,7 @@ PrintMessage:
 45E7: 06 0D           LD      B,$0D               ; CR character
 45E9: 78              LD      A,B                 ; To A
 45EA: CD FF 45        CALL    $45FF               ; {code.PrintChar} Print character
-45ED: C9              RET
+45ED: C9              RET                         
 ```
 
 # Wait For Key
@@ -698,61 +698,61 @@ UnpackMessage:
 ; TODO: Decode this. I have a program created by translating this to Java.
 ; It works, but it would be nice to understand the math here.
 46B9: 32 7B 47        LD      ($477B),A           ; {ram.Unpack1}
-46BC: 3E 01           LD      A,$01               ;
+46BC: 3E 01           LD      A,$01               ; 
 46BE: 32 7E 47        LD      ($477E),A           ; {ram.Unpack4}
 46C1: C3 CB 46        JP      $46CB               ; {}
 ;
 46C4: 32 7B 47        LD      ($477B),A           ; {ram.Unpack1}
-46C7: 97              SUB     A                   ;
+46C7: 97              SUB     A                   ; 
 46C8: 32 7E 47        LD      ($477E),A           ; {ram.Unpack4}
 ;
-46CB: E5              PUSH    HL                  ;
-46CC: 06 03           LD      B,$03               ;
-46CE: E1              POP     HL                  ;
-46CF: 7E              LD      A,(HL)              ;
-46D0: 23              INC     HL                  ;
-46D1: 4E              LD      C,(HL)              ;
-46D2: 23              INC     HL                  ;
-46D3: E5              PUSH    HL                  ;
-46D4: 61              LD      H,C                 ;
-46D5: 6F              LD      L,A                 ;
-46D6: 13              INC     DE                  ;
-46D7: 13              INC     DE                  ;
-46D8: EB              EX      DE,HL               ;
-46D9: E5              PUSH    HL                  ;
-46DA: C5              PUSH    BC                  ;
+46CB: E5              PUSH    HL                  ; 
+46CC: 06 03           LD      B,$03               ; 
+46CE: E1              POP     HL                  ; 
+46CF: 7E              LD      A,(HL)              ; 
+46D0: 23              INC     HL                  ; 
+46D1: 4E              LD      C,(HL)              ; 
+46D2: 23              INC     HL                  ; 
+46D3: E5              PUSH    HL                  ; 
+46D4: 61              LD      H,C                 ; 
+46D5: 6F              LD      L,A                 ; 
+46D6: 13              INC     DE                  ; 
+46D7: 13              INC     DE                  ; 
+46D8: EB              EX      DE,HL               ; 
+46D9: E5              PUSH    HL                  ; 
+46DA: C5              PUSH    BC                  ; 
 46DB: 21 28 00        LD      HL,$0028            ; Number of characters in map
 46DE: 22 7C 47        LD      ($477C),HL          ; {ram.Unpack2}
-46E1: 21 11 47        LD      HL,$4711            ;
+46E1: 21 11 47        LD      HL,$4711            ; 
 46E4: 36 11           LD      (HL),$11            ; 17 passes
-46E6: 01 00 00        LD      BC,$0000            ;
-46E9: C5              PUSH    BC                  ;
-46EA: 7B              LD      A,E                 ;
-46EB: 17              RLA                         ;
-46EC: 5F              LD      E,A                 ;
-46ED: 7A              LD      A,D                 ;
-46EE: 17              RLA                         ;
-46EF: 57              LD      D,A                 ;
-46F0: 35              DEC     (HL)                ;
-46F1: E1              POP     HL                  ;
+46E6: 01 00 00        LD      BC,$0000            ; 
+46E9: C5              PUSH    BC                  ; 
+46EA: 7B              LD      A,E                 ; 
+46EB: 17              RLA                         ; 
+46EC: 5F              LD      E,A                 ; 
+46ED: 7A              LD      A,D                 ; 
+46EE: 17              RLA                         ; 
+46EF: 57              LD      D,A                 ; 
+46F0: 35              DEC     (HL)                ; 
+46F1: E1              POP     HL                  ; 
 46F2: CA 12 47        JP      Z,$4712             ; {}
-46F5: 3E 00           LD      A,$00               ;
-46F7: CE 00           ADC     A,$00               ;
-46F9: 29              ADD     HL,HL               ;
-46FA: 44              LD      B,H                 ;
-46FB: 85              ADD     A,L                 ;
+46F5: 3E 00           LD      A,$00               ; 
+46F7: CE 00           ADC     A,$00               ; 
+46F9: 29              ADD     HL,HL               ; 
+46FA: 44              LD      B,H                 ; 
+46FB: 85              ADD     A,L                 ; 
 46FC: 2A 7C 47        LD      HL,($477C)          ; {ram.Unpack2}
-46FF: 95              SUB     A,L                 ;
-4700: 4F              LD      C,A                 ;
-4701: 78              LD      A,B                 ;
-4702: 9C              SBC     A,H                 ;
-4703: 47              LD      B,A                 ;
-4704: C5              PUSH    BC                  ;
+46FF: 95              SUB     A,L                 ; 
+4700: 4F              LD      C,A                 ; 
+4701: 78              LD      A,B                 ; 
+4702: 9C              SBC     A,H                 ; 
+4703: 47              LD      B,A                 ; 
+4704: C5              PUSH    BC                  ; 
 4705: D2 0A 47        JP      NC,$470A            ; {}
-4708: 09              ADD     HL,BC               ;
-4709: E3              EX      (SP),HL             ;
-470A: 21 11 47        LD      HL,$4711            ;
-470D: 3F              CCF                         ;
+4708: 09              ADD     HL,BC               ; 
+4709: E3              EX      (SP),HL             ; 
+470A: 21 11 47        LD      HL,$4711            ; 
+470D: 3F              CCF                         ; 
 470E: C3 EA 46        JP      $46EA               ; {}
 4711: 00                                 ;
 4712: 01 53 47        LD      BC,$4753            ; Character compression map
@@ -765,38 +765,38 @@ UnpackMessage:
 471B: 05              DEC     B                   ; All done?
 471C: C2 D9 46        JP      NZ,$46D9            ; {} No ... keep decoding
 471F: 3A 7E 47        LD      A,($477E)           ; {ram.Unpack4}
-4722: A7              AND     A                   ;
+4722: A7              AND     A                   ; 
 4723: CA 3B 47        JP      Z,$473B             ; {}
-4726: E5              PUSH    HL                  ;
-4727: C5              PUSH    BC                  ;
-4728: D5              PUSH    DE                  ;
-4729: 1E 03           LD      E,$03               ;
-472B: 23              INC     HL                  ;
-472C: 46              LD      B,(HL)              ;
-472D: E5              PUSH    HL                  ;
-472E: 78              LD      A,B                 ;
+4726: E5              PUSH    HL                  ; 
+4727: C5              PUSH    BC                  ; 
+4728: D5              PUSH    DE                  ; 
+4729: 1E 03           LD      E,$03               ; 
+472B: 23              INC     HL                  ; 
+472C: 46              LD      B,(HL)              ; 
+472D: E5              PUSH    HL                  ; 
+472E: 78              LD      A,B                 ; 
 472F: CD FF 45        CALL    $45FF               ; {code.PrintChar} Print character
-4732: E1              POP     HL                  ;
-4733: 23              INC     HL                  ;
-4734: 1D              DEC     E                   ;
+4732: E1              POP     HL                  ; 
+4733: 23              INC     HL                  ; 
+4734: 1D              DEC     E                   ; 
 4735: C2 2C 47        JP      NZ,$472C            ; {}
-4738: D1              POP     DE                  ;
-4739: C1              POP     BC                  ;
-473A: E1              POP     HL                  ;
-473B: EB              EX      DE,HL               ;
-473C: 13              INC     DE                  ;
+4738: D1              POP     DE                  ; 
+4739: C1              POP     BC                  ; 
+473A: E1              POP     HL                  ; 
+473B: EB              EX      DE,HL               ; 
+473C: 13              INC     DE                  ; 
 473D: 3A 7E 47        LD      A,($477E)           ; {ram.Unpack4}
-4740: A7              AND     A                   ;
+4740: A7              AND     A                   ; 
 4741: C2 47 47        JP      NZ,$4747            ; {}
-4744: 13              INC     DE                  ;
-4745: 13              INC     DE                  ;
-4746: 13              INC     DE                  ;
+4744: 13              INC     DE                  ; 
+4745: 13              INC     DE                  ; 
+4746: 13              INC     DE                  ; 
 4747: 3A 7B 47        LD      A,($477B)           ; {ram.Unpack1}
-474A: 3D              DEC     A                   ;
+474A: 3D              DEC     A                   ; 
 474B: 32 7B 47        LD      ($477B),A           ; {ram.Unpack1}
 474E: C2 CC 46        JP      NZ,$46CC            ; {}
-4751: E1              POP     HL                  ;
-4752: C9              RET                         ;
+4751: E1              POP     HL                  ; 
+4752: C9              RET                         ; 
 ```
 
 # Character Table

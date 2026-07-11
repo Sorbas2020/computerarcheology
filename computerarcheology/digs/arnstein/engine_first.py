@@ -2,6 +2,7 @@ import specifics_pyramid
 import specifics_hauntedhouse1
 import specifics_hauntedhouse2
 import engine_com
+from engine_first_scripter import FirstScripter
 
 COMMANDS_PYRAMID = {
 0x01:     ['move_look',                          'room_num'],
@@ -60,10 +61,13 @@ ADDRESSES = {
     "TRS80": {
         "PYRAMID_L1": {
             "File": "../../../content/TRS80/Pyramid/Code1.md",
+            "ROM": "../../../content/TRS80/Pyramid/roms/Pyramid1.bin",
+            "Origin": 0x4200,
             "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
             "Rooms": specifics_pyramid.ROOMS,
             "Objects": specifics_pyramid.OBJECTS,
+            "Words": specifics_pyramid.WORDS,
             "RoomTable": (0x4825, 0x4965),            
             "AmbientLightTable": (0x4EE2, 0x4F82),
             "ObjectData": (0x4F84, 0x4FDA),
@@ -75,10 +79,13 @@ ADDRESSES = {
         },
         "PYRAMID_L2": {
             "File": "../../../content/TRS80/Pyramid/Code.md",
+            "ROM": "../../../content/TRS80/Pyramid/roms/Pyramid.bin",
+            "Origin": 0x4300,
             "IsLittleEndian": True,
             "Commands": COMMANDS_PYRAMID,
             "Rooms": specifics_pyramid.ROOMS,
             "Objects": specifics_pyramid.OBJECTS,
+            "Words": specifics_pyramid.WORDS,
             "RoomTable": (0x4888, 0x49C8),            
             "AmbientLightTable": (0x4F45, 0x4FE5),
             "ObjectData": (0x4FE7, 0x503D),
@@ -90,10 +97,13 @@ ADDRESSES = {
         },
         "HAUNTEDHOUSE1": {
             "File": "../../../content/TRS80/HauntedHouse/Code1.md",
+            "ROM": "../../../content/TRS80/HauntedHouse/roms/Code1.bin",
+            "Origin": 0x42E9,
             "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
             "Rooms": specifics_hauntedhouse1.ROOMS,
             "Objects": specifics_hauntedhouse1.OBJECTS,
+            "Words": specifics_hauntedhouse1.WORDS,
             "RoomTable": (0x477F, 0x47BB),            
             "AmbientLightTable": None,
             "ObjectData": (0x48C8, 0x48E0),
@@ -105,10 +115,13 @@ ADDRESSES = {
         },
         "HAUNTEDHOUSE2": {
             "File": "../../../content/TRS80/HauntedHouse/Code2.md",
+            "ROM": "../../../content/TRS80/HauntedHouse/roms/Code2.bin",
+            "Origin": 0x435E,
             "IsLittleEndian": True,
             "Commands": COMMANDS_HAUNTEDHOUSE,
             "Rooms": specifics_hauntedhouse2.ROOMS,
             "Objects": specifics_hauntedhouse2.OBJECTS,
+            "Words": specifics_hauntedhouse2.WORDS,
             "RoomTable": (0x4782, 0x479E),            
             "AmbientLightTable": None,
             "ObjectData": (0x4915, 0x492D),
@@ -122,10 +135,13 @@ ADDRESSES = {
     "COCO": {
         "PYRAMID": {
             "File": "../../../content/CoCo/Pyramid/Code.md",
+            "ROM": "../../../content/CoCo/Pyramid/roms/pyramid.bin",
+            "Origin": 0x0600,
             "IsLittleEndian": False,
             "Commands": COMMANDS_PYRAMID,
             "Rooms": specifics_pyramid.ROOMS,
             "Objects": specifics_pyramid.OBJECTS,
+            "Words": specifics_pyramid.WORDS,
             "RoomTable": (0x112E, 0x126E),            
             "AmbientLightTable": (0x17EB, 0x188B),
             "ObjectData": (0x188D, 0x18E3),
@@ -347,34 +363,53 @@ def update_room_scripts(info):
 
     lines = engine_com.read_code_file(info["File"])    
 
-    ps,pe = engine_com.find_start_and_end(lines, info["RoomScripts"][0], info["RoomScripts"][1])
-    while lines[ps].strip():
-        ps -= 1
-    ps += 1
+    pso,peo = engine_com.find_start_and_end(lines, info["RoomScripts"][0], info["RoomScripts"][1])
+    while lines[pso].strip():
+        pso -= 1
+    pso += 1
 
-    while ps < pe:
-        addr = engine_com.get_address_for(lines,ps)
+    new_lines = []
+
+    scripter = FirstScripter(info)
+    addr = engine_com.get_address_for(lines,pso)
+    end_addr = engine_com.get_address_for(lines,peo)
+
+    while addr < end_addr:        
+        ps,pe = engine_com.find_start_and_end(lines, addr, addr)        
+        while True:
+            ps -= 1
+            line = lines[ps]
+            i = line.find(';')
+            comment = ''
+            if i > -1:
+                comment = line[i:].strip()
+                line = line[:i]
+            if line.strip().endswith(':'):
+                break        
+            
         sc_info = room_ptrs[addr]
         rn = sc_info['number']
-        nl = f'Script_RM_{rn:02X}_{info["Rooms"][rn]}:'
-        print('>>>',nl)
+        new_lines.append(f'Script_RM_{rn:02X}_{info["Rooms"][rn]}: {comment}')
+        # print('>>>',nl)
         pi = sc_info['description']
-        nl = f'; PS_{pi['ps_num']:02X}'        
-        print('>>>',nl)
+        new_lines.append(f'; PS_{pi['ps_num']:02X}')        
+        # print('>>>',nl)
         if 'Haunted' in info['File']:
             tt = pi['text'][:]
             tt[0] = 'you_are_at_the_'+tt[0]
         else:
             tt = pi['text']
         for t in tt:
-            print('>>>', '; '+t)
+            # print('>>>', '; '+t)
+            new_lines.append('; '+t)
+        new_lines.append(';') 
 
-        while lines[ps].strip():
-            ps += 1
-        ps += 1
-        
-        #raise "STOP"
-    
+        addr = scripter.decode_map_script(addr, new_lines)        
+
+        new_lines.append('')          
+
+    rep_lines = lines[:pso] + new_lines + lines[peo:]
+    # engine_com.write_code_file(info["File"], rep_lines)    
 
 
 info = ADDRESSES["TRS80"]["PYRAMID_L2"]

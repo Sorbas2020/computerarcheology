@@ -77,7 +77,7 @@ GetObjectInfo:
 435B: C2 50 43        JP      NZ,$4350            ; {code.GetObjectInfo} If this is being carried, recurse to the carrier
 435E: 2B              DEC     HL                  ; Back to first entry for return
 435F: BB              CP      E                   ; Room number matches E?
-4360: C9              RET
+4360: C9              RET                         
 
 TableOffsetTwoBytes:
 ; HL = HL + (A-1)*2
@@ -113,7 +113,7 @@ SetObjectLocation:
 4379: 23              INC     HL                  ; Second entry is location
 437A: 73              LD      (HL),E              ; Set the room number of the parent container
 437B: 2B              DEC     HL                  ; Back to 1st entry
-437C: C9              RET
+437C: C9              RET                         
 ```
 
 # Process Room Scripts
@@ -192,7 +192,7 @@ ScriptCommandPASS:
 43B3: BB              CP      E                   ; ... end of the script (MSB)?
 43B4: C2 BA 43        JP      NZ,$43BA            ; {} No ... keep going
 43B7: F6 01           OR      $01                 ; Z=0 PASS
-43B9: C9              RET
+43B9: C9              RET                         
 ;
 43BA: D5              PUSH    DE                  ; Put the calculated end of script back on stack
 43BB: C3 9D 43        JP      $439D               ; {code.RunScriptCommand} Run the next command
@@ -208,7 +208,7 @@ ScriptCommandFAIL:
 43BE: E1              POP     HL                  ; Pop the script pointer
 43BF: E1              POP     HL                  ; Pop the calculated end of the script
 43C0: AF              XOR     A                   ; Z=1 FAIL
-43C1: C9              RET
+43C1: C9              RET                         
 ```
 
 # COM_07_stop_if_pass()
@@ -365,7 +365,7 @@ ParseInputString:
 44A6: 32 A9 45        LD      ($45A9),A           ; {code.someDecoded} ... buffer-has-something flag
 44A9: 32 7D 46        LD      ($467D),A           ; {code.verbGrammar} ... and the grammar
 ;
-44AC: 11 CE 56        LD      DE,$56CE            ; {+code.wordTable} Pointer to all the words we know
+44AC: 11 CE 56        LD      DE,$56CE            ; {+code.WordTable} Pointer to all the words we know
 44AF: EB              EX      DE,HL               ; Now HL=words we know, DE=where we are in the input
 44B0: 22 79 47        LD      ($4779),HL          ; {code.currentParsePtr} Hold our current spot in the word table
 44B3: EB              EX      DE,HL               ; Now HL=where we are in input, DE=where we are in words
@@ -521,7 +521,7 @@ CopyWord:
 45A2: 13              INC     DE                  ; ... storage ...
 45A3: 05              DEC     B                   ; ... with ...
 45A4: C2 9F 45        JP      NZ,$459F            ; {} ... the "@" character
-45A7: C9              RET
+45A7: C9              RET                         
 
 nounDataSize:
 45A8: 00 ; Number of bytes in noun's data area
@@ -588,7 +588,7 @@ PrintCarriageReturn:
 45E7: 06 0D           LD      B,$0D               ; Print ...
 45E9: 78              LD      A,B                 ; ... carriage ...
 45EA: CD FF 45        CALL    $45FF               ; {code.PrintChar} ... return
-45ED: C9              RET
+45ED: C9              RET                         
 ```
 
 # Wait for key
@@ -613,7 +613,7 @@ PrintChar:
 45FF: D5              PUSH    DE                  ; ROM routine mangles this
 4600: CD 33 00        CALL    $0033               ; {hard.PrintChar} Send character A to the screen
 4603: D1              POP     DE                  ; Restore our DE
-4604: C9              RET
+4604: C9              RET                         
 ```
 
 # Prompt And Read Line
@@ -670,7 +670,7 @@ BackSpace:
 
 InputDone:
 4657: 36 00           LD      (HL),$00            ; Put the null terminator on the end of the input
-4659: C9              RET
+4659: C9              RET                         
 ```
 
 # Input Buffer
@@ -946,14 +946,14 @@ UnpackStringToBuffer:  ; Never used (but was in Haunted House)
 4800: CE 00           ADC     $00                 ; ... to A
 4802: 29              ADD     HL,HL               ; Value = value * 2
 4803: 44              LD      B,H                 ; MSB
-4804: 85              ADD     A,L                 ;
+4804: 85              ADD     A,L                 ; 
 4805: 2A 85 48        LD      HL,($4885)          ; {code.valueOfForty}
-4808: 95              SUB     L                   ;
-4809: 4F              LD      C,A                 ;
+4808: 95              SUB     L                   ; 
+4809: 4F              LD      C,A                 ; 
 480A: 78              LD      A,B                 ; TODO figure out the exact math here
-480B: 9C              SBC     H                   ;
-480C: 47              LD      B,A                 ;
-480D: C5              PUSH    BC                  ;
+480B: 9C              SBC     H                   ; 
+480C: 47              LD      B,A                 ; 
+480D: C5              PUSH    BC                  ; 
 480E: D2 13 48        JP      NC,$4813            ; {} Less than 40 ... skip adding
 4811: 09              ADD     HL,BC               ; Greater or equal, add to the extracted value
 4812: E3              EX      (SP),HL             ; New value back to stack
@@ -1007,7 +1007,7 @@ shiftCount:
 4854: 32 84 48        LD      ($4884),A           ; {code.unpackNumWords} ... words
 4857: C2 D5 47        JP      NZ,$47D5            ; {} Go back for all the words
 485A: E1              POP     HL                  ; Point to the next character after the words in the string
-485B: C9              RET
+485B: C9              RET                         
 ```
 
 # Character Table
@@ -1168,19 +1168,16 @@ Script_RM_01_BEFORE_ENTRANCE:
 ; YOU_ARE_STANDING_BEFORE_THE_ENTRANCE_OF_A_PYRAMID.__AROUND_YOU__
 ; IS_A_DESERT.
 ;
-;;
-;; Keep these
-;;
 49CC: 01 03     ; N
-49CE: 01 02     ;     MoveToRoom(room_2) new  ;; and these
+49CE: 01 02     ;     MoveToRoom(room_2) ;; new
 49D0: 02 03     ; E
-49D2: 01 03     ;     MoveToRoom(room_3) new
+49D2: 01 03     ;     MoveToRoom(room_3) ;; new
 49D4: 03 03     ; S
-49D6: 01 04     ;     MoveToRoom(room_4) new
+49D6: 01 04     ;     MoveToRoom(room_4) ;; new
 49D8: 04 03     ; W
-49DA: 01 05     ;     MoveToRoom(room_5) new
+49DA: 01 05     ;     MoveToRoom(room_5) ;; new
 49DC: 0B 03     ; IN
-49DE: 01 02     ;     MoveToRoom(room_2) new
+49DE: 01 02     ;     MoveToRoom(room_2) ;; new
 49E0: 00
 
 RM_02:
@@ -1189,13 +1186,13 @@ RM_02:
 ; LEADS_TO_A_PASSAGE_BENEATH_THE_SURFACE.
 ;
 49E1: 03 03     ; S
-49E3: 01 01     ;    MoveToRoom(room_1) new
+49E3: 01 01     ;    MoveToRoom(room_1) ;; new
 49E5: 0A 03     ; D
-49E7: 01 07     ;    MoveToRoom(room_7) woodsRoom9
+49E7: 01 07     ;    MoveToRoom(room_7) ;; woodsRoom9
 49E9: 0C 03     ; OUT
-49EB: 01 01     ;    MoveToRoom(room_1) new
+49EB: 01 01     ;    MoveToRoom(room_1) ;; new
 49ED: 12 03     ; PANEL
-49EF: 01 1A     ;    MoveToRoom(room_26) woodsRoom33
+49EF: 01 1A     ;    MoveToRoom(room_26) ;; woodsRoom33
 49F1: 00
 
 RM_03:
@@ -1203,13 +1200,13 @@ RM_03:
 ; YOU_ARE_IN_THE_DESERT.
 ;
 49F2: 01 03     ; N
-49F4: 01 06     ;    MoveToRoom(room_6) new
+49F4: 01 06     ;    MoveToRoom(room_6) ;; new
 49F6: 02 03     ; E
-49F8: 01 03     ;    MoveToRoom(room_3) new
+49F8: 01 03     ;    MoveToRoom(room_3) ;; new
 49FA: 03 03     ; S
-49FC: 01 04     ;    MoveToRoom(room_4) new
+49FC: 01 04     ;    MoveToRoom(room_4) ;; new
 49FE: 04 03     ; W
-4A00: 01 01     ;    MoveToRoom(room_1) new
+4A00: 01 01     ;    MoveToRoom(room_1) ;; new
 4A02: 00
 
 RM_04:
@@ -1217,13 +1214,13 @@ RM_04:
 ; YOU_ARE_IN_THE_DESERT.
 ;
 4A03: 01 03     ; N
-4A05: 01 01     ;    MoveToRoom(room_1) new
+4A05: 01 01     ;    MoveToRoom(room_1) ;; new
 4A07: 02 03     ; E
-4A09: 01 03     ;    MoveToRoom(room_3) new
+4A09: 01 03     ;    MoveToRoom(room_3) ;; new
 4A0B: 03 03     ; S
-4A0D: 01 04     ;    MoveToRoom(room_4) new
+4A0D: 01 04     ;    MoveToRoom(room_4) ;; new
 4A0F: 04 03     ; W
-4A11: 01 05     ;    MoveToRoom(room_5) new
+4A11: 01 05     ;    MoveToRoom(room_5) ;; new
 4A13: 00
 
 RM_05:
@@ -1231,13 +1228,13 @@ RM_05:
 ; YOU_ARE_IN_THE_DESERT.
 ;
 4A14: 01 03     ; N
-4A16: 01 06     ;    MoveToRoom(room_6) new
+4A16: 01 06     ;    MoveToRoom(room_6) ;; new
 4A18: 02 03     ; E
-4A1A: 01 01     ;    MoveToRoom(room_1) new
+4A1A: 01 01     ;    MoveToRoom(room_1) ;; new
 4A1C: 03 03     ; S
-4A1E: 01 04     ;    MoveToRoom(room_4) new
+4A1E: 01 04     ;    MoveToRoom(room_4) ;; new
 4A20: 04 03     ; W
-4A22: 01 05     ;    MoveToRoom(room_5) new
+4A22: 01 05     ;    MoveToRoom(room_5) ;; new
 4A24: 00
 
 RM_06:
@@ -1245,13 +1242,13 @@ RM_06:
 ; YOU_ARE_IN_THE_DESERT.
 ;
 4A25: 01 03     ; N
-4A27: 01 06     ;    MoveToRoom(room_6) new
+4A27: 01 06     ;    MoveToRoom(room_6) ;; new
 4A29: 02 03     ; E
-4A2B: 01 03     ;    MoveToRoom(room_3) new
+4A2B: 01 03     ;    MoveToRoom(room_3) ;; new
 4A2D: 03 03     ; S
-4A2F: 01 01     ;    MoveToRoom(room_1) new
+4A2F: 01 01     ;    MoveToRoom(room_1) ;; new
 4A31: 04 03     ; W
-4A33: 01 05     ;    MoveToRoom(room_5) new
+4A33: 01 05     ;    MoveToRoom(room_5) ;; new
 4A35: 00
 
 RM_07: ; woodsRoom9
@@ -1261,13 +1258,13 @@ RM_07: ; woodsRoom9
 ; TRANSLATE,_"CURSE_ALL_WHO_ENTER_THIS_SACRED_CRYPT."
 ;
 4A36: 09 03     ; U
-4A38: 01 02     ;    MoveToRoom(room_2) new
+4A38: 01 02     ;    MoveToRoom(room_2) ;; new
 4A3A: 0C 03     ; OUT
-4A3C: 01 02     ;    MoveToRoom(room_2) new
+4A3C: 01 02     ;    MoveToRoom(room_2) ;; new
 4A3E: 04 03     ; W
-4A40: 01 08     ;    MoveToRoom(room_8) woodsRoom10
+4A40: 01 08     ;    MoveToRoom(room_8) ;; woodsRoom10
 4A42: 0B 03     ; IN
-4A44: 01 08     ;    MoveToRoom(room_8) woodsRoom10
+4A44: 01 08     ;    MoveToRoom(room_8) ;; woodsRoom10
 4A46: 00
 
 RM_08: ; woodsRoom10
@@ -1276,13 +1273,13 @@ RM_08: ; woodsRoom10
 ; LIGHT_AT_THE_EAST_END_OF_THE_PASSAGE.
 ;
 4A47: 02 03     ; E
-4A49: 01 07     ;    MoveToRoom(room_7) woodsRoom9
+4A49: 01 07     ;    MoveToRoom(room_7) ;; woodsRoom9
 4A4B: 0C 03     ; OUT
-4A4D: 01 07     ;    MoveToRoom(room_7) woodsRoom9
+4A4D: 01 07     ;    MoveToRoom(room_7) ;; woodsRoom9
 4A4F: 04 03     ; W
-4A51: 01 09     ;    MoveToRoom(room_9) woodsRoom11
+4A51: 01 09     ;    MoveToRoom(room_9) ;; woodsRoom11
 4A53: 0B 03     ; IN
-4A55: 01 09     ;    MoveToRoom(room_9) woodsRoom11
+4A55: 01 09     ;    MoveToRoom(room_9) ;; woodsRoom11
 4A57: 00
 
 RM_09: ; woodsRoom11
@@ -1291,13 +1288,13 @@ RM_09: ; woodsRoom11
 ; EGYPTIAN_CRAFTS.__AN_AWKWARD_CORRIDOR_LEADS_UPWARD_AND_WEST.
 ;
 4A58: 02 03     ; E
-4A5A: 01 08     ;    MoveToRoom(room_8) woodsRoom10
+4A5A: 01 08     ;    MoveToRoom(room_8) ;; woodsRoom10
 4A5C: 0B 03     ; IN
-4A5E: 01 0A     ;    MoveToRoom(room_10) woodsRoom12
+4A5E: 01 0A     ;    MoveToRoom(room_10) ;; woodsRoom12
 4A60: 09 03     ; U
-4A62: 01 0A     ;    MoveToRoom(room_10) woodsRoom12
+4A62: 01 0A     ;    MoveToRoom(room_10) ;; woodsRoom12
 4A64: 04 03     ; W
-4A66: 01 0A     ;    MoveToRoom(room_10) woodsRoom12
+4A66: 01 0A     ;    MoveToRoom(room_10) ;; woodsRoom12
 4A68: 00
 
 RM_0A: ; woodsRoom12
@@ -1305,15 +1302,15 @@ RM_0A: ; woodsRoom12
 ; YOU_ARE_IN_AN_AWKWARD_SLOPING_EAST/WEST_CORRIDOR.
 ;
 4A69: 0A 03     ; D
-4A6B: 01 09     ;    MoveToRoom(room_9) woodsRoom11
+4A6B: 01 09     ;    MoveToRoom(room_9) ;; woodsRoom11
 4A6D: 02 03     ; E
-4A6F: 01 09     ;    MoveToRoom(room_9) woodsRoom11
+4A6F: 01 09     ;    MoveToRoom(room_9) ;; woodsRoom11
 4A71: 0B 03     ; IN
-4A73: 01 0B     ;    MoveToRoom(room_11) woodsRoom13
+4A73: 01 0B     ;    MoveToRoom(room_11) ;; woodsRoom13
 4A75: 04 03     ; W
-4A77: 01 0B     ;    MoveToRoom(room_11) woodsRoom13
+4A77: 01 0B     ;    MoveToRoom(room_11) ;; woodsRoom13
 4A79: 09 03     ; U
-4A7B: 01 0B     ;    MoveToRoom(room_11) woodsRoom13
+4A7B: 01 0B     ;    MoveToRoom(room_11) ;; woodsRoom13
 4A7D: 00
 
 room_11: ; woodsRoom13
@@ -1323,9 +1320,9 @@ room_11: ; woodsRoom13
 ; PASSAGE_EXIT_FROM_THE_EAST_AND_WEST_SIDES_OF_THE_CHAMBER.
 ;
 4A7E: 02 03     ; E
-4A80: 01 0A     ;    MoveToRoom(room_10) woodsRoom12
+4A80: 01 0A     ;    MoveToRoom(room_10) ;; woodsRoom12
 4A82: 04 03     ; W
-4A84: 01 0C     ;    MoveToRoom(room_12) woodsRoom14
+4A84: 01 0C     ;    MoveToRoom(room_12) ;; woodsRoom14
 4A86: 00
 
 room_12: ; woodsRoom14
@@ -1335,13 +1332,13 @@ room_12: ; woodsRoom14
 ; ROUGH_STONE_STEPS_LEAD_DOWN_THE_PIT.
 ;
 4A87: 02 03     ; E
-4A89: 01 0B     ;    MoveToRoom(room_11) woodsRoom13
+4A89: 01 0B     ;    MoveToRoom(room_11) ;; woodsRoom13
 4A8B: 0A 0B     ; D
 4A8D: 07 07     ;    StopIfPassElseContinue
 4A8F: 02 25     ;        AssertObjectIsInPack(obj_GOLD)
 4A91: 04 71 71  ;        Print(PS_6B:"YOU_ARE_AT_THE_BOTTOM_OF_THE_PIT_WITH_A_BROKEN_NECK.")
 4A94: 05        ;        PrintScoreAndStop
-4A95: 01 0D     ;    MoveToRoom(room_13) woodsRoom15
+4A95: 01 0D     ;    MoveToRoom(room_13) ;; woodsRoom15
 4A97: 04 04     ; W
 4A99: 04 96 71  ;    Print(PS_6C:"THE_CRACK_IS_FAR_TOO_SMALL_FOR_YOU_TO_FOLLOW.")
 4A9C: 00
@@ -1356,25 +1353,25 @@ room_13: ; woodsRoom15
 ; DOME.
 ;
 4A9D: 03 03     ; S
-4A9F: 01 0E     ;    MoveToRoom(room_14) woodsRoom18
+4A9F: 01 0E     ;    MoveToRoom(room_14) ;; woodsRoom18
 4AA1: 04 03     ; W
-4AA3: 01 0F     ;    MoveToRoom(room_15) woodsRoom17
+4AA3: 01 0F     ;    MoveToRoom(room_15) ;; woodsRoom17
 4AA5: 0A 03     ; D
-4AA7: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4AA7: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4AA9: 01 03     ; N
-4AAB: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4AAB: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4AAD: 09 0A     ; U
 4AAF: 07 06     ;    StopIfPassElseContinue
 4AB1: 02 25     ;        AssertObjectIsInPack(obj_GOLD)
 4AB3: 04 B6 71  ;        Print(PS_6D:"THE_DOME_IS_UNCLIMBABLE.")
-4AB6: 01 0C     ;    MoveToRoom(room_12) woodsRoom14
+4AB6: 01 0C     ;    MoveToRoom(room_12) ;; woodsRoom14
 4AB8: 02 0A     ; E
 4ABA: 07 06     ;    StopIfPassElseContinue
 4ABC: 02 25     ;        AssertObjectIsInPack(obj_GOLD)
 4ABE: 04 B6 71  ;        Print(PS_6D:"THE_DOME_IS_UNCLIMBABLE.")
-4AC1: 01 0C     ;    MoveToRoom(room_12) woodsRoom14
-4AC3: 20 03     ; word_20 ; in CCA loc.c this is GO_Y2 -- command: "GO Y2" or "Y2"
-4AC5: 01 1A     ;    MoveToRoom(room_26) woodsRoom33
+4AC1: 01 0C     ;    MoveToRoom(room_12) ;; woodsRoom14
+4AC3: 20 03     ; word_20 ;; in CCA loc.c this is GO_Y2 -- command: "GO Y2" or "Y2"
+4AC5: 01 1A     ;    MoveToRoom(room_26) ;; woodsRoom33
 4AC7: 00
 
 room_14: ; woodsRoom18
@@ -1383,9 +1380,9 @@ room_14: ; woodsRoom18
 ; "YOU_WON'T_GET_IT_UP_THE_STEPS".
 ;
 4AC8: 0C 03     ; OUT
-4ACA: 01 0D     ;    MoveToRoom(room_13) woodsRoom15
+4ACA: 01 0D     ;    MoveToRoom(room_13);;  woodsRoom15
 4ACC: 01 03     ; N
-4ACE: 01 0D     ;    MoveToRoom(room_13) woodsRoom15
+4ACE: 01 0D     ;    MoveToRoom(room_13) ;; woodsRoom15
 4AD0: 00
 
 room_15: ; woodsRoom17
@@ -1395,7 +1392,7 @@ room_15: ; woodsRoom17
 ; TO_JUMP.
 ;
 4AD1: 02 03     ; E
-4AD3: 01 0D     ;    MoveToRoom(room_13) woodsRoom15
+4AD3: 01 0D     ;    MoveToRoom(room_13) ;; woodsRoom15
 4AD5: 10 0C     ; JUMP
 4AD7: 07 06     ;    StopIfPassElseContinue
 4AD9: 03 01     ;        AssertObjectIsInCurrentRoomOrPack(obj_bridge_15)
@@ -1406,11 +1403,11 @@ room_15: ; woodsRoom17
 4AE2: 04 0A     ; W
 4AE4: 07 05     ;    StopIfPassElseContinue
 4AE6: 03 01     ;        AssertObjectIsInCurrentRoomOrPack(obj_bridge_15)
-4AE8: 01 12     ;        MoveToRoom(room_18) woodsRoom27
+4AE8: 01 12     ;        MoveToRoom(room_18) ;; woodsRoom27
 4AEA: 04 09 72  ;    Print(PS_70:"THERE_IS_NO_WAY_ACROSS_THE_BOTTOMLESS_PIT.")
 4AED: 0D 05     ; CROSS
 4AEF: 03 01     ;    AssertObjectIsInCurrentRoomOrPack(obj_bridge_15)
-4AF1: 01 12     ;    MoveToRoom(room_18) woodsRoom27
+4AF1: 01 12     ;    MoveToRoom(room_18) ;; woodsRoom27
 4AF3: 23 18     ; WAVE
 4AF5: 11 11     ;    AssertObjectMatchesUserInput(obj_SCEPTER)
 4AF7: 07 0C     ;    StopIfPassElseContinue
@@ -1429,24 +1426,24 @@ room_16: ; woodsRoom19
 ; DIRECTIONS.
 ;
 4B0D: 09 03     ; U
-4B0F: 01 0D     ;    MoveToRoom(room_13) woodsRoom15
+4B0F: 01 0D     ;    MoveToRoom(room_13) ;; woodsRoom15
 4B11: 02 03     ; E
-4B13: 01 0D     ;    MoveToRoom(room_13) woodsRoom15
+4B13: 01 0D     ;    MoveToRoom(room_13) ;; woodsRoom15
 4B15: 03 0A     ; S
 4B17: 07 06     ;    StopIfPassElseContinue
 4B19: 03 0B     ;        AssertObjectIsInCurrentRoomOrPack(obj_SERPENT)
 4B1B: 04 27 72  ;        Print(PS_71:"YOU_CAN'T_GET_BY_THE_SERPENT.")
-4B1E: 01 11     ;    MoveToRoom(room_17) woodsRoom29
+4B1E: 01 11     ;    MoveToRoom(room_17) ;; woodsRoom29
 4B20: 01 0A     ; N
 4B22: 07 06     ;    StopIfPassElseContinue
 4B24: 03 0B     ;        AssertObjectIsInCurrentRoomOrPack(obj_SERPENT)
 4B26: 04 27 72  ;        Print(PS_71:"YOU_CAN'T_GET_BY_THE_SERPENT.")
-4B29: 01 19     ;    MoveToRoom(room_25) woodsRoom28
+4B29: 01 19     ;    MoveToRoom(room_25) ;; woodsRoom28
 4B2B: 04 0A     ; W
 4B2D: 07 06     ;    StopIfPassElseContinue
 4B2F: 03 0B     ;        AssertObjectIsInCurrentRoomOrPack(obj_SERPENT)
 4B31: 04 27 72  ;        Print(PS_71:"YOU_CAN'T_GET_BY_THE_SERPENT.")
-4B34: 01 18     ;    MoveToRoom(room_24) woodsRoom30
+4B34: 01 18     ;    MoveToRoom(room_24) ;; woodsRoom30
 4B36: 26 10     ; THROW
 4B38: 11 14     ;    AssertObjectMatchesUserInput(obj_BIRD_boxed)
 4B3A: 03 0B     ;    AssertObjectIsInCurrentRoomOrPack(obj_SERPENT)
@@ -1463,9 +1460,9 @@ room_17: ; woodsRoom29
 ; YOU_ARE_IN_THE_SOUTH_SIDE_CHAMBER.
 ;
 4B48: 01 03     ; N
-4B4A: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4B4A: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4B4C: 0C 03     ; OUT
-4B4E: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4B4E: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4B50: 00
 
 room_18: ; woodsRoom27
@@ -1483,15 +1480,15 @@ room_18: ; woodsRoom27
 4B5E: 02 0A     ; E
 4B60: 07 05     ;    StopIfPassElseContinue
 4B62: 03 02     ;        AssertObjectIsInCurrentRoomOrPack(obj_bridge_18)
-4B64: 01 0F     ;        MoveToRoom(room_15) woodsRoom17
+4B64: 01 0F     ;        MoveToRoom(room_15) ;; woodsRoom17
 4B66: 04 09 72  ;    Print(PS_70:"THERE_IS_NO_WAY_ACROSS_THE_BOTTOMLESS_PIT.")
 4B69: 01 06     ; N
 4B6B: 04 3D 72  ;    Print(PS_72:"YOU_HAVE_CRAWLED_THROUGH_A_VERY_LOW_WIDE_PASSAGE_PARALLEL_TO_AND
 ;                                 NORTH_OF_THE_HALL_OF_GODS.")
-4B6E: 01 13     ;    MoveToRoom(room_19) woodsRoom41
+4B6E: 01 13     ;    MoveToRoom(room_19) ;; woodsRoom41
 4B70: 0D 05     ; CROSS
 4B72: 03 02     ;    AssertObjectIsInCurrentRoomOrPack(obj_bridge_18)
-4B74: 01 0F     ;    MoveToRoom(room_15) woodsRoom17
+4B74: 01 0F     ;    MoveToRoom(room_15) ;; woodsRoom17
 4B76: 23 18     ; WAVE
 4B78: 11 11     ;    AssertObjectMatchesUserInput(obj_SCEPTER)
 4B7A: 07 0C     ;    StopIfPassElseContinue
@@ -1511,17 +1508,17 @@ room_19: ; woodsRoom41
 ; PASSAGE_SIX_FEET_OFF_THE_FLOOR.
 ;
 4B90: 03 03     ; S
-4B92: 01 1C     ;    MoveToRoom(room_28) woodsRoom42
+4B92: 01 1C     ;    MoveToRoom(room_28) ;; woodsRoom42
 4B94: 09 03     ; U
-4B96: 01 1C     ;    MoveToRoom(room_28) woodsRoom42
+4B96: 01 1C     ;    MoveToRoom(room_28) ;; woodsRoom42
 4B98: 11 03     ; CLIMB
-4B9A: 01 1C     ;    MoveToRoom(room_28) woodsRoom42
+4B9A: 01 1C     ;    MoveToRoom(room_28) ;; woodsRoom42
 4B9C: 02 03     ; E
-4B9E: 01 12     ;    MoveToRoom(room_18) woodsRoom27
+4B9E: 01 12     ;    MoveToRoom(room_18) ;; woodsRoom27
 4BA0: 01 03     ; N
-4BA2: 01 12     ;    MoveToRoom(room_18) woodsRoom27
+4BA2: 01 12     ;    MoveToRoom(room_18) ;; woodsRoom27
 4BA4: 04 03     ; W
-4BA6: 01 14     ;    MoveToRoom(room_20) woodsRoom60
+4BA6: 01 14     ;    MoveToRoom(room_20) ;; woodsRoom60
 4BA8: 00
 
 room_20: ; woodsRoom60
@@ -1531,15 +1528,15 @@ room_20: ; woodsRoom60
 ; A_ROUND_TWO_FOOT_HOLE_SLANTS_DOWN.
 ;
 4BA9: 02 03     ; E
-4BAB: 01 13     ;    MoveToRoom(room_19) woodsRoom41
+4BAB: 01 13     ;    MoveToRoom(room_19) ;; woodsRoom41
 4BAD: 09 03     ; U
-4BAF: 01 13     ;    MoveToRoom(room_19) woodsRoom41
+4BAF: 01 13     ;    MoveToRoom(room_19) ;; woodsRoom41
 4BB1: 04 03     ; W
-4BB3: 01 15     ;    MoveToRoom(room_21) woodsRoom61
+4BB3: 01 15     ;    MoveToRoom(room_21) ;; woodsRoom61
 4BB5: 01 03     ; N
-4BB7: 01 16     ;    MoveToRoom(room_22) woodsRoom62
+4BB7: 01 16     ;    MoveToRoom(room_22) ;; woodsRoom62
 4BB9: 0A 03     ; D
-4BBB: 01 16     ;    MoveToRoom(room_22) woodsRoom62
+4BBB: 01 16     ;    MoveToRoom(room_22) ;; woodsRoom62
 4BBD: 00
 
 room_21: ; woodsRoom61
@@ -1548,9 +1545,9 @@ room_21: ; woodsRoom61
 ; HALL_JOINS_UP_WITH_A_NARROW_NORTH/SOUTH_PASSAGE.
 ;
 4BBE: 02 03     ; E
-4BC0: 01 14     ;    MoveToRoom(room_20) woodsRoom60
+4BC0: 01 14     ;    MoveToRoom(room_20) ;; woodsRoom60
 4BC2: 01 03     ; N
-4BC4: 01 16     ;    MoveToRoom(room_22) woodsRoom62
+4BC4: 01 16     ;    MoveToRoom(room_22) ;; woodsRoom62
 4BC6: 00
 
 room_22: ; woodsRoom62
@@ -1558,13 +1555,13 @@ room_22: ; woodsRoom62
 ; YOU_ARE_AT_A_CROSSOVER_OF_A_HIGH_N/S_PASSAGE_AND_A_LOW_E/W_ONE.
 ;
 4BC7: 04 03     ; W
-4BC9: 01 14     ;    MoveToRoom(room_20) woodsRoom60
+4BC9: 01 14     ;    MoveToRoom(room_20) ;; woodsRoom60
 4BCB: 01 03     ; N
-4BCD: 01 17     ;    MoveToRoom(room_23) woodsRoom63
+4BCD: 01 17     ;    MoveToRoom(room_23) ;; woodsRoom63
 4BCF: 02 03     ; E
-4BD1: 01 18     ;    MoveToRoom(room_24) woodsRoom30
+4BD1: 01 18     ;    MoveToRoom(room_24) ;; woodsRoom30
 4BD3: 03 03     ; S
-4BD5: 01 15     ;    MoveToRoom(room_21) woodsRoom61
+4BD5: 01 15     ;    MoveToRoom(room_21) ;; woodsRoom61
 4BD7: 00
 
 room_23: ; woodsRoom63
@@ -1572,9 +1569,9 @@ room_23: ; woodsRoom63
 ; DEAD_END.
 ;
 4BD8: 03 03     ; S
-4BDA: 01 16     ;    MoveToRoom(room_22) woodsRoom62
+4BDA: 01 16     ;    MoveToRoom(room_22) ;; woodsRoom62
 4BDC: 0C 03     ; OUT
-4BDE: 01 16     ;    MoveToRoom(room_22) woodsRoom62
+4BDE: 01 16     ;    MoveToRoom(room_22) ;; woodsRoom62
 4BE0: 00
 
 room_24: ; woodsRoom30
@@ -1583,13 +1580,13 @@ room_24: ; woodsRoom30
 ; AND_UP_FROM_HERE.
 ;
 4BE1: 02 03     ; E
-4BE3: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4BE3: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4BE5: 0C 03     ; OUT
-4BE7: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4BE7: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4BE9: 04 03     ; W
-4BEB: 01 16     ;    MoveToRoom(room_22) woodsRoom62
+4BEB: 01 16     ;    MoveToRoom(room_22) ;; woodsRoom62
 4BED: 09 03     ; U
-4BEF: 01 16     ;    MoveToRoom(room_22) woodsRoom62
+4BEF: 01 16     ;    MoveToRoom(room_22) ;; woodsRoom62
 4BF1: 00
 
 room_25: ; woodsRoom28
@@ -1598,15 +1595,15 @@ room_25: ; woodsRoom28
 ; GOES_DOWN_TO_AN_E/W_PASSAGE.
 ;
 4BF2: 0C 03     ; OUT
-4BF4: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4BF4: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4BF6: 03 03     ; S
-4BF8: 01 10     ;    MoveToRoom(room_16) woodsRoom19
+4BF8: 01 10     ;    MoveToRoom(room_16) ;; woodsRoom19
 4BFA: 01 03     ; N
-4BFC: 01 1A     ;    MoveToRoom(room_26) woodsRoom33
-4BFE: 20 03     ; word_20 ; in CCA loc.c this is GO_Y2 -- command: "GO Y2" or "Y2"
-4C00: 01 1A     ;    MoveToRoom(room_26) woodsRoom33
+4BFC: 01 1A     ;    MoveToRoom(room_26) ;; woodsRoom33
+4BFE: 20 03     ; word_20 ;; in CCA loc.c this is GO_Y2 -- command: "GO Y2" or "Y2"
+4C00: 01 1A     ;    MoveToRoom(room_26) ;; woodsRoom33
 4C02: 0A 03     ; D
-4C04: 01 36     ;    MoveToRoom(room_54) woodsRoom36
+4C04: 01 36     ;    MoveToRoom(room_54) ;; woodsRoom36
 4C06: 00
 
 room_26: ; woodsRoom33 -- this is the Y2 room (with a panel instead of a Y2 rock)
@@ -1615,11 +1612,11 @@ room_26: ; woodsRoom33 -- this is the Y2 room (with a panel instead of a Y2 rock
 ; OF_BROKEN_ROCK_TO_THE_EAST.__THERE_IS_A_PANEL_ON_THE_NORTH_WALL.
 ;
 4C07: 12 03     ; PANEL
-4C09: 01 02     ;    MoveToRoom(room_2) new
+4C09: 01 02     ;    MoveToRoom(room_2) ;; new
 4C0B: 03 03     ; S
-4C0D: 01 19     ;    MoveToRoom(room_25) woodsRoom28
+4C0D: 01 19     ;    MoveToRoom(room_25) ;; woodsRoom28
 4C0F: 02 03     ; E
-4C11: 01 1B     ;    MoveToRoom(room_27) woodsRoom34
+4C11: 01 1B     ;    MoveToRoom(room_27) ;; woodsRoom34
 4C13: 00
 
 room_27: ; woodsRoom34
@@ -1627,11 +1624,11 @@ room_27: ; woodsRoom34
 ; YOU_ARE_IN_THE_CHAMBER_OF_ANUBIS.
 ;
 4C14: 0A 03     ; D
-4C16: 01 1A     ;    MoveToRoom(room_26) woodsRoom33
-4C18: 20 03     ; word_20 ; in CCA loc.c this is GO_Y2 -- command: "GO Y2" or "Y2"
-4C1A: 01 1A     ;    MoveToRoom(room_26) woodsRoom33
+4C16: 01 1A     ;    MoveToRoom(room_26) ;; woodsRoom33
+4C18: 20 03     ; word_20 ;; in CCA loc.c this is GO_Y2 -- command: "GO Y2" or "Y2"
+4C1A: 01 1A     ;    MoveToRoom(room_26) ;; woodsRoom33
 4C1C: 09 03     ; U
-4C1E: 01 0D     ;    MoveToRoom(room_13) woodsRoom15
+4C1E: 01 0D     ;    MoveToRoom(room_13) ;; woodsRoom15
 4C20: 00
 
 room_28: ; woodsRoom42
@@ -1639,15 +1636,15 @@ room_28: ; woodsRoom42
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C21: 01 03     ; N
-4C23: 01 1C     ;    MoveToRoom(room_28) woodsRoom42
+4C23: 01 1C     ;    MoveToRoom(room_28) ;; woodsRoom42
 4C25: 02 03     ; E
-4C27: 01 20     ;    MoveToRoom(room_32) woodsRoom43
+4C27: 01 20     ;    MoveToRoom(room_32) ;; woodsRoom43
 4C29: 03 03     ; S
-4C2B: 01 1E     ;    MoveToRoom(room_30) woodsRoom45
+4C2B: 01 1E     ;    MoveToRoom(room_30) ;; woodsRoom45
 4C2D: 04 03     ; W
-4C2F: 01 1D     ;    MoveToRoom(room_29) woodsRoom80
+4C2F: 01 1D     ;    MoveToRoom(room_29) ;; woodsRoom80
 4C31: 09 03     ; U
-4C33: 01 13     ;    MoveToRoom(room_19) woodsRoom41
+4C33: 01 13     ;    MoveToRoom(room_19) ;; woodsRoom41
 4C35: 00
 
 room_29: ; woodsRoom80
@@ -1655,13 +1652,13 @@ room_29: ; woodsRoom80
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C36: 01 03     ; N
-4C38: 01 1C     ;    MoveToRoom(room_28) woodsRoom42
+4C38: 01 1C     ;    MoveToRoom(room_28) ;; woodsRoom42
 4C3A: 02 03     ; E
-4C3C: 01 33     ;    MoveToRoom(room_51) woodsRoom81
+4C3C: 01 33     ;    MoveToRoom(room_51) ;; woodsRoom81
 4C3E: 03 03     ; S
-4C40: 01 1D     ;    MoveToRoom(room_29) woodsRoom80
+4C40: 01 1D     ;    MoveToRoom(room_29) ;; woodsRoom80
 4C42: 04 03     ; W
-4C44: 01 1D     ;    MoveToRoom(room_29) woodsRoom80
+4C44: 01 1D     ;    MoveToRoom(room_29) ;; woodsRoom80
 4C46: 00
 
 room_30: ; woodsRoom45
@@ -1669,17 +1666,17 @@ room_30: ; woodsRoom45
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C47: 01 03     ; N
-4C49: 01 20     ;    MoveToRoom(room_32) woodsRoom43
+4C49: 01 20     ;    MoveToRoom(room_32) ;; woodsRoom43
 4C4B: 02 03     ; E
-4C4D: 01 2A     ;    MoveToRoom(room_42) woodsRoom46
+4C4D: 01 2A     ;    MoveToRoom(room_42) ;; woodsRoom46
 4C4F: 03 03     ; S
-4C51: 01 2B     ;    MoveToRoom(room_43) woodsRoom47
+4C51: 01 2B     ;    MoveToRoom(room_43) ;; woodsRoom47
 4C53: 04 03     ; W
-4C55: 01 1C     ;    MoveToRoom(room_28) woodsRoom42
+4C55: 01 1C     ;    MoveToRoom(room_28) ;; woodsRoom42
 4C57: 09 03     ; U
-4C59: 01 1F     ;    MoveToRoom(room_31) woodsRoom87
+4C59: 01 1F     ;    MoveToRoom(room_31) ;; woodsRoom87
 4C5B: 0A 03     ; D
-4C5D: 01 1F     ;    MoveToRoom(room_31) woodsRoom87
+4C5D: 01 1F     ;    MoveToRoom(room_31) ;; woodsRoom87
 4C5F: 00
 
 room_31: ; woodsRoom87
@@ -1687,9 +1684,9 @@ room_31: ; woodsRoom87
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C60: 09 03     ; U
-4C62: 01 1E     ;    MoveToRoom(room_30) woodsRoom45
+4C62: 01 1E     ;    MoveToRoom(room_30) ;; woodsRoom45
 4C64: 0A 03     ; D
-4C66: 01 1E     ;    MoveToRoom(room_30) woodsRoom45
+4C66: 01 1E     ;    MoveToRoom(room_30) ;; woodsRoom45
 4C68: 00
 
 room_32: ; woodsRoom43
@@ -1697,11 +1694,11 @@ room_32: ; woodsRoom43
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C69: 02 03     ; E
-4C6B: 01 1E     ;    MoveToRoom(room_30) woodsRoom45
+4C6B: 01 1E     ;    MoveToRoom(room_30) ;; woodsRoom45
 4C6D: 03 03     ; S
-4C6F: 01 21     ;    MoveToRoom(room_33) woodsRoom44
+4C6F: 01 21     ;    MoveToRoom(room_33) ;; woodsRoom44
 4C71: 04 03     ; W
-4C73: 01 1C     ;    MoveToRoom(room_28) woodsRoom42
+4C73: 01 1C     ;    MoveToRoom(room_28) ;; woodsRoom42
 4C75: 00
 
 room_33: ; woodsRoom44
@@ -1709,13 +1706,13 @@ room_33: ; woodsRoom44
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C76: 01 03     ; N
-4C78: 01 2C     ;    MoveToRoom(room_44) woodsRoom82
+4C78: 01 2C     ;    MoveToRoom(room_44) ;; woodsRoom82
 4C7A: 02 03     ; E
-4C7C: 01 20     ;    MoveToRoom(room_32) woodsRoom43
+4C7C: 01 20     ;    MoveToRoom(room_32) ;; woodsRoom43
 4C7E: 03 03     ; S
-4C80: 01 22     ;    MoveToRoom(room_34) woodsRoom50
+4C80: 01 22     ;    MoveToRoom(room_34) ;; woodsRoom50
 4C82: 0A 03     ; D
-4C84: 01 2D     ;    MoveToRoom(room_45) woodsRoom48
+4C84: 01 2D     ;    MoveToRoom(room_45) ;; woodsRoom48
 4C86: 00
 
 room_34: ; woodsRoom50
@@ -1723,13 +1720,13 @@ room_34: ; woodsRoom50
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C87: 02 03     ; E
-4C89: 01 21     ;    MoveToRoom(room_33) woodsRoom44
+4C89: 01 21     ;    MoveToRoom(room_33) ;; woodsRoom44
 4C8B: 03 03     ; S
-4C8D: 01 23     ;    MoveToRoom(room_35) woodsRoom52
+4C8D: 01 23     ;    MoveToRoom(room_35) ;; woodsRoom52
 4C8F: 04 03     ; W
-4C91: 01 25     ;    MoveToRoom(room_37) woodsRoom49
+4C91: 01 25     ;    MoveToRoom(room_37) ;; woodsRoom49
 4C93: 0A 03     ; D
-4C95: 01 26     ;    MoveToRoom(room_38) woodsRoom51
+4C95: 01 26     ;    MoveToRoom(room_38) ;; woodsRoom51
 4C97: 00
 
 room_35: ; woodsRoom52
@@ -1737,17 +1734,17 @@ room_35: ; woodsRoom52
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4C98: 01 03     ; N
-4C9A: 01 24     ;    MoveToRoom(room_36) woodsRoom55
+4C9A: 01 24     ;    MoveToRoom(room_36) ;; woodsRoom55
 4C9C: 02 03     ; E
-4C9E: 01 26     ;    MoveToRoom(room_38) woodsRoom51
+4C9E: 01 26     ;    MoveToRoom(room_38) ;; woodsRoom51
 4CA0: 03 03     ; S
-4CA2: 01 23     ;    MoveToRoom(room_35) woodsRoom52
+4CA2: 01 23     ;    MoveToRoom(room_35) ;; woodsRoom52
 4CA4: 04 03     ; W
-4CA6: 01 22     ;    MoveToRoom(room_34) woodsRoom50
+4CA6: 01 22     ;    MoveToRoom(room_34) ;; woodsRoom50
 4CA8: 09 03     ; U
-4CAA: 01 27     ;    MoveToRoom(room_39) woodsRoom53
+4CAA: 01 27     ;    MoveToRoom(room_39) ;; woodsRoom53
 4CAC: 0A 03     ; D
-4CAE: 01 2F     ;    MoveToRoom(room_47) woodsRoom86
+4CAE: 01 2F     ;    MoveToRoom(room_47) ;; woodsRoom86
 4CB0: 00
 
 room_36: ; woodsRoom55
@@ -1755,13 +1752,13 @@ room_36: ; woodsRoom55
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4CB1: 01 03     ; N
-4CB3: 01 24     ;    MoveToRoom(room_36) woodsRoom55
+4CB3: 01 24     ;    MoveToRoom(room_36) ;; woodsRoom55
 4CB5: 02 03     ; E
-4CB7: 01 34     ;    MoveToRoom(room_52) woodsRoom57
+4CB7: 01 34     ;    MoveToRoom(room_52) ;; woodsRoom57
 4CB9: 04 03     ; W
-4CBB: 01 23     ;    MoveToRoom(room_35) woodsRoom52
+4CBB: 01 23     ;    MoveToRoom(room_35) ;; woodsRoom52
 4CBD: 0A 03     ; D
-4CBF: 01 30     ;    MoveToRoom(room_48) woodsRoom56
+4CBF: 01 30     ;    MoveToRoom(room_48) ;; woodsRoom56
 4CC1: 00
 
 room_37: ; woodsRoom49
@@ -1769,9 +1766,9 @@ room_37: ; woodsRoom49
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4CC2: 02 03     ; E
-4CC4: 01 22     ;    MoveToRoom(room_34) woodsRoom50
+4CC4: 01 22     ;    MoveToRoom(room_34) ;; woodsRoom50
 4CC6: 04 03     ; W
-4CC8: 01 26     ;    MoveToRoom(room_38) woodsRoom51
+4CC8: 01 26     ;    MoveToRoom(room_38) ;; woodsRoom51
 4CCA: 00
 
 room_38: ; woodsRoom51
@@ -1779,13 +1776,13 @@ room_38: ; woodsRoom51
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4CCB: 02 03     ; E
-4CCD: 01 23     ;    MoveToRoom(room_35) woodsRoom52
+4CCD: 01 23     ;    MoveToRoom(room_35) ;; woodsRoom52
 4CCF: 03 03     ; S
-4CD1: 01 27     ;    MoveToRoom(room_39) woodsRoom53
+4CD1: 01 27     ;    MoveToRoom(room_39) ;; woodsRoom53
 4CD3: 04 03     ; W
-4CD5: 01 25     ;    MoveToRoom(room_37) woodsRoom49
+4CD5: 01 25     ;    MoveToRoom(room_37) ;; woodsRoom49
 4CD7: 09 03     ; U
-4CD9: 01 22     ;    MoveToRoom(room_34) woodsRoom50
+4CD9: 01 22     ;    MoveToRoom(room_34) ;; woodsRoom50
 4CDB: 00
 
 room_39: ; woodsRoom53
@@ -1793,11 +1790,11 @@ room_39: ; woodsRoom53
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4CDC: 01 03     ; N
-4CDE: 01 23     ;    MoveToRoom(room_35) woodsRoom52
+4CDE: 01 23     ;    MoveToRoom(room_35) ;; woodsRoom52
 4CE0: 03 03     ; S
-4CE2: 01 2E     ;    MoveToRoom(room_46) woodsRoom54
+4CE2: 01 2E     ;    MoveToRoom(room_46) ;; woodsRoom54
 4CE4: 04 03     ; W
-4CE6: 01 26     ;    MoveToRoom(room_38) woodsRoom51
+4CE6: 01 26     ;    MoveToRoom(room_38) ;; woodsRoom51
 4CE8: 00
 
 room_40: ; woodsRoom84
@@ -1805,11 +1802,11 @@ room_40: ; woodsRoom84
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4CE9: 01 03     ; N
-4CEB: 01 34     ;    MoveToRoom(room_52) woodsRoom57
+4CEB: 01 34     ;    MoveToRoom(room_52) ;; woodsRoom57
 4CED: 04 03     ; W
-4CEF: 01 29     ;    MoveToRoom(room_41) woodsRoom83
+4CEF: 01 29     ;    MoveToRoom(room_41) ;; woodsRoom83
 4CF1: 08 03     ; NW
-4CF3: 01 35     ;    MoveToRoom(room_53) woodsRoom114
+4CF3: 01 35     ;    MoveToRoom(room_53) ;; woodsRoom114
 4CF5: 00
 
 room_41: ; woodsRoom83
@@ -1817,11 +1814,11 @@ room_41: ; woodsRoom83
 ; YOU_ARE_IN_A_MAZE_OF_TWISTY_PASSAGES,_ALL_ALIKE.
 ;
 4CF6: 02 03     ; E
-4CF8: 01 28     ;    MoveToRoom(room_40) woodsRoom84
+4CF8: 01 28     ;    MoveToRoom(room_40) ;; woodsRoom84
 4CFA: 03 03     ; S
-4CFC: 01 34     ;    MoveToRoom(room_52) woodsRoom57
+4CFC: 01 34     ;    MoveToRoom(room_52) ;; woodsRoom57
 4CFE: 04 03     ; W
-4D00: 01 32     ;    MoveToRoom(room_50) woodsRoom85
+4D00: 01 32     ;    MoveToRoom(room_50) ;; woodsRoom85
 4D02: 00
 
 room_42: ; woodsRoom46
@@ -1829,7 +1826,7 @@ room_42: ; woodsRoom46
 ; DEAD_END.
 ;
 4D03: 04 03     ; W
-4D05: 01 1E     ;    MoveToRoom(room_30) woodsRoom45
+4D05: 01 1E     ;    MoveToRoom(room_30) ;; woodsRoom45
 4D07: 00
 
 room_43: ; woodsRoom47
@@ -1837,7 +1834,7 @@ room_43: ; woodsRoom47
 ; DEAD_END.
 ;
 4D08: 02 03     ; E
-4D0A: 01 1E     ;    MoveToRoom(room_30) woodsRoom45
+4D0A: 01 1E     ;    MoveToRoom(room_30) ;; woodsRoom45
 4D0C: 00
 
 room_44: ; woodsRoom82
@@ -1845,7 +1842,7 @@ room_44: ; woodsRoom82
 ; DEAD_END.
 ;
 4D0D: 03 03     ; S
-4D0F: 01 21     ;    MoveToRoom(room_33) woodsRoom44
+4D0F: 01 21     ;    MoveToRoom(room_33) ;; woodsRoom44
 4D11: 00
 
 room_45: ; woodsRoom48
@@ -1853,7 +1850,7 @@ room_45: ; woodsRoom48
 ; DEAD_END.
 ;
 4D12: 09 03     ; U
-4D14: 01 21     ;    MoveToRoom(room_33) woodsRoom44
+4D14: 01 21     ;    MoveToRoom(room_33) ;; woodsRoom44
 4D16: 00
 
 room_46: ; woodsRoom54
@@ -1861,7 +1858,7 @@ room_46: ; woodsRoom54
 ; DEAD_END.
 ;
 4D17: 04 03     ; W
-4D19: 01 27     ;    MoveToRoom(room_39) woodsRoom53
+4D19: 01 27     ;    MoveToRoom(room_39) ;; woodsRoom53
 4D1B: 00
 
 room_47: ; woodsRoom86
@@ -1869,7 +1866,7 @@ room_47: ; woodsRoom86
 ; DEAD_END.
 ;
 4D1C: 09 03     ; U
-4D1E: 01 23     ;    MoveToRoom(room_35) woodsRoom52
+4D1E: 01 23     ;    MoveToRoom(room_35) ;; woodsRoom52
 4D20: 00
 
 room_48: ; woodsRoom56
@@ -1877,7 +1874,7 @@ room_48: ; woodsRoom56
 ; DEAD_END.
 ;
 4D21: 09 03     ; U
-4D23: 01 24     ;    MoveToRoom(room_36) woodsRoom55
+4D23: 01 24     ;    MoveToRoom(room_36) ;; woodsRoom55
 4D25: 00
 
 room_49: ; woodsRoom58
@@ -1885,7 +1882,7 @@ room_49: ; woodsRoom58
 ; DEAD_END.
 ;
 4D26: 02 03     ; E
-4D28: 01 34     ;    MoveToRoom(room_52) woodsRoom57
+4D28: 01 34     ;    MoveToRoom(room_52) ;; woodsRoom57
 4D2A: 00
 
 room_50: ; woodsRoom85
@@ -1893,7 +1890,7 @@ room_50: ; woodsRoom85
 ; DEAD_END.
 ;
 4D2B: 02 03     ; E
-4D2D: 01 29     ;    MoveToRoom(room_41) woodsRoom83
+4D2D: 01 29     ;    MoveToRoom(room_41) ;; woodsRoom83
 4D2F: 00
 
 room_51: ; woodsRoom81
@@ -1901,7 +1898,7 @@ room_51: ; woodsRoom81
 ; DEAD_END.
 ;
 4D30: 04 03     ; W
-4D32: 01 1D     ;    MoveToRoom(room_29) woodsRoom80
+4D32: 01 1D     ;    MoveToRoom(room_29) ;; woodsRoom80
 4D34: 21 0B     ; DROP
 4D36: 11 29     ;    AssertObjectMatchesUserInput(obj_COINS)
 4D38: 15 29 00  ;    MoveObjectToRoom(obj_COINS, room_0)
@@ -1916,15 +1913,15 @@ room_52: ; woodsRoom57
 ; THIS_LEVEL.
 ;
 4D41: 01 03     ; N
-4D43: 01 29     ;    MoveToRoom(room_41) woodsRoom83
+4D43: 01 29     ;    MoveToRoom(room_41) ;; woodsRoom83
 4D45: 02 03     ; E
-4D47: 01 28     ;    MoveToRoom(room_40) woodsRoom84
+4D47: 01 28     ;    MoveToRoom(room_40) ;; woodsRoom84
 4D49: 03 03     ; S
-4D4B: 01 31     ;    MoveToRoom(room_49) woodsRoom58
+4D4B: 01 31     ;    MoveToRoom(room_49) ;; woodsRoom58
 4D4D: 04 03     ; W
-4D4F: 01 24     ;    MoveToRoom(room_36) woodsRoom55
+4D4F: 01 24     ;    MoveToRoom(room_36) ;; woodsRoom55
 4D51: 0A 03     ; D
-4D53: 01 0B     ;    MoveToRoom(room_11) woodsRoom13
+4D53: 01 0B     ;    MoveToRoom(room_11) ;; woodsRoom13
 4D55: 00
 
 room_53: ; woodsRoom114 CHEST_ROOM1
@@ -1932,7 +1929,7 @@ room_53: ; woodsRoom114 CHEST_ROOM1
 ; DEAD_END.
 ;
 4D56: 06 03     ; SE
-4D58: 01 28     ;    MoveToRoom(room_40) woodsRoom84
+4D58: 01 28     ;    MoveToRoom(room_40) ;; woodsRoom84
 4D5A: 00
 
 room_54: ; woodsRoom36
@@ -1942,11 +1939,11 @@ room_54: ; woodsRoom36
 ; PASSAGE.
 ;
 4D5B: 02 03     ; E
-4D5D: 01 37     ;    MoveToRoom(room_55) woodsRoom37
+4D5D: 01 37     ;    MoveToRoom(room_55) ;; woodsRoom37
 4D5F: 04 03     ; W
-4D61: 01 39     ;    MoveToRoom(room_57) woodsRoom39
+4D61: 01 39     ;    MoveToRoom(room_57) ;; woodsRoom39
 4D63: 09 03     ; U
-4D65: 01 19     ;    MoveToRoom(room_25) woodsRoom28
+4D65: 01 19     ;    MoveToRoom(room_25) ;; woodsRoom28
 4D67: 00
 
 room_55: ; woodsRoom37
@@ -1955,11 +1952,11 @@ room_55: ; woodsRoom37
 ; LEADS_WEST.
 ;
 4D68: 04 03     ; W
-4D6A: 01 36     ;    MoveToRoom(room_54) woodsRoom36
+4D6A: 01 36     ;    MoveToRoom(room_54) ;; woodsRoom36
 4D6C: 0A 03     ; D
-4D6E: 01 38     ;    MoveToRoom(room_56) woodsRoom38
+4D6E: 01 38     ;    MoveToRoom(room_56) ;; woodsRoom38
 4D70: 11 03     ; CLIMB
-4D72: 01 38     ;    MoveToRoom(room_56) woodsRoom38
+4D72: 01 38     ;    MoveToRoom(room_56) ;; woodsRoom38
 4D74: 00
 
 room_56: ; woodsRoom38
@@ -1968,11 +1965,11 @@ room_56: ; woodsRoom38
 ; ENTERS_AND_EXITS_THROUGH_TINY_SLITS.
 ;
 4D75: 09 03     ; U
-4D77: 01 37     ;    MoveToRoom(room_55) woodsRoom37
+4D77: 01 37     ;    MoveToRoom(room_55) ;; woodsRoom37
 4D79: 0C 03     ; OUT
-4D7B: 01 37     ;    MoveToRoom(room_55) woodsRoom37
+4D7B: 01 37     ;    MoveToRoom(room_55) ;; woodsRoom37
 4D7D: 11 03     ; CLIMB
-4D7F: 01 37     ;    MoveToRoom(room_55) woodsRoom37
+4D7F: 01 37     ;    MoveToRoom(room_55) ;; woodsRoom37
 4D81: 0A 04     ; D
 4D83: 04 7B 72  ;    Print(PS_73:"YOU_DON'T_FIT_THROUGH_TWO-INCH_SLIT!")
 4D86: 27 0B     ; FILL
@@ -1989,9 +1986,9 @@ room_57: ; woodsRoom39
 ; EAST.
 ;
 4D93: 02 03     ; E
-4D95: 01 36     ;    MoveToRoom(room_54) woodsRoom36
+4D95: 01 36     ;    MoveToRoom(room_54) ;; woodsRoom36
 4D97: 0A 03     ; D
-4D99: 01 3A     ;    MoveToRoom(room_58) woodsRoom64
+4D99: 01 3A     ;    MoveToRoom(room_58) ;; woodsRoom64
 4D9B: 00
 
 room_58: ; woodsRoom64
@@ -2002,15 +1999,15 @@ room_58: ; woodsRoom64
 ; THE_AIR_IS_DAMP_HERE.
 ;
 4D9C: 01 03     ; N
-4D9E: 01 3D     ;    MoveToRoom(room_61) woodsRoom103
+4D9E: 01 3D     ;    MoveToRoom(room_61) ;; woodsRoom103
 4DA0: 02 03     ; E
-4DA2: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DA2: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DA4: 04 03     ; W
-4DA6: 01 41     ;    MoveToRoom(room_65) woodsRoom65
+4DA6: 01 41     ;    MoveToRoom(room_65) ;; woodsRoom65
 4DA8: 09 03     ; U
-4DAA: 01 39     ;    MoveToRoom(room_57) woodsRoom39
+4DAA: 01 39     ;    MoveToRoom(room_57) ;; woodsRoom39
 4DAC: 11 03     ; CLIMB
-4DAE: 01 39     ;    MoveToRoom(room_57) woodsRoom39
+4DAE: 01 39     ;    MoveToRoom(room_57) ;; woodsRoom39
 4DB0: 00
 
 room_59: ; woodsRoom106
@@ -2021,11 +2018,11 @@ room_59: ; woodsRoom106
 ; PROCEED_EAST_MAY_NEVER_RETURN."
 ;
 4DB1: 02 03     ; E
-4DB3: 01 3C     ;    MoveToRoom(room_60) woodsRoom108
+4DB3: 01 3C     ;    MoveToRoom(room_60) ;; woodsRoom108
 4DB5: 04 03     ; W
-4DB7: 01 41     ;    MoveToRoom(room_65) woodsRoom65
+4DB7: 01 41     ;    MoveToRoom(room_65) ;; woodsRoom65
 4DB9: 09 03     ; U
-4DBB: 01 3A     ;    MoveToRoom(room_58) woodsRoom64
+4DBB: 01 3A     ;    MoveToRoom(room_58) ;; woodsRoom64
 4DBD: 00
 
 room_60: ; woodsRoom108
@@ -2036,39 +2033,39 @@ room_60: ; woodsRoom108
 4DBE: 01 07     ; N
 4DC0: 07 03     ;    StopIfPassElseContinue
 4DC2: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DC4: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DC4: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DC6: 02 07     ; E
 4DC8: 07 03     ;    StopIfPassElseContinue
 4DCA: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DCC: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DCC: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DCE: 03 07     ; S
 4DD0: 07 03     ;    StopIfPassElseContinue
 4DD2: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DD4: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DD4: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DD6: 05 07     ; NE
 4DD8: 07 03     ;    StopIfPassElseContinue
 4DDA: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DDC: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DDC: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DDE: 06 07     ; SE
 4DE0: 07 03     ;    StopIfPassElseContinue
 4DE2: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DE4: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DE4: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DE6: 07 07     ; SW
 4DE8: 07 03     ;    StopIfPassElseContinue
 4DEA: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DEC: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DEC: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DEE: 08 07     ; NW
 4DF0: 07 03     ;    StopIfPassElseContinue
 4DF2: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DF4: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DF4: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DF6: 09 07     ; U
 4DF8: 07 03     ;    StopIfPassElseContinue
 4DFA: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DFC: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DFC: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4DFE: 04 06     ; W
 4E00: 04 CF 72  ;    Print(PS_75:"YOU_HAVE_CRAWLED_AROUND_IN_SOME_LITTLE_HOLES_AND_FOUND_YOUR_WAY_
 ;                                 BLOCKED_BY_A_FALLEN_SLAB.__YOU_ARE_NOW_BACK_IN_THE_MAIN_PASSAGE.")
-4E03: 01 3C     ;    MoveToRoom(room_60) woodsRoom108
+4E03: 01 3C     ;    MoveToRoom(room_60) ;; woodsRoom108
 4E05: 00
 
 room_61: ; woodsRoom103
@@ -2085,11 +2082,11 @@ room_61: ; woodsRoom103
 4E0F: 07 06     ;    StopIfPassElseContinue
 4E11: 02 18     ;        AssertObjectIsInPack(obj_SARCOPH_empty)
 4E13: 04 27 73  ;        Print(PS_76:"YOU_CAN'T_FIT_THIS_BIG_SARCOPHAGUS_THROUGH_THAT_LITTLE_PASSAGE!")
-4E16: 01 3A     ;    MoveToRoom(room_58) woodsRoom64
+4E16: 01 3A     ;    MoveToRoom(room_58) ;; woodsRoom64
 4E18: 09 03     ; U
-4E1A: 01 3E     ;    MoveToRoom(room_62) woodsRoom102
+4E1A: 01 3E     ;    MoveToRoom(room_62) ;; woodsRoom102
 4E1C: 0A 03     ; D
-4E1E: 01 3F     ;    MoveToRoom(room_63) woodsRoom104
+4E1E: 01 3F     ;    MoveToRoom(room_63) ;; woodsRoom104
 4E20: 00
 
 room_62: ; woodsRoom102
@@ -2099,9 +2096,9 @@ room_62: ; woodsRoom102
 ; MOON_GOD.
 ;
 4E21: 0A 03     ; D
-4E23: 01 3D     ;    MoveToRoom(room_61) woodsRoom103
+4E23: 01 3D     ;    MoveToRoom(room_61) ;; woodsRoom103
 4E25: 0C 03     ; OUT
-4E27: 01 3D     ;    MoveToRoom(room_61) woodsRoom103
+4E27: 01 3D     ;    MoveToRoom(room_61) ;; woodsRoom103
 4E29: 00
 
 room_63: ; woodsRoom104
@@ -2109,9 +2106,9 @@ room_63: ; woodsRoom104
 ; YOU_ARE_IN_A_LONG_SLOPING_CORRIDOR_WITH_RAGGED_WALLS._
 ;
 4E2A: 09 03     ; U
-4E2C: 01 3D     ;    MoveToRoom(room_61) woodsRoom103
+4E2C: 01 3D     ;    MoveToRoom(room_61) ;; woodsRoom103
 4E2E: 0A 03     ; D
-4E30: 01 40     ;    MoveToRoom(room_64) woodsRoom105
+4E30: 01 40     ;    MoveToRoom(room_64) ;; woodsRoom105
 4E32: 00
 
 room_64: ; woodsRoom105
@@ -2119,9 +2116,9 @@ room_64: ; woodsRoom105
 ; YOU_ARE_IN_A_CUL-DE-SAC_ABOUT_EIGHT_FEET_ACROSS.
 ;
 4E33: 09 03     ; U
-4E35: 01 3F     ;    MoveToRoom(room_63) woodsRoom104
+4E35: 01 3F     ;    MoveToRoom(room_63) ;; woodsRoom104
 4E37: 0C 03     ; OUT
-4E39: 01 3F     ;    MoveToRoom(room_63) woodsRoom104
+4E39: 01 3F     ;    MoveToRoom(room_63) ;; woodsRoom104
 4E3B: 00
 
 room_65: ; woodsRoom65
@@ -2131,25 +2128,25 @@ room_65: ; woodsRoom65
 ; UP,_OR_DOWN.
 ;
 4E3C: 02 03     ; E
-4E3E: 01 3A     ;    MoveToRoom(room_58) woodsRoom64
+4E3E: 01 3A     ;    MoveToRoom(room_58) ;; woodsRoom64
 4E40: 04 03     ; W
-4E42: 01 4E     ;    MoveToRoom(room_78) woodsRoom67
+4E42: 01 4E     ;    MoveToRoom(room_78) ;; woodsRoom67
 4E44: 09 07     ; U
 4E46: 07 03     ;    StopIfPassElseContinue
 4E48: 0A CC     ;        AssertRandomIsLessOrEqual(204)
-4E4A: 01 48     ;    MoveToRoom(room_72) woodsRoom96
+4E4A: 01 48     ;    MoveToRoom(room_72) ;; woodsRoom96
 4E4C: 01 07     ; N
 4E4E: 07 03     ;    StopIfPassElseContinue
 4E50: 0A CC     ;        AssertRandomIsLessOrEqual(204)
-4E52: 01 49     ;    MoveToRoom(room_73) woodsRoom99
+4E52: 01 49     ;    MoveToRoom(room_73) ;; woodsRoom99
 4E54: 03 07     ; S
 4E56: 07 03     ;    StopIfPassElseContinue
 4E58: 0A CC     ;        AssertRandomIsLessOrEqual(204)
-4E5A: 01 42     ;    MoveToRoom(room_66)
+4E5A: 01 42     ;    MoveToRoom(room_66) ;; woodsRoom68
 4E5C: 0A 07     ; D
 4E5E: 07 03     ;    StopIfPassElseContinue
 4E60: 0A CC     ;        AssertRandomIsLessOrEqual(204)
-4E62: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4E62: 01 3B     ;    MoveToRoom(room_59) ;; woodsRoom106
 4E64: 00
 
 room_66: ; woodsRoom68
@@ -2160,9 +2157,9 @@ room_66: ; woodsRoom68
 ; LOW_SMALL_PASSAGES_GO_NORTH_AND_SOUTH.
 ;
 4E65: 01 03     ; N
-4E67: 01 41     ;    MoveToRoom(room_65) woodsRoom65
+4E67: 01 41     ;    MoveToRoom(room_65) ;; woodsRoom65
 4E69: 03 03     ; S
-4E6B: 01 50     ;    MoveToRoom(room_80) woodsRoom23
+4E6B: 01 50     ;    MoveToRoom(room_80) ;; woodsRoom23
 4E6D: 00
 
 room_72: ; woodsRoom96
@@ -2172,9 +2169,9 @@ room_72: ; woodsRoom96
 ; CEILING.
 ;
 4E6E: 04 03     ; W
-4E70: 01 41     ;    MoveToRoom(room_65) woodsRoom65
+4E70: 01 41     ;    MoveToRoom(room_65) ;; woodsRoom65
 4E72: 0C 03     ; OUT
-4E74: 01 41     ;    MoveToRoom(room_65) woodsRoom65
+4E74: 01 41     ;    MoveToRoom(room_65) ;; woodsRoom65
 4E76: 00
 
 room_73: ; woodsRoom99
@@ -2186,11 +2183,11 @@ room_73: ; woodsRoom99
 4E77: 04 09     ; W
 4E79: 07 04     ;    StopIfPassElseContinue
 4E7B: 0D        ;        AssertPackIsEmptyExceptForEmerald
-4E7C: 01 4C     ;        MoveToRoom(room_76) woodsRoom100
+4E7C: 01 4C     ;        MoveToRoom(room_76) ;; woodsRoom100
 4E7E: 04 53 73  ;    Print(PS_77:"SOMETHING_YOU'RE_CARRYING_WON'T_FIT_THROUGH_THE_TUNNEL_WITH_YOU.
 ;                                 YOU'D_BEST_TAKE_INVENTORY_AND_DROP_SOMETHING.")
 4E81: 06 03     ; SE
-4E83: 01 41     ;    MoveToRoom(room_65) woodsRoom65
+4E83: 01 41     ;    MoveToRoom(room_65) ;; woodsRoom65
 4E85: 00
 
 room_76: ; woodsRoom100
@@ -2201,13 +2198,13 @@ room_76: ; woodsRoom100
 4E86: 02 09     ; E
 4E88: 07 04     ;    StopIfPassElseContinue
 4E8A: 0D        ;        AssertPackIsEmptyExceptForEmerald
-4E8B: 01 49     ;        MoveToRoom(room_73) woodsRoom99
+4E8B: 01 49     ;        MoveToRoom(room_73) ;; woodsRoom99
 4E8D: 04 53 73  ;    Print(PS_77:"SOMETHING_YOU'RE_CARRYING_WON'T_FIT_THROUGH_THE_TUNNEL_WITH_YOU.
 ;                                 YOU'D_BEST_TAKE_INVENTORY_AND_DROP_SOMETHING.")
 4E90: 0C 09     ; OUT
 4E92: 07 04     ;    StopIfPassElseContinue
 4E94: 0D        ;        AssertPackIsEmptyExceptForEmerald
-4E95: 01 49     ;        MoveToRoom(room_73) woodsRoom99
+4E95: 01 49     ;        MoveToRoom(room_73) ;; woodsRoom99
 4E97: 04 53 73  ;    Print(PS_77:"SOMETHING_YOU'RE_CARRYING_WON'T_FIT_THROUGH_THE_TUNNEL_WITH_YOU.
 ;                                 YOU'D_BEST_TAKE_INVENTORY_AND_DROP_SOMETHING.")
 4E9A: 00
@@ -2222,11 +2219,11 @@ room_78: ; woodsRoom67
 ; CAN'T_GET_TO_IT.
 ;
 4E9B: 02 03     ; E
-4E9D: 01 41     ;    MoveToRoom(room_65) woodsRoom65
+4E9D: 01 41     ;    MoveToRoom(room_65) ;; woodsRoom65
 4E9F: 04 03     ; W
-4EA1: 01 50     ;    MoveToRoom(room_80) woodsRoom23
+4EA1: 01 50     ;    MoveToRoom(room_80) ;; woodsRoom23
 4EA3: 0A 03     ; D
-4EA5: 01 4F     ;    MoveToRoom(room_79) woodsRoom24
+4EA5: 01 4F     ;    MoveToRoom(room_79) ;; woodsRoom24
 4EA7: 00
 
 room_79: ; woodsRoom24
@@ -2234,9 +2231,9 @@ room_79: ; woodsRoom24
 ; YOU_ARE_AT_THE_BOTTOM_OF_THE_EASTERN_PIT_IN_THE_TWOPIT_ROOM.
 ;
 4EA8: 09 03     ; U
-4EAA: 01 4E     ;    MoveToRoom(room_78) woodsRoom67
+4EAA: 01 4E     ;    MoveToRoom(room_78) ;; woodsRoom67
 4EAC: 0C 03     ; OUT
-4EAE: 01 4E     ;    MoveToRoom(room_78) woodsRoom67
+4EAE: 01 4E     ;    MoveToRoom(room_78) ;; woodsRoom67
 4EB0: 00
 
 room_80: ; woodsRoom23
@@ -2245,11 +2242,11 @@ room_80: ; woodsRoom23
 ; HOLE_IN_THE_WALL_ABOVE_THE_PIT_AT_THIS_END_OF_THE_ROOM.
 ;
 4EB1: 02 03     ; E
-4EB3: 01 4E     ;    MoveToRoom(room_78) woodsRoom67
+4EB3: 01 4E     ;    MoveToRoom(room_78) ;; woodsRoom67
 4EB5: 04 03     ; W
-4EB7: 01 42     ;    MoveToRoom(room_66) woodsRoom68
+4EB7: 01 42     ;    MoveToRoom(room_66) ;; woodsRoom68
 4EB9: 0A 03     ; D
-4EBB: 01 51     ;    MoveToRoom(room_81) woodsRoom25
+4EBB: 01 51     ;    MoveToRoom(room_81) ;; woodsRoom25
 4EBD: 00
 
 room_81: ; woodsRoom25
@@ -2258,18 +2255,18 @@ room_81: ; woodsRoom25
 ; IS_A_LARGE_HOLE_IN_THE_WALL_ABOUT_TWENTY_FIVE_FEET_ABOVE_YOU.
 ;
 4EBE: 09 03     ; U
-4EC0: 01 50     ;    MoveToRoom(room_80) woodsRoom23
+4EC0: 01 50     ;    MoveToRoom(room_80) ;; woodsRoom23
 4EC2: 0C 03     ; OUT
-4EC4: 01 50     ;    MoveToRoom(room_80) woodsRoom23
+4EC4: 01 50     ;    MoveToRoom(room_80) ;; woodsRoom23
 4EC6: 11 16     ; CLIMB
 4EC8: 07 08     ;    StopIfPassElseContinue
 4ECA: 03 09     ;        AssertObjectIsInCurrentRoomOrPack(obj_PLANT_C)
 4ECC: 04 9E 73  ;        Print(PS_78:"YOU_CLAMBER_UP_THE_PLANT_AND_SCURRY_THROUGH_THE_HOLE_AT_THE_TOP.")
-4ECF: 01 4D     ;        MoveToRoom(room_77) woodsRoom88
+4ECF: 01 4D     ;        MoveToRoom(room_77) ;; woodsRoom88
 4ED1: 07 06     ;    StopIfPassElseContinue
 4ED3: 03 08     ;        AssertObjectIsInCurrentRoomOrPack(obj_PLANT_B)
 4ED5: 04 CB 73  ;        Print(PS_79:"YOU'VE_CLIMBED_UP_THE_PLANT_AND_OUT_OF_THE_PIT.")
-4ED8: 01 50     ;    MoveToRoom(room_80) woodsRoom23
+4ED8: 01 50     ;    MoveToRoom(room_80) ;; woodsRoom23
 4EDA: 04 7D 7D  ;    Print(PS_B8:"THERE_IS_NOTHING_HERE_TO_CLIMB.__USE_UP_OR_OUT_TO_LEAVE_THE_PIT.")
 4EDD: 24 2F     ; POUR
 4EDF: 11 1C     ;    AssertObjectMatchesUserInput(obj_WATER)
@@ -2302,16 +2299,16 @@ room_77: ; woodsRoom88
 ; SEE_A_PROFUSION_OF_LEAVES.
 ;
 4F0E: 02 03     ; E
-4F10: 01 51     ;    MoveToRoom(room_81) woodsRoom25
+4F10: 01 51     ;    MoveToRoom(room_81) ;; woodsRoom25
 4F12: 0A 03     ; D
-4F14: 01 51     ;    MoveToRoom(room_81) woodsRoom25
+4F14: 01 51     ;    MoveToRoom(room_81) ;; woodsRoom25
 4F16: 11 03     ; CLIMB
-4F18: 01 51     ;    MoveToRoom(room_81) woodsRoom25
+4F18: 01 51     ;    MoveToRoom(room_81) ;; woodsRoom25
 4F1A: 10 05     ; JUMP
 4F1C: 04 71 71  ;    Print(PS_6B:"YOU_ARE_AT_THE_BOTTOM_OF_THE_PIT_WITH_A_BROKEN_NECK.")
 4F1F: 05        ;    PrintScoreAndStop
 4F20: 04 03     ; W
-4F22: 01 47     ;    MoveToRoom(room_71) woodsRoom92
+4F22: 01 47     ;    MoveToRoom(room_71) ;; woodsRoom92
 4F24: 00
 
 room_71: ; woodsRoom92
@@ -2320,11 +2317,11 @@ room_71: ; woodsRoom92
 ; YOUR_LAMP_TO_SHOW_IT.__PASSAGES_LEAD_EAST,_NORTH,_AND_SOUTH.
 ;
 4F25: 01 03     ; N
-4F27: 01 44     ;    MoveToRoom(room_68) woodsRoom94
+4F27: 01 44     ;    MoveToRoom(room_68) ;; woodsRoom94
 4F29: 02 03     ; E
-4F2B: 01 46     ;    MoveToRoom(room_70) woodsRoom93
+4F2B: 01 46     ;    MoveToRoom(room_70) ;; woodsRoom93
 4F2D: 03 03     ; S
-4F2F: 01 4D     ;    MoveToRoom(room_77) woodsRoom88
+4F2F: 01 4D     ;    MoveToRoom(room_77) ;; woodsRoom88
 4F31: 00
 
 room_70: ; woodsRoom93
@@ -2332,9 +2329,9 @@ room_70: ; woodsRoom93
 ; THE_PASSAGE_HERE_IS_BLOCKED_BY_A_FALLEN_BLOCK.
 ;
 4F32: 03 03     ; S
-4F34: 01 47     ;    MoveToRoom(room_71) woodsRoom92
+4F34: 01 47     ;    MoveToRoom(room_71) ;; woodsRoom92
 4F36: 0C 03     ; OUT
-4F38: 01 47     ;    MoveToRoom(room_71) woodsRoom92
+4F38: 01 47     ;    MoveToRoom(room_71) ;; woodsRoom92
 4F3A: 00
 
 room_68: ; woodsRoom94
@@ -2344,9 +2341,9 @@ room_68: ; woodsRoom94
 ; SOUTH.
 ;
 4F3B: 03 03     ; S
-4F3D: 01 47     ;    MoveToRoom(room_71) woodsRoom92
+4F3D: 01 47     ;    MoveToRoom(room_71) ;; woodsRoom92
 4F3F: 0C 03     ; OUT
-4F41: 01 47     ;    MoveToRoom(room_71) woodsRoom92
+4F41: 01 47     ;    MoveToRoom(room_71) ;; woodsRoom92
 4F43: 00
 
 4F44: FF
@@ -2473,7 +2470,7 @@ AmbientLightTable:
 
 ObjectData:
 ;             MCT      Name                     Start location
-4FE7: 00 00 ; 000..... OBJ_01_BRIDGE_ROOM_0E    *
+4FE7: 00 00 ; 000..... OBJ_01_BRIDGE_ROOM_0F    *
 4FE9: 00 00 ; 000..... OBJ_02_BRIDGE_ROOM_12    *
 4FEB: 00 00 ;
 4FED: 00 00 ;
@@ -2732,7 +2729,7 @@ BumpBCDTurnCount:
 5183: CE 00           ADC     $00                 ; Add any ...
 5185: 27              DAA                         ; ... carry from lower
 5186: 32 41 50        LD      ($5041),A           ; {code.bcdTurnCountMSB} Update upper BCD count
-5189: C9              RET
+5189: C9              RET                         
 ```
 
 # COM_01_move_look(room_num)
@@ -3425,20 +3422,20 @@ PrintScore:
 5550: 3E 2D           LD      A,$2D               ; Add a "-" to ...
 5552: 32 BF 55        LD      ($55BF),A           ; {code.scoreSign} ... the score string
 5555: 3A B3 55        LD      A,($55B3)           ; {code.scoreTempMSB}
-5558: 47              LD      B,A                 ;
+5558: 47              LD      B,A                 ; 
 5559: 3E 99           LD      A,$99               ; TODO decode the math
 555B: 90              SUB     B                   ; Negative values need fixing up to make them right
 555C: 32 B3 55        LD      ($55B3),A           ; {code.scoreTempMSB}
 555F: 3A B2 55        LD      A,($55B2)           ; {code.scoreTempLSB}
-5562: 47              LD      B,A                 ;
+5562: 47              LD      B,A                 ; 
 5563: 3E 99           LD      A,$99               ; TODO BCD math for negatives
-5565: 90              SUB     B                   ;
-5566: C6 01           ADD     $01                 ;
-5568: 27              DAA                         ;
+5565: 90              SUB     B                   ; 
+5566: C6 01           ADD     $01                 ; 
+5568: 27              DAA                         ; 
 5569: 32 B2 55        LD      ($55B2),A           ; {code.scoreTempLSB}
 556C: 3A B3 55        LD      A,($55B3)           ; {code.scoreTempMSB}
-556F: CE 00           ADC     $00                 ;
-5571: 27              DAA                         ;
+556F: CE 00           ADC     $00                 ; 
+5571: 27              DAA                         ; 
 5572: 32 B3 55        LD      ($55B3),A           ; {code.scoreTempMSB}
 5575: C3 7D 55        JP      $557D               ; {} Now update the turns
 ;
@@ -3457,7 +3454,7 @@ PrintScore:
 5598: CD A2 55        CALL    $55A2               ; {code.BinaryToASCII} ... count to string
 559B: 21 B4 55        LD      HL,$55B4            ; {+code.ScoreString} The string we just built
 559E: CD D0 45        CALL    $45D0               ; {code.PrintPlain} Print the constructed score
-55A1: C9              RET
+55A1: C9              RET                         
 
 BinaryToASCII:
 55A2: F5              PUSH    AF                  ; Hold the lower nibble
@@ -3472,7 +3469,7 @@ BinaryToASCII:
 55AD: C6 30           ADD     $30                 ; Binary to ASCII digit
 55AF: 77              LD      (HL),A              ; Store in buffer
 55B0: 23              INC     HL                  ; Bump buffer
-55B1: C9              RET
+55B1: C9              RET                         
 
 scoreTempLSB:
 55B2: 00 ; Used in calculating/printing score
@@ -3614,7 +3611,7 @@ COM_1D_scramble_directions_print_ack:
 5694: 3A 74 47        LD      A,($4774)           ; {code.keyWaitCounter} Random value
 5697: E6 03           AND     $03                 ; 0, 1, 2, or 3
 5699: 47              LD      B,A                 ; To B
-569A: 21 CC 49        LD      HL,$49CC            ; {+code.room_1} start of room scripts
+569A: 21 CC 49        LD      HL,$49CC            ; {+code.Script_RM_01_BEFORE_ENTRANCE} start of room scripts
 CNALL: ; This is the label from the actual 8080 source code (see Code1)
 569D: 7E              LD      A,(HL)              ; Get the verb number
 569E: 23              INC     HL                  ; Next byte
@@ -5108,6 +5105,7 @@ PS_77:
 7393: 15 53 A0 3F B9 82 62 91 7A 2E 00
 
 ; woods26   YOU CLAMBER UP THE PLANT AND SCURRY THROUGH THE HOLE AT THE TOP.
+;
 ; YOU_CLAMBER_UP_THE_PLANT_AND_SCURRY_THROUGH_THE_HOLE_AT_THE_TOP.
 PS_78:
 739E: 15 C7 DE DE 14 64 48 23 62 D3 C5 5F BE E6 16 9E
