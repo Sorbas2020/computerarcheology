@@ -30,6 +30,8 @@ class FirstScripter:
     def get_room_text(self, room_num):
         if room_num==0:
             return 'RM_00_nowhere'
+        if room_num==0xFF:
+            return 'BACKPACK'
         return f'RM_{room_num:02X}_{self.info["Rooms"][room_num]}'
     
     def get_object_text(self, obj_num):
@@ -49,25 +51,25 @@ class FirstScripter:
             nl = nl + self.script_comments['end_comments'][addr]
         new_lines.append(nl)      
 
-    def decode_01_move_look(self, addr, new_lines, print_level):
+    def decode_01_move_look(self, cn, addr, new_lines, print_level):
         rn = self.cursor.get_byte()
-        com_text = self.info["Commands"][1][0]+'('+self.get_room_text(rn)+')'                
-        self.handle_script_comments(addr, [1,rn], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_room_text(rn)+')'                
+        self.handle_script_comments(addr, [cn,rn], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_02_obj_in_pack(self, addr, new_lines, print_level):
+    def decode_02_obj_in_pack(self, cn, addr, new_lines, print_level):
         obj_num = self.cursor.get_byte()
-        com_text = self.info["Commands"][2][0]+'('+self.get_object_text(obj_num)+')'                
-        self.handle_script_comments(addr, [2,obj_num], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num)+')'                
+        self.handle_script_comments(addr, [cn,obj_num], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_03_obj_in_room_pack(self, addr, new_lines, print_level):
+    def decode_03_obj_in_room_pack(self, cn, addr, new_lines, print_level):
         obj_num = self.cursor.get_byte()
-        com_text = self.info["Commands"][3][0]+'('+self.get_object_text(obj_num)+')'                
-        self.handle_script_comments(addr, [3,obj_num], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num)+')'                
+        self.handle_script_comments(addr, [cn,obj_num], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_04_print(self, addr, new_lines, print_level):
+    def decode_04_print(self, cn, addr, new_lines, print_level):
         a = self.cursor.get_byte()
         b = self.cursor.get_byte()
         if self.info['IsLittleEndian']:
@@ -76,133 +78,157 @@ class FirstScripter:
             ptr = (a<<8) + b
         ps_data = self.packed_strings[ptr]        
         txt = f'(PS_{ps_data['ps_num']:02X}) {ps_data['text'][0]}'
-        self.handle_script_comments(addr, [4,a,b], self.info["Commands"][4][0]+txt, print_level, new_lines)
+        self.handle_script_comments(addr, [cn,a,b], self.info["Commands"][cn][0]+txt, print_level, new_lines)
         for txt in ps_data['text'][1:]:
             new_lines.append(';                  '+' '*(print_level*4)+'             '+txt)
         return addr+3
     
-    def decode_05_print_score_stop(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [5], self.info["Commands"][5][0]+'()', print_level, new_lines)
+    def decode_05_print_score_stop(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_07_stop_pass(self, addr, new_lines, print_level):
+    def decode_07_stop_pass(self, cn, addr, new_lines, print_level):
         sz = self.cursor.get_byte()
-        com_text = self.info["Commands"][7][0]+' ...'
-        self.handle_script_comments(addr, [7,sz], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+' ...'
+        self.handle_script_comments(addr, [cn,sz], com_text, print_level, new_lines)
 
         self.decode_script(addr+2, new_lines, sz-1, print_level+1)
         return addr+sz+1
     
-    def decode_08_print_score(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [8], self.info["Commands"][8][0]+'()', print_level, new_lines)
+    def decode_08_print_score(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_09_end_game(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [9], self.info["Commands"][9][0]+'()', print_level, new_lines)
+    def decode_09_end_game(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
         
-    def decode_0A_assert_random(self, addr, new_lines, print_level):
+    def decode_0A_assert_random(self, cn, addr, new_lines, print_level):
         value = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x0A][0]+'('+f'0x{value:02X}'+')'
-        self.handle_script_comments(addr, [0x0A,value], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+f'0x{value:02X}'+')'
+        self.handle_script_comments(addr, [cn,value], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_0B_drop_object(self, addr, new_lines, print_level):
+    def decode_0B_drop_object(self, cn, addr, new_lines, print_level):
         obj_num = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x0B][0]+'('+self.get_object_text(obj_num)+')'                
-        self.handle_script_comments(addr, [0x0B,obj_num], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num)+')'                
+        self.handle_script_comments(addr, [cn,obj_num], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_0C_move_to_last(self, addr, new_lines, print_level):
+    def decode_0C_move_to_last(self, cn, addr, new_lines, print_level):
         rn = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x0C][0]+'('+self.get_room_text(rn)+')'
-        self.handle_script_comments(addr, [0x0C,rn], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_room_text(rn)+')'
+        self.handle_script_comments(addr, [cn,rn], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_0D_just_emerald(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x0D], self.info["Commands"][0x0D][0]+'()', print_level, new_lines)
+    def decode_0D_just_emerald(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_0E_move_to_last_room(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x0E], self.info["Commands"][0x0E][0]+'()', print_level, new_lines)
+    def decode_0E_move_to_last_room(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_0F_print_inventory(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x0F], self.info["Commands"][0x0F][0]+'()', print_level, new_lines)
+    def decode_0F_print_inventory(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_10_print_room(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x10], self.info["Commands"][0x10][0]+'()', print_level, new_lines)
+    def decode_10_print_room(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_11_matches_user_input(self, addr, new_lines, print_level):
+    def decode_11_matches_user_input(self, cn, addr, new_lines, print_level):
         obj_num = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x11][0]+'('+self.get_object_text(obj_num)+')'                
-        self.handle_script_comments(addr, [0x11,obj_num], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num)+')'                
+        self.handle_script_comments(addr, [cn,obj_num], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_12_get_object(self, addr, new_lines, print_level):
+    def decode_12_get_object(self, cn, addr, new_lines, print_level):
         obj_num = self.cursor.get_byte()
-        rm_num = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x12][0]+'('+self.get_object_text(obj_num)+', '+self.get_room_text(rm_num)+')'                
-        self.handle_script_comments(addr, [0x12,obj_num,rm_num], com_text, print_level, new_lines)
-        return addr+3
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num)+')'                
+        self.handle_script_comments(addr, [cn,obj_num], com_text, print_level, new_lines)
+        return addr+2
     
-    def decode_14_ok(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x14], self.info["Commands"][0x14][0]+'()', print_level, new_lines)
+    def decode_14_ok(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_15_move_to_room(self, addr, new_lines, print_level):
+    def decode_15_move_to_room(self, cn, addr, new_lines, print_level):
         obn = self.cursor.get_byte()        
         rn = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x15][0]+'('+self.get_object_text(obn)+', '+self.get_room_text(rn)+')'                
-        self.handle_script_comments(addr, [0x15,obn,rn], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obn)+', '+self.get_room_text(rn)+')'                
+        self.handle_script_comments(addr, [cn,obn,rn], com_text, print_level, new_lines)
         return addr+3
     
-    def decode_16_get_user_input(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x16], self.info["Commands"][0x16][0]+'()', print_level, new_lines)
+    def decode_16_get_user_input(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_17_drop_users_object(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x17], self.info["Commands"][0x17][0]+'()', print_level, new_lines)
+    def decode_17_drop_users_object(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_18_move_object_to_current(self, addr, new_lines, print_level):
+    def decode_18_move_object_to_current(self, cn, addr, new_lines, print_level):
         obj_num = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x18][0]+'('+self.get_object_text(obj_num)+')'                
-        self.handle_script_comments(addr, [0x18,obj_num], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num)+')'                
+        self.handle_script_comments(addr, [cn,obj_num], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_19_put_object_in(self, addr, new_lines, print_level):
+    def decode_19_put_object_in(self, cn, addr, new_lines, print_level):
         obj_num1 = self.cursor.get_byte()
         obj_num2 = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x19][0]+'('+self.get_object_text(obj_num1)+', '+self.get_object_text(obj_num2)+')'                
-        self.handle_script_comments(addr, [0x19,obj_num1,obj_num2], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num1)+', '+self.get_object_text(obj_num2)+')'                
+        self.handle_script_comments(addr, [cn,obj_num1,obj_num2], com_text, print_level, new_lines)
         return addr+3
     
-    def decode_1A_is_in_current(self, addr, new_lines, print_level):
+    def decode_1A_is_in_current(self, cn, addr, new_lines, print_level):
         obj_num = self.cursor.get_byte()
-        com_text = self.info["Commands"][0x1A][0]+'('+self.get_object_text(obj_num)+')'                
-        self.handle_script_comments(addr, [0x1A,obj_num], com_text, print_level, new_lines)
+        com_text = self.info["Commands"][cn][0]+'('+self.get_object_text(obj_num)+')'                
+        self.handle_script_comments(addr, [cn,obj_num], com_text, print_level, new_lines)
         return addr+2
     
-    def decode_1B_load_game(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x1B], self.info["Commands"][0x1B][0]+'()', print_level, new_lines)
+    def decode_1B_load_game(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_1C_save_game(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x1C], self.info["Commands"][0x1C][0]+'()', print_level, new_lines)
+    def decode_1C_save_game(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
     
-    def decode_1D_scramble(self, addr, new_lines, print_level):
-        self.handle_script_comments(addr, [0x1D], self.info["Commands"][0x1D][0]+'()', print_level, new_lines)
+    def decode_1D_scramble(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
+        return addr+1
+    
+    def decode_load_second_floor(self, cn, addr, new_lines, print_level):
+        self.handle_script_comments(addr, [cn], self.info["Commands"][cn][0]+'()', print_level, new_lines)
         return addr+1
 
-    def decode_command_unknown(self, addr, new_lines, print_level):
+    def decode_command_unknown(self, cn, addr, new_lines, print_level):
         for t in new_lines:
             print(t)
         print(f'Unknown command at {addr:04X} {self.binary_data[addr-self.info["Origin"]]:02X}')
         raise "NOT IMPLEMENTED"
+    
+    COMMAND_MAP_HAUNTED_HOUSE = {
+        0x01: decode_01_move_look,
+        0x02: decode_02_obj_in_pack,
+        0x03: decode_03_obj_in_room_pack,
+        0x04: decode_04_print,
+        0x05: decode_10_print_room,
+        0x06: decode_07_stop_pass,
+        0x07: decode_09_end_game,
+        0x08: decode_0B_drop_object,
+        0x09: decode_0F_print_inventory,
+        0x0A: decode_11_matches_user_input,
+        0x0B: decode_12_get_object,
+        0x0C: decode_14_ok,
+        0x0D: decode_15_move_to_room,
+        0x0E: decode_16_get_user_input,
+        0x0F: decode_17_drop_users_object,
+        0x10: decode_1A_is_in_current,
+        # Just for Haunted House, not in Pyramid
+        0x11: decode_load_second_floor
+    }
     
     COMMAND_MAP = {
         0x01: decode_01_move_look,
@@ -227,7 +253,7 @@ class FirstScripter:
         0x14: decode_14_ok,
         0x15: decode_15_move_to_room,
         0x16: decode_16_get_user_input,
-        0x17: decode_command_unknown,
+        0x17: decode_17_drop_users_object,
         0x18: decode_18_move_object_to_current,
         0x19: decode_19_put_object_in,
         0x1A: decode_1A_is_in_current,
@@ -239,8 +265,12 @@ class FirstScripter:
     def decode_script(self, addr, new_lines, script_length, print_level):
         end_addr = addr + script_length
         while addr < end_addr:
+            # print(f'addr={addr:04X}')
             com = self.cursor.get_byte()
-            addr = self.COMMAND_MAP[com](self, addr, new_lines, print_level)
+            if 'HauntedHouse' in self.info['File']:
+                addr = self.COMMAND_MAP_HAUNTED_HOUSE[com](self, com, addr, new_lines, print_level)
+            else:
+                addr = self.COMMAND_MAP[com](self, com, addr, new_lines, print_level)
         return addr
     
     def decode_map_script(self, addr, new_lines):
@@ -255,6 +285,7 @@ class FirstScripter:
                 break            
 
             word_text = self.info["Words"]["verbs"][word_num][0]
+            # print(">>>",word_text)
             script_len = self.cursor.get_byte()                          
 
             self.handle_script_comments(addr, [word_num, script_len], word_text, 0, new_lines)

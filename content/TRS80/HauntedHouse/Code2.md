@@ -741,21 +741,30 @@ RoomTable:
 
 ```code
 RoomScripts:
-; "Room_1"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.__THERE_IS_A_HOLE_IN_THE_FLOOR.",
+
+Script_RM_01_HOLE_IN_FLOOR:
+; PS_08
+; you_are_at_the_DIMLY_LIT_ROOM.__THERE_IS_A_HOLE_IN_THE_FLOOR.
+;
 ;;
-;; All of the 2nd floor rooms look the same except for this first one you start in. 
+;; All of the 2nd floor rooms look the same except for this first one you start in.
 ;; In this room there is a hole in the floor, but climbing down will kill you.
 ;;
-47A2: 02 03 01 02    ;     "E"    : ["GoToRoom(2)"],
-47A6: 03 03 01 03    ;     "S"    : ["GoToRoom(3)"],
-47AA: 04 03 01 04    ;     "W"    : ["GoToRoom(4)"],
-47AE: 0F 05 04 F4 4D ;     "CLIM" : ["Print(YOU_FALL_THROUGH_THE_HOLE_AND_BREAK_YOUR_NECK.__YOU_ARE_DEAD.)",
-47B3: 07             ;               "EndlessLoop()"]
-47B4: 00             ; },
+47A2: 02 03      ; E
+47A4: 01 02      ;     move_look(RM_02_DIMLY_LIT_ROOM1)
+47A6: 03 03      ; S
+47A8: 01 03      ;     move_look(RM_03_DIMLY_LIT_ROOM2)
+47AA: 04 03      ; W
+47AC: 01 04      ;     move_look(RM_04_DIMLY_LIT_ROOM3)
+47AE: 0F 05      ; CLIM
+47B0: 04 F4 4D   ;     print(PS_18) YOU_FALL_THROUGH_THE_HOLE_AND_BREAK_YOUR_NECK.__YOU_ARE_DEAD.
+47B3: 07         ;     end_of_game()
+47B4: 00         ;
 
-; "Room_2"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+Script_RM_02_DIMLY_LIT_ROOM1:
+; PS_07
+; you_are_at_the_DIMLY_LIT_ROOM.
+;
 ;;
 ;; This room either has GHOST1 (living) or GHOST5 (dead).
 ;; If GHOST1 (living) is in the room:
@@ -769,28 +778,36 @@ RoomScripts:
 ;; it is alive and you go in any invalid direction. This is a little trickery to make you think the ghost
 ;; is actually blocking you, when really there is nowhere to go.
 ;;
-47B5: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
-47B9: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
-47BC: 04 03 01 01 ;     "W"    : ["GoToRoom(1)"],
-47C0: 11 18 06 13 ;     "KILL" : ["SubscriptAbortAllIfPass", [
-47C4: 10 01       ;                   "AssertObjectIsInRoom(GHOST1)"
-47C6: 06 0C       ;                   "SubscriptAbortAllIfPass", [
-47C8: 02 09       ;                       "AssertObjectIsInPack(SWORD)",
-47CA: 0D 01 00    ;                       "MoveObjectToRoom(GHOST1,0)",
-47CD: 0D 05 02    ;                       "MoveObjectToRoom(GHOST5,2)",
-47D0: 04 11 4C    ;                       "Print(YOUR_MAGIC_SWORD_ENABLES_YOU_TO_KILL_THE_GHOST!)"]
-47D3: 04 43 4C    ;                   "Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.)"]
-47D6: 04 63 4C    ;               "Print(THE_POOR_THING'S_ALREADY_DEAD.)"],
-47D9: 01 06 10 01 ;     "N"    : ["AssertObjectIsInRoom(GHOST1)",
-47DD: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-47E0: 02 06 10 01 ;     "E"    : ["AssertObjectIsInRoom(GHOST1)",
-47E4: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!))"],
-47E7: 03 06 10 01 ;     "S"    : ["AssertObjectIsInRoom(GHOST1)",
-47EB: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!))"]
-47EE: 00          ; },
+47B5: 11 06      ; SMAS
+47B7: 0A 09      ;     is_object_user_input(OBJ_09_SWORD)
+47B9: 04 91 4C   ;     print(PS_10) OUCH!__YOU_HURT_YOUR_HAND.
+47BC: 04 03      ; W
+47BE: 01 01      ;     move_look(RM_01_HOLE_IN_FLOOR)
+47C0: 11 18      ; SMAS
+47C2: 06 13      ;     stop_if_pass ...
+47C4: 10 01      ;         is_in_current_room(OBJ_01_GHOST1)
+47C6: 06 0C      ;         stop_if_pass ...
+47C8: 02 09      ;             is_in_pack(OBJ_09_SWORD)
+47CA: 0D 01 00   ;             move_object_to_room(OBJ_01_GHOST1, RM_00_nowhere)
+47CD: 0D 05 02   ;             move_object_to_room(OBJ_05_GHOST5, RM_02_DIMLY_LIT_ROOM1)
+47D0: 04 11 4C   ;             print(PS_0B) YOUR_MAGIC_SWORD_ENABLES_YOU_TO_KILL_THE_GHOST!
+47D3: 04 43 4C   ;         print(PS_0D) YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.
+47D6: 04 63 4C   ;     print(PS_0E) THE_POOR_THING'S_ALREADY_DEAD.
+47D9: 01 06      ; N
+47DB: 10 01      ;     is_in_current_room(OBJ_01_GHOST1)
+47DD: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+47E0: 02 06      ; E
+47E2: 10 01      ;     is_in_current_room(OBJ_01_GHOST1)
+47E4: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+47E7: 03 06      ; S
+47E9: 10 01      ;     is_in_current_room(OBJ_01_GHOST1)
+47EB: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+47EE: 00         ;
 
-; "Room_3"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+Script_RM_03_DIMLY_LIT_ROOM2:
+; PS_07
+; you_are_at_the_DIMLY_LIT_ROOM.
+;
 ;;
 ;; This room either has GHOST2 (living) or GHOST6 (dead).
 ;; If GHOST2 (living) is in the room:
@@ -804,28 +821,36 @@ RoomScripts:
 ;; it is alive and you go in an invalid direction. This is a little trickery to make you think the ghost
 ;; is actually blocking you, when really there is nowhere to go.
 ;;
-47EF: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
-47F3: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
-47F6: 01 03 01 01 ;     "N"    : ["GoToRoom(1)"],
-47FA: 11 18 06 13 ;     "KILL" : ["SubscriptAbortAllIfPass", [
-47FE: 10 02       ;                   "AssertObjectIsInRoom(GHOST2)"
-4800: 06 0C       ;                   "SubscriptAbortAllIfPass", [
-4802: 02 09       ;                       "AssertObjectIsInPack(SWORD)",
-4804: 0D 02 00    ;                       "MoveObjectToRoom(GHOST2,0)",
-4807: 0D 06 03    ;                       "MoveObjectToRoom(GHOST6,2)",
-480A: 04 11 4C    ;                       "Print(YOUR_MAGIC_SWORD_ENABLES_YOU_TO_KILL_THE_GHOST!)"]
-480D: 04 43 4C    ;                   "Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.)"]
-4810: 04 63 4C    ;               "Print(THE_POOR_THING'S_ALREADY_DEAD.)"],
-4813: 02 06 10 02 ;     "E"    : ["AssertObjectIsInRoom(GHOST2)",
-4817: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-481A: 03 06 10 02 ;     "S"    : ["AssertObjectIsInRoom(GHOST2)",
-481E: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-4821: 04 06 10 02 ;     "W"    : ["AssertObjectIsInRoom(GHOST2)",
-4825: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-4828: 00
+47EF: 11 06      ; SMAS
+47F1: 0A 09      ;     is_object_user_input(OBJ_09_SWORD)
+47F3: 04 91 4C   ;     print(PS_10) OUCH!__YOU_HURT_YOUR_HAND.
+47F6: 01 03      ; N
+47F8: 01 01      ;     move_look(RM_01_HOLE_IN_FLOOR)
+47FA: 11 18      ; SMAS
+47FC: 06 13      ;     stop_if_pass ...
+47FE: 10 02      ;         is_in_current_room(OBJ_02_GHOST2)
+4800: 06 0C      ;         stop_if_pass ...
+4802: 02 09      ;             is_in_pack(OBJ_09_SWORD)
+4804: 0D 02 00   ;             move_object_to_room(OBJ_02_GHOST2, RM_00_nowhere)
+4807: 0D 06 03   ;             move_object_to_room(OBJ_06_GHOST6, RM_03_DIMLY_LIT_ROOM2)
+480A: 04 11 4C   ;             print(PS_0B) YOUR_MAGIC_SWORD_ENABLES_YOU_TO_KILL_THE_GHOST!
+480D: 04 43 4C   ;         print(PS_0D) YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.
+4810: 04 63 4C   ;     print(PS_0E) THE_POOR_THING'S_ALREADY_DEAD.
+4813: 02 06      ; E
+4815: 10 02      ;     is_in_current_room(OBJ_02_GHOST2)
+4817: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+481A: 03 06      ; S
+481C: 10 02      ;     is_in_current_room(OBJ_02_GHOST2)
+481E: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+4821: 04 06      ; W
+4823: 10 02      ;     is_in_current_room(OBJ_02_GHOST2)
+4825: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+4828: 00         ;
 
-; "Room_4"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+Script_RM_04_DIMLY_LIT_ROOM3:
+; PS_07
+; you_are_at_the_DIMLY_LIT_ROOM.
+;
 ;;
 ;; This room either has GHOST3 (living) or GHOST7 (dead).
 ;; If GHOST3 (living) is in the room:
@@ -838,29 +863,38 @@ RoomScripts:
 ;; There are two exits from this room. You can go East any time, but this time the ghost does block your
 ;; passage. Once you kill the ghost you can go West.
 ;;
-4829: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
-482D: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
-4830: 02 03 01 01 ;     "E"    : ["GoToRoom(1)"],
-4834: 11 18 06 13 ;     "KILL" : ["SubscriptAbortAllIfPass", [
-4838: 10 03       ;                   "AssertObjectIsInRoom(GHOST3)"
-483A: 06 0C       ;                   "SubscriptAbortAllIfPass", [
-483C: 02 09       ;                       "AssertObjectIsInPack(SWORD)",
-483E: 0D 03 00    ;                       "MoveObjectToRoom(GHOST3,0)",
-4841: 0D 07 04    ;                       "MoveObjectToRoom(GHOST7,2)",
-4844: 04 11 4C    ;                       "Print(YOUR_MAGIC_SWORD_ENABLES_YOU_TO_KILL_THE_GHOST!)"]
-4847: 04 43 4C    ;                   "Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.)"]
-484A: 04 63 4C    ;               "Print(THE_POOR_THING'S_ALREADY_DEAD.)"],
-484D: 01 06 10 03 ;     "N"    : ["AssertObjectIsInRoom(GHOST3)",
-4851: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-4854: 03 06 10 03 ;     "S"    : ["AssertObjectIsInRoom(GHOST3)",
-4858: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-485B: 04 06 10 03 ;     "W"    : ["AssertObjectIsInRoom(GHOST3)",
-485F: 04 79 4C    ;               "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-4862: 04 03 01 05 ;     "W"    : ["GoToRoom(5)"]
-4866: 00          ; },
+4829: 11 06      ; SMAS
+482B: 0A 09      ;     is_object_user_input(OBJ_09_SWORD)
+482D: 04 91 4C   ;     print(PS_10) OUCH!__YOU_HURT_YOUR_HAND.
+4830: 02 03      ; E
+4832: 01 01      ;     move_look(RM_01_HOLE_IN_FLOOR)
+4834: 11 18      ; SMAS
+4836: 06 13      ;     stop_if_pass ...
+4838: 10 03      ;         is_in_current_room(OBJ_03_GHOST3)
+483A: 06 0C      ;         stop_if_pass ...
+483C: 02 09      ;             is_in_pack(OBJ_09_SWORD)
+483E: 0D 03 00   ;             move_object_to_room(OBJ_03_GHOST3, RM_00_nowhere)
+4841: 0D 07 04   ;             move_object_to_room(OBJ_07_GHOST7, RM_04_DIMLY_LIT_ROOM3)
+4844: 04 11 4C   ;             print(PS_0B) YOUR_MAGIC_SWORD_ENABLES_YOU_TO_KILL_THE_GHOST!
+4847: 04 43 4C   ;         print(PS_0D) YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.
+484A: 04 63 4C   ;     print(PS_0E) THE_POOR_THING'S_ALREADY_DEAD.
+484D: 01 06      ; N
+484F: 10 03      ;     is_in_current_room(OBJ_03_GHOST3)
+4851: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+4854: 03 06      ; S
+4856: 10 03      ;     is_in_current_room(OBJ_03_GHOST3)
+4858: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+485B: 04 06      ; W
+485D: 10 03      ;     is_in_current_room(OBJ_03_GHOST3)
+485F: 04 79 4C   ;     print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+4862: 04 03      ; W
+4864: 01 05      ;     move_look(RM_05_DIMLY_LIT_ROOM4)
+4866: 00         ;
 
-; "Room_5"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+Script_RM_05_DIMLY_LIT_ROOM4:
+; PS_07
+; you_are_at_the_DIMLY_LIT_ROOM.
+;
 ;;
 ;; This room has GHOST4 (living) in it. Like the others, there is a "dead" version GHOST8 of it. But there
 ;; is no way to kill this ghost. You can "KILL" it with or without the SWORD. Either way you just
@@ -870,29 +904,37 @@ RoomScripts:
 ;; floor then the ghost blocks your other movements. You can go North if you drop the sword in a previous
 ;; room. South and West leave you in the current room.
 ;;
-4867: 11 06 0A 09 ;     "KILL" : ["AssertNounIs(SWORD)",
-486B: 04 91 4C    ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
-486E: 02 03 01 04 ;     "E"    : ["GoToRoom(4)"],
-4872: 11 0B 06 06 ;     "KILL" : ["SubscriptAbortAllIfPass", [
-4876: 02 09       ;                   "AssertObjectIsInPack(SWORD)",
-4878: 04 BF 4C    ;                   "Print(THE_GHOST_IS_IMMUNE_TO_YOUR_ATTACK!)"],
-487B: 04 43 4C    ;               "Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.)"],
-487E: 01 0A 06 06 ;     "N"    : ["SubscriptAbortAllIfPass", [
-4882: 03 09       ;                   "AssertObjectIsInRoomOrPack(SWORD)"
-4884: 04 79 4C    ;                   "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-4887: 01 06       ;               "GoToRoom(6)"],
-4889: 03 0A 06 06 ;     "S"    : ["SubscriptAbortAllIfPass", [
-488D: 03 09       ;                   "AssertObjectIsInRoomOrPack(SWORD)",
-488F: 04 79 4C    ;                   "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-4892: 01 05       ;               "GoToRoom(5)"],
-4894: 04 0A 06 06 ;     "W"    : ["SubscriptAbortAllIfPass", [
-4898: 03 09       ;                   "AssertObjectIsInRoomOrPack(SWORD)",
-489A: 04 79 4C    ;                   "Print(THE_GHOST_WILL_NOT_LET_YOU_PASS!)"],
-489D: 01 05       ;               "GoToRoom(5)"]
-489F: 00          ; },
+4867: 11 06      ; SMAS
+4869: 0A 09      ;     is_object_user_input(OBJ_09_SWORD)
+486B: 04 91 4C   ;     print(PS_10) OUCH!__YOU_HURT_YOUR_HAND.
+486E: 02 03      ; E
+4870: 01 04      ;     move_look(RM_04_DIMLY_LIT_ROOM3)
+4872: 11 0B      ; SMAS
+4874: 06 06      ;     stop_if_pass ...
+4876: 02 09      ;         is_in_pack(OBJ_09_SWORD)
+4878: 04 BF 4C   ;         print(PS_12) THE_GHOST_IS_IMMUNE_TO_YOUR_ATTACK!
+487B: 04 43 4C   ;     print(PS_0D) YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.
+487E: 01 0A      ; N
+4880: 06 06      ;     stop_if_pass ...
+4882: 03 09      ;         is_in_pack_or_current_room(OBJ_09_SWORD)
+4884: 04 79 4C   ;         print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+4887: 01 06      ;     move_look(RM_06_DIMLY_LIT_ROOM5)
+4889: 03 0A      ; S
+488B: 06 06      ;     stop_if_pass ...
+488D: 03 09      ;         is_in_pack_or_current_room(OBJ_09_SWORD)
+488F: 04 79 4C   ;         print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+4892: 01 05      ;     move_look(RM_05_DIMLY_LIT_ROOM4)
+4894: 04 0A      ; W
+4896: 06 06      ;     stop_if_pass ...
+4898: 03 09      ;         is_in_pack_or_current_room(OBJ_09_SWORD)
+489A: 04 79 4C   ;         print(PS_0F) THE_GHOST_WILL_NOT_LET_YOU_PASS!
+489D: 01 05      ;     move_look(RM_05_DIMLY_LIT_ROOM4)
+489F: 00         ;
 
-; "Room_6"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+Script_RM_06_DIMLY_LIT_ROOM5:
+; PS_07
+; you_are_at_the_DIMLY_LIT_ROOM.
+;
 ;;
 ;; This room has a live GHOST11 that has no dead version. It doesn't block you. You can't kill it.
 ;; It's just scenery.
@@ -902,16 +944,23 @@ RoomScripts:
 ;; message. Of course, you can't bring the SWORD to this room so you'll never get the
 ;; "HURT" message. Try bringing the SIGN to this room and KILL SIGN!
 ;;
-48A0: 11 06 0A 09    ;     "KILL" : ["AssertNounIs(SWORD)",
-48A4: 04 91 4C       ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
-48A7: 02 03 01 04    ;     "E"    : ["GoToRoom(4)"],
-48AB: 03 03 01 05    ;     "S"    : ["GoToRoom(5)"],
-48AF: 04 03 01 07    ;     "W"    : ["GoToRoom(7)"],
-48B3: 11 04 04 43 4C ;     "KILL" : ["Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.))"]
-48B8: 00             ; },
+48A0: 11 06      ; SMAS
+48A2: 0A 09      ;     is_object_user_input(OBJ_09_SWORD)
+48A4: 04 91 4C   ;     print(PS_10) OUCH!__YOU_HURT_YOUR_HAND.
+48A7: 02 03      ; E
+48A9: 01 04      ;     move_look(RM_04_DIMLY_LIT_ROOM3)
+48AB: 03 03      ; S
+48AD: 01 05      ;     move_look(RM_05_DIMLY_LIT_ROOM4)
+48AF: 04 03      ; W
+48B1: 01 07      ;     move_look(RM_07_DIMLY_LIT_ROOM6)
+48B3: 11 04      ; SMAS
+48B5: 04 43 4C   ;     print(PS_0D) YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.
+48B8: 00         ;
 
-; "Room_7"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+Script_RM_07_DIMLY_LIT_ROOM6:
+; PS_07
+; you_are_at_the_DIMLY_LIT_ROOM.
+;
 ;;
 ;; This room has a live GHOST12 that has no dead version. It doesn't block you. You can't kill it.
 ;; It's just scenery.
@@ -921,15 +970,21 @@ RoomScripts:
 ;; message. Of course, you can't bring the SWORD to this room so you'll never get the
 ;; "HURT" message. Try bringing the SIGN to this room and KILL SIGN!
 ;;
-48B9: 11 06 0A 09    ;     "KILL" : ["AssertNounIs(SWORD)",
-48BD: 04 91 4C       ;               "Print(OUCH!__YOU_HURT_YOUR_HAND.)"],
-48C0: 02 03 01 06    ;     "E"    : ["GoToRoom(6)"],
-48C4: 03 03 01 08    ;     "S"    : ["GoToRoom(8)"],
-48C8: 11 04 04 43 4C ;     "KILL" : ["Print(YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.))"]
-48CD: 00             ; },
+48B9: 11 06      ; SMAS
+48BB: 0A 09      ;     is_object_user_input(OBJ_09_SWORD)
+48BD: 04 91 4C   ;     print(PS_10) OUCH!__YOU_HURT_YOUR_HAND.
+48C0: 02 03      ; E
+48C2: 01 06      ;     move_look(RM_06_DIMLY_LIT_ROOM5)
+48C4: 03 03      ; S
+48C6: 01 08      ;     move_look(RM_08_DIMLY_LIT_ROOM7)
+48C8: 11 04      ; SMAS
+48CA: 04 43 4C   ;     print(PS_0D) YOU_CAN'T_KILL_A_GHOST_WITH_YOUR_BARE_HANDS.
+48CD: 00         ;
 
-; "Room_8"   : {
-;     "Description" : "YOU_ARE_IN_A_DIMLY_LIT_ROOM.",
+Script_RM_08_DIMLY_LIT_ROOM7:
+; PS_07
+; you_are_at_the_DIMLY_LIT_ROOM.
+;
 ;;
 ;; When you READ SIGN from anywhere the exit object is moved to this room. This is handled in
 ;; the general script.
@@ -939,38 +994,48 @@ RoomScripts:
 ;; Every other direction is the end of the game. If you are holding the SIGN then you die. If you have not
 ;; READ SIGN then you die. If you have READ SIGN then the exit object is here and you escape.
 ;;
-48CE: 01 03 01 07 ;     "N"    : ["GoToRoom(7)"],
-48D2: 02 15 06 07 ;     "E"    : ["SubscriptAbortAllIfPass", [
-48D6: 02 0A       ;                   "AssertObjectIsInPack(SIGN)",
-48D8: 04 56 4D    ;                   "Print(YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!)",
-48DB: 07          ;                   "EndlessLoop()"],
-48DC: 06 07       ;               "SubscriptAbortAllIfPass", [
-48DE: 10 0D       ;                   "AssertObjectIsInRoom(EXIT)"
-48E0: 04 75 4D    ;                   "Print(YOU_WALK_THROUGH_A_DOOR_AND_FIND_YOURSELF_ON_A_BALCONY.__YOU____CLIMB_DOWN_A_TREE_AND_ESCAPE_TO_SAFETY!__CONGRATULATIONS!_______YOU_MADE_IT!)",
-48E3: 07          ;                   "EndlessLoop()"],
-48E4: 04 56 4D    ;               "Print(YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!)",
-48E7: 07          ;               "EndlessLoop()"],
-48E8: 03 15 06 07 ;     "S"    : ["SubscriptAbortAllIfPass", [
-48EC: 02 0A       ;                   "AssertObjectIsInPack(SIGN)",
-48EE: 04 56 4D    ;                   "Print(YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!)",
-48F1: 07          ;                   "EndlessLoop()"],
-48F2: 06 07       ;               "SubscriptAbortAllIfPass", [
-48F4: 10 0D       ;                   "AssertObjectIsInRoom(EXIT)"
-48F6: 04 75 4D    ;                   "Print(YOU_WALK_THROUGH_A_DOOR_AND_FIND_YOURSELF_ON_A_BALCONY.__YOU____CLIMB_DOWN_A_TREE_AND_ESCAPE_TO_SAFETY!__CONGRATULATIONS!_______YOU_MADE_IT!)",
-48F9: 07          ;                   "EndlessLoop()"],
-48FA: 04 56 4D    ;               "Print(YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!)",
-48FD: 07          ;                   "EndlessLoop()"],
-48FE: 04 15 06 07 ;     "W"    : ["SubscriptAbortAllIfPass", [
-4902: 02 0A       ;                   "AssertObjectIsInPack(SIGN)",
-4904: 04 56 4D    ;                   "Print(YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!)",
-4907: 07          ;                   "EndlessLoop()"],
-4908: 06 07       ;               "SubscriptAbortAllIfPass", [
-490A: 10 0D       ;                   "AssertObjectIsInRoom(EXIT)"
-490C: 04 75 4D    ;                   "Print(YOU_WALK_THROUGH_A_DOOR_AND_FIND_YOURSELF_ON_A_BALCONY.__YOU____CLIMB_DOWN_A_TREE_AND_ESCAPE_TO_SAFETY!__CONGRATULATIONS!_______YOU_MADE_IT!)",
-490F: 07          ;                   "EndlessLoop()"],
-4910: 04 56 4D    ;               "Print(YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!)",
-4913: 07          ;                   "EndlessLoop()"]
-4914: 00          ; }
+48CE: 01 03      ; N
+48D0: 01 07      ;     move_look(RM_07_DIMLY_LIT_ROOM6)
+48D2: 02 15      ; E
+48D4: 06 07      ;     stop_if_pass ...
+48D6: 02 0A      ;         is_in_pack(OBJ_0A_SIGN)
+48D8: 04 56 4D   ;         print(PS_14) YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!
+48DB: 07         ;         end_of_game()
+48DC: 06 07      ;     stop_if_pass ...
+48DE: 10 0D      ;         is_in_current_room(OBJ_0D_EXIT_MARKER)
+48E0: 04 75 4D   ;         print(PS_15) YOU_WALK_THROUGH_A_DOOR_AND_FIND_YOURSELF_ON_A_BALCONY.__YOU____
+;                                       CLIMB_DOWN_A_TREE_AND_ESCAPE_TO_SAFETY!__CONGRATULATIONS!_______
+;                                       YOU_MADE_IT!
+48E3: 07         ;         end_of_game()
+48E4: 04 56 4D   ;     print(PS_14) YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!
+48E7: 07         ;     end_of_game()
+48E8: 03 15      ; S
+48EA: 06 07      ;     stop_if_pass ...
+48EC: 02 0A      ;         is_in_pack(OBJ_0A_SIGN)
+48EE: 04 56 4D   ;         print(PS_14) YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!
+48F1: 07         ;         end_of_game()
+48F2: 06 07      ;     stop_if_pass ...
+48F4: 10 0D      ;         is_in_current_room(OBJ_0D_EXIT_MARKER)
+48F6: 04 75 4D   ;         print(PS_15) YOU_WALK_THROUGH_A_DOOR_AND_FIND_YOURSELF_ON_A_BALCONY.__YOU____
+;                                       CLIMB_DOWN_A_TREE_AND_ESCAPE_TO_SAFETY!__CONGRATULATIONS!_______
+;                                       YOU_MADE_IT!
+48F9: 07         ;         end_of_game()
+48FA: 04 56 4D   ;     print(PS_14) YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!
+48FD: 07         ;     end_of_game()
+48FE: 04 15      ; W
+4900: 06 07      ;     stop_if_pass ...
+4902: 02 0A      ;         is_in_pack(OBJ_0A_SIGN)
+4904: 04 56 4D   ;         print(PS_14) YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!
+4907: 07         ;         end_of_game()
+4908: 06 07      ;     stop_if_pass ...
+490A: 10 0D      ;         is_in_current_room(OBJ_0D_EXIT_MARKER)
+490C: 04 75 4D   ;         print(PS_15) YOU_WALK_THROUGH_A_DOOR_AND_FIND_YOURSELF_ON_A_BALCONY.__YOU____
+;                                       CLIMB_DOWN_A_TREE_AND_ESCAPE_TO_SAFETY!__CONGRATULATIONS!_______
+;                                       YOU_MADE_IT!
+490F: 07         ;         end_of_game()
+4910: 04 56 4D   ;     print(PS_14) YOU_FALL_THROUGH_A_TRAP_DOOR_TO_YOUR_DEATH!
+4913: 07         ;     end_of_game()
+4914: 00         ;
 ```
 
 # Object Info
@@ -1377,23 +1442,38 @@ GeneralScript:
 ;  - You can READ the SIGN or SWORD to get a message. Note that you MUST read the sign to open the exit.
 ;
 ;                    ; {
-4B1A: 01 02 05       ;  "N"    : ["PrintRoomDescription()"],
-4B1D: 02 02 05       ;  "E"    : ["PrintRoomDescription()"],
-4B20: 03 02 05       ;  "S"    : ["PrintRoomDescription()"],
-4B23: 04 02 05       ;  "W"    : ["PrintRoomDescription()"],
-4B26: 06 02 0E       ;  "GET"  : ["GetNounToPack()"],
-4B29: 07 02 0F       ;  "DROP" : ["DropNounToRoom()"],
-4B2C: 0D 02 05       ;  "LOOK" : ["PrintRoomDescription()"],
-4B2F: 0B 02 07       ;  "QUIT" : ["EndlessLoop()"],
-4B32: 0C 02  09      ;  "INVE" : ["PrintInventory()"],
-4B35: 09 09 0A 0A    ;  "READ" : ["AssertInputNounIs(SIGN)",
-4B39: 0D 0D 08       ;            "MoveObjectToRoom(8)",
-4B3C: 04 D9 4C       ;            "Print(THE_SIGN_SAYS,_______________________________________________________"THERE_ARE_THREE_EXITS_FROM_THIS_ROOM.__ONLY_ONE_IS_TRUE...______YOU_MUST_KNOW,_BUT_NOT_BE_BURDENED_BY,_THIS_CLUE!")"],
-4B3F: 0A 04 04 A5 4C ;  "PLUG" : ["Print(SORRY,_ONLY_ONE_PLUGH_PER_CUSTOMER.)"],
-4B44: 11 04 04 91 4C ;  "KILL" : ["Print(; OUCH!__YOU_HURT_YOUR_HAND.)"],
-4B49: 09 06 0A 09    ;  "READ" : ["AssertInputNounIs(SWORD)",
-4B4D: 04 D5 4D       ;            "Print(AN_INSCRIPTION_READS,_"GHOST_KILLER.")"]
-4B50: 00             ; }
+4B1A: 01 02      ; N
+4B1C: 05         ;     print_room_description()
+4B1D: 02 02      ; E
+4B1F: 05         ;     print_room_description()
+4B20: 03 02      ; S
+4B22: 05         ;     print_room_description()
+4B23: 04 02      ; W
+4B25: 05         ;     print_room_description()
+4B26: 06 02      ; GET
+4B28: 0E         ;     get_users_object_print_ok()
+4B29: 07 02      ; DROP
+4B2B: 0F         ;     drop_users_object_print_ok()
+4B2C: 0D 02      ; LOOK
+4B2E: 05         ;     print_room_description()
+4B2F: 0B 02      ; QUIT
+4B31: 07         ;     end_of_game()
+4B32: 0C 02      ; INVE
+4B34: 09         ;     print_inventory()
+4B35: 09 09      ; READ
+4B37: 0A 0A      ;     is_object_user_input(OBJ_0A_SIGN)
+4B39: 0D 0D 08   ;     move_object_to_room(OBJ_0D_EXIT_MARKER, RM_08_DIMLY_LIT_ROOM7)
+4B3C: 04 D9 4C   ;     print(PS_13) THE_SIGN_SAYS,__________________________________________________
+;                                   _____"THERE_ARE_THREE_EXITS_FROM_THIS_ROOM.__ONLY_ONE_IS_TRUE...
+;                                   ______YOU_MUST_KNOW,_BUT_NOT_BE_BURDENED_BY,_THIS_CLUE!"
+4B3F: 0A 04      ; PLUG
+4B41: 04 A5 4C   ;     print(PS_11) SORRY,_ONLY_ONE_PLUGH_PER_CUSTOMER.
+4B44: 11 04      ; SMAS
+4B46: 04 91 4C   ;     print(PS_10) OUCH!__YOU_HURT_YOUR_HAND.
+4B49: 09 06      ; READ
+4B4B: 0A 09      ;     is_object_user_input(OBJ_09_SWORD)
+4B4D: 04 D5 4D   ;     print(PS_16) AN_INSCRIPTION_READS,_"GHOST_KILLER."
+4B50: 00         ; 
 ```
 
 # Compressed Text

@@ -41,7 +41,7 @@ def collect_labels(line_details):
                 raise Exception('Dangling label on end of code')
             ent = memory_map.MemoryMapEntry(last_address, last_address,
                                             parts['label'], '', '')
-            ret.append(ent)
+            ret.insert(0, ent)
 
     return ret
 
@@ -310,7 +310,7 @@ def update_names_in_code(directory, filename, check_binary=True,extract_binary=F
                 table = tables[name]
                 en = table[1].find_entry_by_address(c, use)
                 if en:
-                    fnd = [name, table, en]
+                    fnd = [name, table, en]                                
                     break
 
         if not fnd:
@@ -327,7 +327,7 @@ def update_names_in_code(directory, filename, check_binary=True,extract_binary=F
             _rebuild_text(line, parts, spacing, cpu_name)
             continue
 
-        # Add the reference to the start of the comment
+        # Add the reference to the start of the comment        
 
         ref = fnd[0] + '.' + fnd[2].name
         if c != fnd[2].first:

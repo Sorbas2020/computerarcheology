@@ -841,15 +841,23 @@ RoomTable:
 
 ```code
 RoomScripts:
-; "Room_1"   : {
-;     "Description" : "YOU_ARE_AT_THE_FORYER.",
-47BF: 02 03 01 02 ;     "E"    : ["GoToRoom(2)"],
-47C3: 03 03 01 08 ;     "S"    : ["GoToRoom(8)"],
-47C7: 04 03 01 09 ;     "W"    : ["GoToRoom(9)"]
-47CB: 00          ; },
 
-; "Room_2"   : {
-;     "Description" : "YOU_ARE_AT_THE_LIVING_ROOM.",
+Script_RM_01_FORYER:
+; PS_12
+; you_are_at_the_FOYER.
+;
+47BF: 02 03      ; E
+47C1: 01 02      ;     move_look(RM_02_LIVING_ROOM)
+47C3: 03 03      ; S
+47C5: 01 08      ;     move_look(RM_08_DEN)
+47C7: 04 03      ; W
+47C9: 01 09      ;     move_look(RM_09_EAST_END_HALL)
+47CB: 00         ;
+
+Script_RM_02_LIVING_ROOM:
+; PS_13
+; you_are_at_the_LIVING_ROOM.
+;
 ;;
 ;; You can safely go EAST or WEST. You can also issue a GET command. If you enter any other
 ;; command and the KNIFE is in the room then you die. Note that you can't pick up the KNIFE
@@ -858,168 +866,238 @@ RoomScripts:
 ;; This KNIFE behavior is part of the LIVING ROOM script. Anywhere else the KNIFE is just an
 ;; ordinary, non-dangerous object.
 ;;
-47CC: 02 03 01 03 ;     "E"    : ["GoToRoom(3)"],
-47D0: 04 03 01 01 ;     "W"    : ["GoToRoom(1)"],
-47D4: 06 0E 06 0B ;     "GET"  : ["SubscriptAbortAllIfPass", [
-47D8: 0A 06       ;                   "AssertNounIs(KNIFE)",
-47DA: 06 04       ;                   "SubscriptAbortAllIfPass", [
-47DC: 02 01       ;                       "AssertIsInPack(PAPER)",
-47DE: 0E          ;                       "MoveNounToPack()"],
-47DF: 04 B6 4F    ;                   "Print(THE_KNIFE_FLOATS_OUT_OF_YOUR_REACH.)"],
-47E2: 0E          ;               "MoveNounToPack()"],
-47E3: FF 07 10 06 ;     "*"    : ["AssertIsInRoom(KNIFE)",
-47E7: 04 10 4F    ;               "Print(SUDDENLY_THE_KNIFE_WHOOSHES_DOWN_AND_SLITS_YOUR_THROAT!__YOU_AREDEAD.)",
-47EA: 07          ;               "EndlessLoop()"]
-47EB: 00          ; },
+47CC: 02 03      ; E
+47CE: 01 03      ;     move_look(RM_03_DINING_ROOM)
+47D0: 04 03      ; W
+47D2: 01 01      ;     move_look(RM_01_FORYER)
+47D4: 06 0E      ; GET
+47D6: 06 0B      ;     stop_if_pass ...
+47D8: 0A 06      ;         is_object_user_input(OBJ_06_KNIFE)
+47DA: 06 04      ;         stop_if_pass ...
+47DC: 02 01      ;             is_in_pack(OBJ_01_PAPER)
+47DE: 0E         ;             get_users_object_print_ok()
+47DF: 04 B6 4F   ;         print(PS_38) THE_KNIFE_FLOATS_OUT_OF_YOUR_REACH.
+47E2: 0E         ;     get_users_object_print_ok()
+47E3: FF 07      ; all
+47E5: 10 06      ;     is_in_current_room(OBJ_06_KNIFE)
+47E7: 04 10 4F   ;     print(PS_32) SUDDENLY_THE_KNIFE_WHOOSHES_DOWN_AND_SLITS_YOUR_THROAT!__YOU_ARE
+;                                   DEAD.
+47EA: 07         ;     end_of_game()
+47EB: 00         ;
 
-; "Room_3"   : {
-;     "Description" : "YOU_ARE_AT_THE_DINING_ROOM.",
-47EC: 03 03 01 04 ;     "S"    : ["GoToRoom(4)"],
-47F0: 04 03 01 02 ;     "W"    : ["GoToRoom(2)"]
-47F4: 00          ; },
+Script_RM_03_DINING_ROOM:
+; PS_14
+; you_are_at_the_DINING_ROOM.
+;
+47EC: 03 03      ; S
+47EE: 01 04      ;     move_look(RM_04_KITCHEN)
+47F0: 04 03      ; W
+47F2: 01 02      ;     move_look(RM_02_LIVING_ROOM)
+47F4: 00         ;
 
-; "Room_4"   : {
-;     "Description" : "YOU_ARE_AT_THE_KITCHEN.",
+Script_RM_04_KITCHEN:
+; PS_15
+; you_are_at_the_KITCHEN.
+;
 ;;
 ;; The ARMOR is an invisible object in this room (it has no description). If you have the KNIFE in your pack then
 ;; it runs off (out of game-play). If you don't have the knife and the ARMOR is in the room then it prevents you
 ;; from going SOUTH.
 ;;
-47F5: 01 03 01 03 ;     "N"    : ["GoToRoom(3)"],
-47F9: 04 03 01 08 ;     "W"    : ["GoToRoom(8)"],
-47FD: 03 17 06 13 ;     "S"    : ["SubscriptAbortAllIfPass", [
-4801: 10 08       ;                   "AssertObjectIsInRoom(object8)",
-4803: 06 0B       ;                   "SubscriptAbortAllIfPass", [
-4805: 02 06       ;                       "AssertObjectIsInPack(KNIFE)",
-4807: 0D 08 00    ;                       "MoveObjectToRoom(8,0)",
-480A: 04 4E 4E    ;                       "Print(A_SUIT_OF_ARMOUR_HERE_FLEES_WHEN_IT_SPOTS_YOUR_KNIFE)",
-480D: 01 05       ;                       "GoToRoom(5)"],
-480F: 04 73 4E    ;                   "Print(YOUR_ARE_AT_THE_BREAKFAST_ROOM.__AN_ANIMATED_SUIT_OF_ARMOUR_____THROWS_YOU_OUT!)",
-4812: 05          ;                   "PrintRoomDescription()"],
-4813: 01 05       ;               "GoToRoom(5)"
-4815: 00          ; },
+47F5: 01 03      ; N
+47F7: 01 03      ;     move_look(RM_03_DINING_ROOM)
+47F9: 04 03      ; W
+47FB: 01 08      ;     move_look(RM_08_DEN)
+47FD: 03 17      ; S
+47FF: 06 13      ;     stop_if_pass ...
+4801: 10 08      ;         is_in_current_room(OBJ_08_ARMOR)
+4803: 06 0B      ;         stop_if_pass ...
+4805: 02 06      ;             is_in_pack(OBJ_06_KNIFE)
+4807: 0D 08 00   ;             move_object_to_room(OBJ_08_ARMOR, RM_00_nowhere)
+480A: 04 4E 4E   ;             print(PS_2B) A_SUIT_OF_ARMOUR_HERE_FLEES_WHEN_IT_SPOTS_YOUR_KNIFE
+480D: 01 05      ;             move_look(RM_05_BREAKFAST_ROOM)
+480F: 04 73 4E   ;         print(PS_2C) YOUR_ARE_AT_THE_BREAKFAST_ROOM.__AN_ANIMATED_SUIT_OF_ARMOUR_____
+;                                       THROWS_YOU_OUT!
+4812: 05         ;         print_room_description()
+4813: 01 05      ;     move_look(RM_05_BREAKFAST_ROOM)
+4815: 00         ;
 
-; "Room_5"   : {
-;     "Description" : "YOU_ARE_AT_THE_BREAKFAST_ROOM.",
-4816: 01 03 01 04 ;     "N"    : ["GoToRoom(4)"],
-481A: 02 03 01 06 ;     "E"    : ["GoToRoom(6)"],
-481E: 00          ; },
+Script_RM_05_BREAKFAST_ROOM:
+; PS_16
+; you_are_at_the_BREAKFAST_ROOM.
+;
+4816: 01 03      ; N
+4818: 01 04      ;     move_look(RM_04_KITCHEN)
+481A: 02 03      ; E
+481C: 01 06      ;     move_look(RM_06_SERVANTS_QUARTERS1)
+481E: 00         ;
 
-; "Room_6"   : {
-;     "Description" : "YOU_ARE_AT_THE_SERVANTS_QUARTERS.",
-481F: 01 03 01 07 ;     "N"    : ["GoToRoom(7)"],
-4823: 04 03 01 05 ;     "W"    : ["GoToRoom(5)"],
-4827: 05 06 0A 09 ;     "OPEN" : ["AssertNounIs(CABINET)",
-482B: 04 AA 4E    ;               "Print(IT'S_EMPTY.)"]
-482E: 00          ; },
+Script_RM_06_SERVANTS_QUARTERS1:
+; PS_17
+; you_are_at_the_SERVANTS_QUARTERS.
+;
+481F: 01 03      ; N
+4821: 01 07      ;     move_look(RM_07_SERVANTS_QUARTERS2)
+4823: 04 03      ; W
+4825: 01 05      ;     move_look(RM_05_BREAKFAST_ROOM)
+4827: 05 06      ; OPEN
+4829: 0A 09      ;     is_object_user_input(OBJ_09_CABINET)
+482B: 04 AA 4E   ;     print(PS_2D) IT'S_EMPTY.
+482E: 00         ;
 
-; "Room_7"   : {
-;     "Description" : "YOU_ARE_AT_THE_SERVANTS_QUARTERS.",
+Script_RM_07_SERVANTS_QUARTERS2:
+; PS_17
+; you_are_at_the_SERVANTS_QUARTERS.
+;
 ;;
 ;; This room has the same description as Room_6 ... very sneaky. This room has the
 ;; CABINET WITH KEY in it. Whenever you open this CABINET the KEY appears in the
 ;; room. If the key is already in your pack or dropped in some other room then it
 ;; magically moves here.
 ;;
-482F: 03 03 01 06 ;     "S"    : ["GoToRoom(6)"],
-4833: 05 08 0A 0B ;     "OPEN" : ["AssertNounIs(CABINETKEY)",
-4837: 08 03       ;               "MoveObjectToCurrentRoom(KEY)",
-4839: 04 FC 4E    ;               "Print(THERE_IS_A_KEY_IN_IT.)"]
-483C: 00          ; },
+482F: 03 03      ; S
+4831: 01 06      ;     move_look(RM_06_SERVANTS_QUARTERS1)
+4833: 05 08      ; OPEN
+4835: 0A 0B      ;     is_object_user_input(OBJ_0B_KEY_IN_CABINET)
+4837: 08 03      ;     drop_object_print_ok(OBJ_03_KEY)
+4839: 04 FC 4E   ;     print(PS_30) THERE_IS_A_KEY_IN_IT.
+483C: 00         ;
 
-; "Room_8"   : {
-;     "Description" : "YOU_ARE_AT_THE_DEN.",
-483D: 01 03 01 01 ;     "N"    : ["GoToRoom(1)"],
-4841: 02 03 01 04 ;     "E"    : ["GoToRoom(4)"]
-4845: 00          ; },
+Script_RM_08_DEN:
+; PS_18
+; you_are_at_the_DEN.
+;
+483D: 01 03      ; N
+483F: 01 01      ;     move_look(RM_01_FORYER)
+4841: 02 03      ; E
+4843: 01 04      ;     move_look(RM_04_KITCHEN)
+4845: 00         ;
 
-; "Room_9"   : {
-;     "Description" : "YOU_ARE_AT_THE_EAST_END_OF_THE_HALL.",
-4846: 01 03 01 0B ;     "N"    : ["GoToRoom(11)"],
-484A: 02 03 01 01 ;     "E"    : ["GoToRoom(1)"],
-484E: 04 03 01 0A ;     "W"    : ["GoToRoom(10)"],
-4852: 00          ; },
+Script_RM_09_EAST_END_HALL:
+; PS_19
+; you_are_at_the_EAST_END_OF_THE_HALL.
+;
+4846: 01 03      ; N
+4848: 01 0B      ;     move_look(RM_0B_GREEN_BEDROOM)
+484A: 02 03      ; E
+484C: 01 01      ;     move_look(RM_01_FORYER)
+484E: 04 03      ; W
+4850: 01 0A      ;     move_look(RM_0A_WEST_END_HALL)
+4852: 00         ;
 
-; "Room_10"  : {
-;     "Description" : "YOU_ARE_AT_THE_WEST_END_OF_THE_HALL.",
+Script_RM_0A_WEST_END_HALL:
+; PS_1A
+; you_are_at_the_WEST_END_OF_THE_HALL.
+;
 ;;
 ;; You can OPEN DOOR or go S to the LIBRARY -- but only if you have the KEY in the pack. Otherwise you
 ;; get an error message.
 ;;
-4853: 01 03 01 0D ;     "N"    : ["GoToRoom(13)"],
-4857: 02 03 01 09 ;     "E"    : ["GoToRoom(9)"],
-485B: 03 0A 06 05 ;     "S"    : ["SubscriptAbortAllIfPass", [
-485F: 02 03       ;                   "AssertObjectIsIPack(KEY)",
-4861: 01 0E       ;                   "GoToRoom(15)"],
-4863: 04 B4 4E    ;               "Print(YOU'LL_NEED_A_KEY_TO_GET_THROUGH_THAT_DOOR.)"],
-4866: 05 0C 0A 05 ;     "OPEN" : ["AssertInputNounIs(DOOR)",
-486A: 06 05       ;               "SubscriptAbortAllIfPass", [
-486C: 02 03       ;                   "AssertObjectIsInPack(KEY)",
-486E: 01 0E       ;                   "GoToRoom(15)"],
-4870: 04 B4 4E    ;               "Print(YOU'LL_NEED_A_KEY_TO_GET_THROUGH_THAT_DOOR.)"]
-4873: 00          ; },
+4853: 01 03      ; N
+4855: 01 0D      ;     move_look(RM_0D_BLUE_BEDROOM)
+4857: 02 03      ; E
+4859: 01 09      ;     move_look(RM_09_EAST_END_HALL)
+485B: 03 0A      ; S
+485D: 06 05      ;     stop_if_pass ...
+485F: 02 03      ;         is_in_pack(OBJ_03_KEY)
+4861: 01 0E      ;         move_look(RM_0E_MASTER_BEDROOM)
+4863: 04 B4 4E   ;     print(PS_2E) YOU'LL_NEED_A_KEY_TO_GET_THROUGH_THAT_DOOR.
+4866: 05 0C      ; OPEN
+4868: 0A 05      ;     is_object_user_input(OBJ_05_LOCKED_DOOR)
+486A: 06 05      ;     stop_if_pass ...
+486C: 02 03      ;         is_in_pack(OBJ_03_KEY)
+486E: 01 0E      ;         move_look(RM_0E_MASTER_BEDROOM)
+4870: 04 B4 4E   ;     print(PS_2E) YOU'LL_NEED_A_KEY_TO_GET_THROUGH_THAT_DOOR.
+4873: 00         ;
 
-; "Room_11"  : {
-;     "Description" : "YOU_ARE_AT_THE_GREEN_BEDROOM._THERE'S_A_PANEL_ON_THE_WEST_WALL.",
-4874: 03 03 01 09 ;     "S"    : ["GoToRoom(9)"],
-4878: 0E 03 01 0C ;     "PANE" : ["GoToRoom(12)"]
-487C: 00          ; },
-
-; "Room_12"  : {
-;     "Description" : "YOU_ARE_AT_THE_SECRET_PASSAGE.",
-487D: 02 03 01 0B ;     "E"    : ["GoToRoom(11)"],
-4881: 04 03 01 0D ;     "W"    : ["GoToRoom(13)"],
-4885: 00          ; },
-
-; "Room_13"  : {
-;     "Description" : "YOU_ARE_AT_THE_BLUE_BEDROOM.__THERE'S_A_PANEL_ON_THE_WEST_WALL.",
-4886: 03 03 01 0A ;     "S"    : ["GoToRoom(10)"],
-488A: 0E 03 01 0C ;     "PANE" : ["GoToRoom(12)"]
-488E: 00          ; },
-
+Script_RM_0B_GREEN_BEDROOM:
+; PS_1B
+; you_are_at_the_GREEN_BEDROOM._THERE'S_A_PANEL_ON_THE_WEST_WALL.
 ;
-; "Room_14"  : {
-;     "Description" : "YOU_ARE_AT_THE_MASTER_BEDROOM.",
+4874: 03 03      ; S
+4876: 01 09      ;     move_look(RM_09_EAST_END_HALL)
+4878: 0E 03      ; PANE
+487A: 01 0C      ;     move_look(RM_0C_SECRET_PASSAGE)
+487C: 00         ;
+
+Script_RM_0C_SECRET_PASSAGE:
+; PS_1C
+; you_are_at_the_SECRET_PASSAGE.
+;
+487D: 02 03      ; E
+487F: 01 0B      ;     move_look(RM_0B_GREEN_BEDROOM)
+4881: 04 03      ; W
+4883: 01 0D      ;     move_look(RM_0D_BLUE_BEDROOM)
+4885: 00         ;
+
+Script_RM_0D_BLUE_BEDROOM:
+; PS_1D
+; you_are_at_the_BLUE_BEDROOM.__THERE'S_A_PANEL_ON_THE_EAST_WALL.
+;
+4886: 03 03      ; S
+4888: 01 0A      ;     move_look(RM_0A_WEST_END_HALL)
+488A: 0E 03      ; PANE
+488C: 01 0C      ;     move_look(RM_0C_SECRET_PASSAGE)
+488E: 00         ;
+
+Script_RM_0E_MASTER_BEDROOM:
+; PS_1E
+; you_are_at_the_MASTER_BEDROOM.
+;
 ;;
 ;; The YES command takes you east at any time (even if you haven't seen the "are you sure?"). The E command
 ;; always prints a "are you sure?" message. The NO command prints "a wise decision", but it isn't really.
 ;; Very sneaky game.
 ;;
-488F: 01 03 01 0A    ;     "N"    : ["GoToRoom(11)"],
-4893: 02 04 04 D3 4E ;     "E"    : ["Print(ARE_YOU_JUST_GOING_TO_WALK_RIGHT_THROUGH_THAT_RAGING_FIRE?)"],
-4898: 12 04 0C       ;     "YES"  : ["PrintOK()",
-489B: 01 0F          ;               "GoToRoom(15)"],
-489D: 13 04 04 D0 4F ;     "NO"   : ["Print(A_WISE_DECISION.)"]
-48A2: 00
+488F: 01 03      ; N
+4891: 01 0A      ;     move_look(RM_0A_WEST_END_HALL)
+4893: 02 04      ; E
+4895: 04 D3 4E   ;     print(PS_2F) ARE_YOU_JUST_GOING_TO_WALK_RIGHT_THROUGH_THAT_RAGING_FIRE?
+4898: 12 04      ; YES
+489A: 0C         ;     print_ok()
+489B: 01 0F      ;     move_look(RM_0F_LIBRARY)
+489D: 13 04      ; NO
+489F: 04 D0 4F   ;     print(PS_39) A_WISE_DECISION.
+48A2: 00         ;
 
-; "Room_15"  : {
-;     "Description" : "YOU_ARE_AT_THE_LIBRARY._THERE IS A HOLE IN THE CEILING.",
+Script_RM_0F_LIBRARY:
+; PS_1F
+; you_are_at_the_LIBRARY.__THERE_IS_A_HOLE_IN_THE_CEILING.
+;
 ;;
 ;; If you DROP the ROPE in this room then the ROPE object goes out of game-play and the ROPE TO CEILING is
 ;; moved to this room. If the ROPE TO CEILING is in this room then the CLIMB command loads the second floor
 ;; from tape.
 ;;
-48A3: 04 03 01 0E    ;     "W"    : ["GoToRoom(13)"],
-48A7: 07 0B 0A 07    ;     "DROP" : ["AssertInputNounIs(ROPE)",
-48AB: 0D 07 00       ;               "MoveObjectToRoom(ROPE,0)"
-48AE: 08 0C          ;               "MoveObjectToCurrentRoom(ROPECEILING)",
-48B0: 04 40 4F       ;               "Print(INSTANTLY_THE_ROPE_UNWINDS_AND_LEVITATES_TO_THE_HOLE_IN_THE_____CEILING!)"],
-48B3: 0F 04 10 0C    ;     "CLIM" : ["AssertObjectIsInRoom(ROPECEILING)",
-48B7: 11             ;               "LoadSecondFloorFromTape"]
-48B8: 00             ; },
+48A3: 04 03      ; W
+48A5: 01 0E      ;     move_look(RM_0E_MASTER_BEDROOM)
+48A7: 07 0B      ; DROP
+48A9: 0A 07      ;     is_object_user_input(OBJ_07_ROPE)
+48AB: 0D 07 00   ;     move_object_to_room(OBJ_07_ROPE, RM_00_nowhere)
+48AE: 08 0C      ;     drop_object_print_ok(OBJ_0C_ROPE_CEILING)
+48B0: 04 40 4F   ;     print(PS_33) INSTANTLY_THE_ROPE_UNWINDS_AND_LEVITATES_TO_THE_HOLE_IN_THE_____
+;                                   CEILING!
+48B3: 0F 04      ; CLIM
+48B5: 10 0C      ;     is_in_current_room(OBJ_0C_ROPE_CEILING)
+48B7: 11         ;     load_second_floor()
+48B8: 00         ;
 
-; "Room_16"  : {
-;     "Description" : "YOU_ARE_AT_THE_OUTSIDE_OF_THE_HOUSE.",
+Script_RM_10_OUTSIDE_HOUSE:
+; PS_20
+; you_are_at_the_OUTSIDE_OF_THE_HOUSE.
+;
 ;;
 ;; There is a DOOR here, but you can't open it. You have to use the PLUGH command to "poof" inside the house.
 ;; Be sure to pick up the PAPER here or you can't get the KNIFE later. The PAPER has a message you can
 ;; READ, but that is handled by the general script (later).
 ;;
-48B9: 0A 06 04 23 4E ; "PLUG" : ["Print(YOU_MATERIALIZE_INSIDE_THE_DOOR.)",
-48BE: 01 01          ;           "GoToRoom(1)"],
-48C0: 05 06 0A 02    ; "OPEN" : ["AssertInputNounIs(DOOR)"
-48C4: 04 3B 4E       ;           "Print(THE_DOOR_CAN'T_BE_OPENED.)"]
-48C7: 00             ; }
+48B9: 0A 06      ; PLUG
+48BB: 04 23 4E   ;     print(PS_29) YOU_MATERIALIZE_INSIDE_THE_DOOR.
+48BE: 01 01      ;     move_look(RM_01_FORYER)
+48C0: 05 06      ; OPEN
+48C2: 0A 02      ;     is_object_user_input(OBJ_02_DOOR)
+48C4: 04 3B 4E   ;     print(PS_2A) THE_DOOR_CAN'T_BE_OPENED.
+48C7: 00         ;
 ```
 
 # Object Info
@@ -1425,27 +1503,42 @@ GeneralScript:
 ;  - You can READ the PAPER or SCROLL if they are present (in your pack or in the room).
 ;  - DRINK the water and you die.
 ;                    ; {
-4AF2: 01 02 05       ;  "N"    : ["PrintRoomDescription()"],
-4AF5: 02 02 05       ;  "E"    : ["PrintRoomDescription()"],
-4AF8: 03 02 05       ;  "S"    : ["PrintRoomDescription()"],
-4AFB: 04 02 05       ;  "W"    : ["PrintRoomDescription()"],
-4AFE: 06 02 0E       ;  "GET"  : ["GetNounToPack()"],
-4B01: 07 02 0F       ;  "DROP" : ["DropNounToRoom()"],
-4B04: 0D 02 05       ;  "LOOK" : ["PrintRoomDescription()"],
-4B07: 0B 02 07       ;  "QUIT" : ["EndlessLoop()"],
-4B0A: 0C 02 09       ;  "INVE" : ["PrintInventory()"],
-4B0D: 08 06 0A 0A    ;  "POUR" : ["AssertInputNounIs(BUCKET)",
-4B11: 04 95 4D       ;            "Print(THE_GROUND_IS_WET.__THE_BUCKET_MAGICALLY_REFILLS!)"],
-4B14: 09 06 0A 01    ;  "READ" : ["AssertInputNounIs(PAPER)",
-4B18: 04 B8 4D       ;            "Print(IT_SAYS,_"MAGIC_WORD_-_PLUGH.")"],
-4B1B: 09 06 0A 0D    ;  "READ" : ["AssertInputNounIs(SCROLL)",
-4B1F: 04 DD 4F       ;            "Print(IT_SAYS,_"THERE_IS_ESCAPE_FROM_THE_SECOND_FLOOR!")"],
-4B22: 10 07 0A 0A    ;  "DRIN" : ["AssertInputNounIs(BUCKET)",
-4B26: 04 CE 4D       ;            "Print(YOU_FEEL_SICK.__IN_FACT,_YOU_JUST_DIED.__IT_WAS_POSION!)",
-4B29: 07             ;            "EndlessLoop()"],
-4B2A: 11 04 04 F5 4D ;  "SMAS" : ["OUCH!__YOU_HURT_YOUR_HAND."],
-4B2F: 0A 04 04 09 4E ;  "PLUG" : ["Print(SORRY,_ONLY_ONE_PLUGH_PER_CUSTOMER.)"]
-4B34: 00             ; }
+4AF2: 01 02      ; N
+4AF4: 05         ;     print_room_description()
+4AF5: 02 02      ; E
+4AF7: 05         ;     print_room_description()
+4AF8: 03 02      ; S
+4AFA: 05         ;     print_room_description()
+4AFB: 04 02      ; W
+4AFD: 05         ;     print_room_description()
+4AFE: 06 02      ; GET
+4B00: 0E         ;     get_users_object_print_ok()
+4B01: 07 02      ; DROP
+4B03: 0F         ;     drop_users_object_print_ok()
+4B04: 0D 02      ; LOOK
+4B06: 05         ;     print_room_description()
+4B07: 0B 02      ; QUIT
+4B09: 07         ;     end_of_game()
+4B0A: 0C 02      ; INVE
+4B0C: 09         ;     print_inventory()
+4B0D: 08 06      ; POUR
+4B0F: 0A 0A      ;     is_object_user_input(OBJ_0A_BUCKET)
+4B11: 04 95 4D   ;     print(PS_24) THE_GROUND_IS_WET.__THE_BUCKET_MAGICALLY_REFILLS!
+4B14: 09 06      ; READ
+4B16: 0A 01      ;     is_object_user_input(OBJ_01_PAPER)
+4B18: 04 B8 4D   ;     print(PS_25) IT_SAYS,_"MAGIC_WORD_-_PLUGH."
+4B1B: 09 06      ; READ
+4B1D: 0A 0D      ;     is_object_user_input(OBJ_0D_SCROLL)
+4B1F: 04 DD 4F   ;     print(PS_3A) IT_SAYS,_"THERE_IS_ESCAPE_FROM_THE_SECOND_FLOOR!"
+4B22: 10 07      ; DRIN
+4B24: 0A 0A      ;     is_object_user_input(OBJ_0A_BUCKET)
+4B26: 04 CE 4D   ;     print(PS_26) YOU_FEEL_SICK.__IN_FACT,_YOU_JUST_DIED.__IT_WAS_POSION!
+4B29: 07         ;     end_of_game()
+4B2A: 11 04      ; SMAS
+4B2C: 04 F5 4D   ;     print(PS_27) OUCH!__YOU_HURT_YOUR_HAND.
+4B2F: 0A 04      ; PLUG
+4B31: 04 09 4E   ;     print(PS_28) SORRY,_ONLY_ONE_PLUGH_PER_CUSTOMER.
+4B34: 00         ; 
 ```
 
 # Compressed Text

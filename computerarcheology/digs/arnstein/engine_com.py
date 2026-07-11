@@ -104,7 +104,7 @@ def collect_script_comments(info):
     addr = 0
     for i in range(len(lines)-1,-1,-1):
         line = lines[i]
-        if len(line)>4 and line[4]==':':
+        if len(line)>6 and line[4]==':':
             addr = int(line[:4], 16)
 
         i = line.find(';;')

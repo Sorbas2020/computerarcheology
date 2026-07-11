@@ -237,7 +237,7 @@ StartupCont:
 0153: CB 66           BIT     4,(HL)              ; 
 0155: 28 1F           JR      Z,$176              ; {}
 0157: 21 ED 2A        LD      HL,$2AED            ; "GAME OVER PLAYER " script
-015A: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+015A: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 015D: 3A 46 E0        LD      A,($E046)           ; {ram.mE046}
 0160: 1F              RRA                         ; 
 0161: 1F              RRA                         ; 
@@ -251,7 +251,7 @@ StartupCont:
 0172: A7              AND     A                   ; 
 0173: C2 B7 0B        JP      NZ,$0BB7            ; {code.jf_start_new_section}
 0176: 21 02 2B        LD      HL,$2B02            ; "GAME OVER" script * J0155
-0179: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+0179: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 017C: CD 1C 06        CALL    $061C               ; {code.WhichPlayer}
 017F: 28 03           JR      Z,$184              ; {}
 0181: CD 03 06        CALL    $0603               ; {code.SwapPlayers}
@@ -1465,7 +1465,7 @@ ReadSettings:
 074B: CD 00 03        CALL    $0300               ; {code.RunTextScript}
 074E: CD 27 05        CALL    $0527               ; {code.PrintCreds}
 0751: 21 57 2C        LD      HL,$2C57            ; "INSERT COIN" script
-0754: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+0754: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 0757: 11 54 E0        LD      DE,$E054            ; 
 075A: 01 20 00        LD      BC,$0020            ; 
 075D: 3A 44 E0        LD      A,($E044)           ; {ram.slotMode}
@@ -1491,7 +1491,7 @@ ReadSettings:
 0785: 3E 31           LD      A,$31               ; 
 0787: 77              LD      (HL),A              ; * J077F
 0788: 21 54 E0        LD      HL,$E054            ; * J079D
-078B: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+078B: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 078E: 3A 47 E0        LD      A,($E047)           ; {ram.cntTillCred} * J076C,J0792
 0791: A7              AND     A                   ; 
 0792: 20 FA           JR      NZ,$78E             ; {}
@@ -1537,7 +1537,7 @@ ReadSettings:
 07E3: 3A 42 E0        LD      A,($E042)           ; {ram.slotModeB}
 07E6: 18 C2           JR      $7AA                ; {}
 07E8: 21 54 E0        LD      HL,$E054            ; * C0766,C07DD
-07EB: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+07EB: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 07EE: 2A 54 E0        LD      HL,($E054)          ; {ram.mE054}
 07F1: 11 40 00        LD      DE,$0040            ; 
 07F4: 19              ADD     HL,DE               ; 
@@ -4955,12 +4955,12 @@ ISROBJRun_24:
 2003: DD 7E 0C        LD      A,(IX+$0C)          ; 
 2006: E6 7F           AND     $7F                 ; 
 2008: C8              RET     Z                   ; 
-2009: CD 28 1F        CALL    $1F28               ; {code.ISROBJRun_27}
+2009: CD 28 1F        CALL    $1F28               ; {code.ISROBJRun_1F}
 200C: DD 7E 00        LD      A,(IX+$00)          ; 
 200F: FE 25           CP      $25                 ; 
 2011: CA 83 1F        JP      Z,$1F83             ; {}
 2014: FE 24           CP      $24                 ; 
-2016: CA AA 1E        JP      Z,$1EAA             ; {code.ISROBJRun_22}
+2016: CA AA 1E        JP      Z,$1EAA             ; {code.ISROBJRun_1E}
 2019: C9              RET                         ; 
 
 ISROBJRun_25:
@@ -5272,7 +5272,7 @@ ISROBJRun_21:
 281F: 2B              DEC     HL                  ; 
 2820: 73              LD      (HL),E              ; 
 2821: 21 39 2C        LD      HL,$2C39            ; "YOU HAVE BROKEN A RECORD" script
-2824: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+2824: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 2827: 2A 94 E0        LD      HL,($E094)          ; {ram.mE094} * J2817,J285C
 282A: ED 5B 11 E5     LD      DE,($E511)          ; {ram.mE511}
 282E: 7D              LD      A,L                 ; 
@@ -5310,12 +5310,12 @@ ISROBJRun_21:
 2871: CD BA 28        CALL    $28BA               ; {}
 2874: 38 0D           JR      C,$2883             ; {}
 2876: 21 E4 2B        LD      HL,$2BE4            ; "GOOD BONUS POINTS" script
-2879: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+2879: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 287C: 3A F9 E0        LD      A,($E0F9)           ; {ram.champColors}
 287F: 3C              INC     A                   ; 
 2880: C3 F9 27        JP      $27F9               ; {}
 2883: 21 F9 2B        LD      HL,$2BF9            ; "SORRY NO BONUS" script * J2874
-2886: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+2886: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 2889: CD E8 05        CALL    $05E8               ; {code.Delay3Sec}
 288C: 18 0E           JR      $289C               ; {}
 288E: CD E8 05        CALL    $05E8               ; {code.Delay3Sec} * J283C
@@ -5374,7 +5374,7 @@ ISROBJRun_21:
 2905: 2B              DEC     HL                  ; 
 2906: 71              LD      (HL),C              ; 
 2907: 21 79 2B        LD      HL,$2B79            ; "TIME TO REACH POINT " script * J2902
-290A: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+290A: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 290D: CD 81 29        CALL    $2981               ; {}
 2910: A7              AND     A                   ; 
 2911: 20 02           JR      NZ,$2915            ; {}
@@ -5384,15 +5384,15 @@ ISROBJRun_21:
 2918: 1B              DEC     DE                  ; 
 2919: 12              LD      (DE),A              ; 
 291A: 21 94 2B        LD      HL,$2B94            ; 
-291D: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+291D: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 2920: 21 12 E5        LD      HL,$E512            ; 
 2923: 13              INC     DE                  ; 
 2924: CD 9A 03        CALL    $039A               ; {code.jf_write_2_digits_to_screen}
 2927: 21 B0 2B        LD      HL,$2BB0            ; "THE AVERAGE TIME " script
-292A: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+292A: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 292D: CD 68 29        CALL    $2968               ; {}
 2930: 21 CC 2B        LD      HL,$2BCC            ; "TOP RECORD " script
-2933: CD 4E 03        CALL    $034E               ; {code.write_text_to_screen_at_xy_with_delay}
+2933: CD 4E 03        CALL    $034E               ; {code.SlowScript}
 2936: 2A 96 E0        LD      HL,($E096)          ; {ram.mE096}
 2939: 13              INC     DE                  ; 
 293A: CD 9A 03        CALL    $039A               ; {code.jf_write_2_digits_to_screen}

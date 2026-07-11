@@ -456,7 +456,7 @@ InterruptService:
 074E: 24 01           BCC     $751                ; {} ... a second
 0750: 3B              RTI                         ; Return from interrupt
 ;
-0751: BD 0A 1F        JSR     $0A1F               ; {code.MINOTAURAttack} Handle creatures that attack
+0751: BD 0A 1F        JSR     $0A1F               ; {code.CreaturesAttack} Handle creatures that attack
 0754: 96 45           LDA     <$45                ; {ram.fogClock} Time spent with MYSTERIOUS FOG
 0756: 81 06           CMPA    #$06                ; Fog counter reached 6 seconds?
 0758: 27 19           BEQ     $773                ; {} Yes ... warn the player
@@ -558,7 +558,7 @@ OneMinTick:
 0807: 0A 13           DEC     <$13                ; {ram.auraTimer} Count down until we can heal again
 ;
 0809: 8D 04           BSR     $80F                ; {} Ground might shake
-080B: BD 09 6E        JSR     $096E               ; {code.MoveMinotaur} Move creatures once every minute
+080B: BD 09 6E        JSR     $096E               ; {code.MoveCreatures} Move creatures once every minute
 080E: 3B              RTI                         ; Out
  
 ; Shaking ground ... here once a minute
@@ -2331,7 +2331,7 @@ CommandDRINK:
 ## Code Bug 1
 
 ```code
-12E7: 27 17           BEQ     $1300               ; {code.CodeBug1} Yes ... go handle potion
+12E7: 27 17           BEQ     $1300               ; {code.DirnkPotion} Yes ... go handle potion
 12E9: 81 FF           CMPA    #$FF                ; No noun?
 12EB: 10 27 FD AA     LBEQ    $1099               ; {code.ComWHAT} No noun ... "DRINK WHAT?" and out
 12EF: 8E 2A C0        LDX     #$2AC0              ; "DON'T BE RIDICULOUS."

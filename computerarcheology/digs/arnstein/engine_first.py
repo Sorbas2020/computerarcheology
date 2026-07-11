@@ -286,7 +286,7 @@ def update_room_names(info):
     # Objects (elsewhere)
     # GeneralScript (elsewhere)
 
-    # write_code_file(info["File"], lines) 
+    engine_com.write_code_file(info["File"], lines) 
 
 def update_objects(info):
     lines = engine_com.read_code_file(info["File"])
@@ -406,38 +406,69 @@ def update_room_scripts(info):
 
         addr = scripter.decode_map_script(addr, new_lines)        
 
-        new_lines.append('')          
+        if addr < end_addr:
+            new_lines.append('')          
 
     rep_lines = lines[:pso] + new_lines + lines[peo:]
-    # engine_com.write_code_file(info["File"], rep_lines)    
+    engine_com.write_code_file(info["File"], rep_lines)    
+
+def update_general_script(info):
+    # coms = engine_com.collect_script_comments(info)
+
+    # ps_info = engine_com.get_packed_strings(info)
+    # room_ptrs = engine_com.get_room_info(info)
+
+    lines = engine_com.read_code_file(info["File"])    
+
+    pso,peo = engine_com.find_start_and_end(lines, info["GeneralScript"][0], info["GeneralScript"][1])
+    
+    new_lines = []
+
+    scripter = FirstScripter(info)
+    addr = engine_com.get_address_for(lines,pso)
+
+    addr = scripter.decode_map_script(addr, new_lines)
+
+    rep_lines = lines[:pso] + new_lines + lines[peo:]
+    engine_com.write_code_file(info["File"], rep_lines)    
+    
 
 
 info = ADDRESSES["TRS80"]["PYRAMID_L2"]
-# update_command_names(info)
-# update_room_names(info)
-# update_objects(info)
+update_command_names(info)
+update_room_names(info)
+update_objects(info)
 update_room_scripts(info)
+update_general_script(info)
 
 info = ADDRESSES["TRS80"]["PYRAMID_L1"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
 # update_room_scripts(info)
+# update_room_scripts(info)
+# update_general_script(info)
 
 info = ADDRESSES["COCO"]["PYRAMID"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
 # update_room_scripts(info)
+# update_room_scripts(info)
+# update_general_script(info)
 
 info = ADDRESSES["TRS80"]["HAUNTEDHOUSE1"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
 # update_room_scripts(info)
+# update_room_scripts(info)
+# update_general_script(info)
 
 info = ADDRESSES["TRS80"]["HAUNTEDHOUSE2"]
 # update_command_names(info)
 # update_room_names(info)
 # update_objects(info)
 # update_room_scripts(info)
+# update_room_scripts(info)
+# update_general_script(info)

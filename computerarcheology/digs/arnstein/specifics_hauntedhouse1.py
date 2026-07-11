@@ -54,6 +54,7 @@ WORDS = {
         9: ['READ'],
         14: ['PANE'],
         10: ['PLUG'],
+        255: ['all']
     },
     'nouns': {
         3: ['KEY'],
