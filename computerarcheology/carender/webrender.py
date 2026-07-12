@@ -246,7 +246,7 @@ def _render_code_line(line, code_anchors, tables):
             # This a naked (no-name) reference to a code address
             rep = first_part[i:j]
             rep_org = first_part[i + 1:j]
-            rep_org = rep_org.rjust(4, '0')
+            rep_org = rep_org.rjust(4, '0')            
             rep_html = f'<a class="addr_code" href="#{rep_org}">{rep}</a>'
             first_part = first_part[0:i] + rep_html + first_part[j:]
         else:
@@ -271,6 +271,8 @@ def _render_code_line(line, code_anchors, tables):
                 if html_name.endswith('.md'):
                     html_name = html_name[:-3] + '.html'
                 hover = first_part[i:j]
+                if len(rep) > 20:
+                    print("#### Long reference: " + rep)                    
                 rep_html = f'<a title="{hover}" class="addr_{table_name}" href="{html_name}#{rep}"{target}>{rep_org}</a>'
                 vis_length = vis_length - (j - i)  # Removing the constant
                 vis_length = vis_length + len(rep_org)  # Adding the link text                
