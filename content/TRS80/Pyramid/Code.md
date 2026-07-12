@@ -46,7 +46,7 @@ GameLoop:
 4334: 6F              LD      L,A                 ; ... HL
 4335: CD 7D 43        CALL    $437D               ; {code.ProcessRoomScript} Process the room script
 4338: C2 4A 43        JP      NZ,$434A            ; {} ZF clear ... script was successful. Move on.
-433B: 21 B0 59        LD      HL,$59B0            ; {+code.GeneralCommandHandler} General script
+433B: 21 B0 59        LD      HL,$59B0            ; {+code.GeneralComScript} General script
 433E: CD 7D 43        CALL    $437D               ; {code.ProcessRoomScript} Process the script
 4341: C2 4A 43        JP      NZ,$434A            ; {} Process the script
 4344: 21 71 74        LD      HL,$7471            ; {+code.PS_7F} General fail message (one of 4 that changes)
@@ -3810,7 +3810,7 @@ WordTable:
 This script is used when the room doesn't have a script for the input command.
 
 ```code
-GeneralCommandHandler:
+GeneralComScript:
 59B0: 01 04      ; N
 59B2: 04 ED 73   ;     print(PS_7A) THERE_IS_NO_WAY_FOR_YOU_TO_GO_THAT_DIRECTION.
 59B5: 02 04      ; E

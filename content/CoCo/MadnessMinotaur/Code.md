@@ -1334,7 +1334,7 @@ PlaceSpells:
 0C9D: 26 EE           BNE     $C8D                ; {} No ... do all
 0C9F: 39              RTS                         ; Out
 
-PlaceEnterRoomActions:
+PlaceEnterActions:
 0CA0: 10 8E 3C 8C     LDY     #$3C8C              ; Entering-room action table
 0CA4: 8E 1D E6        LDX     #$1DE6              ; Placement range table
 0CA7: 86 1E           LDA     #$1E                ; 30 actions to place
@@ -1414,7 +1414,7 @@ GameInit:
 0D19: BD 0B CC        JSR     $0BCC               ; {code.InitializeObjects} Initialize all objects
 0D1C: BD 0C 22        JSR     $0C22               ; {} Init lamp oil (0708)
 0D1F: BD 0C 51        JSR     $0C51               ; {code.AssignHolders} Assign treasures to holders
-0D22: BD 0C A0        JSR     $0CA0               ; {code.PlaceEnterRoomActions} Place the enter-room-actions
+0D22: BD 0C A0        JSR     $0CA0               ; {code.PlaceEnterActions} Place the enter-room-actions
 0D25: 0A 05           DEC     <$05                ; {ram.condition} Physical condition at max
 0D27: 86 0A           LDA     #$0A                ; Start in ...
 0D29: 97 00           STA     <$00                ; {ram.curRoom} ... Room 10
@@ -3788,7 +3788,7 @@ EnteringRoomAction_c:
 1B7E: 97 00           STA     <$00                ; {ram.curRoom} Current room ...
 1B80: 97 01           STA     <$01                ; {ram.lastRoom} ... and last room
 1B82: BD 06 61        JSR     $0661               ; {code.Random} Random
-1B85: F7 3C 8F        STB     $3C8F               ; {code.ActionWhenEnteringRoom} Move first handler to another room
+1B85: F7 3C 8F        STB     $3C8F               ; {code.ActionWhenEnterRoom} Move first handler to another room
 1B88: BD 06 61        JSR     $0661               ; {code.Random} Random
 1B8B: F7 3C 92        STB     $3C92               ; {} Move second handler to another room
 1B8E: 86 20           LDA     #$20                ; Caved-in floor ...
@@ -6725,7 +6725,7 @@ WhoHolds:
 ## Enter Room Table 
 
 ```code
-ActionWhenEnteringRoom:
+ActionWhenEnterRoom:
 3C8F: 00 1B 6D  ; 0    _a     ; Cave in to next floor if pack heavier than 192. If so move _a and _b to random rooms.
 3C92: 00 1B 70  ; 0    _b     ; Cave in to next floor if pack heavier than 128. If so move _a and _b to random rooms.
 3C95: 00 1B 73  ; 0    _c     ; Cave in to next floor if pack heavier than 95. If so move _a and _b to random rooms.

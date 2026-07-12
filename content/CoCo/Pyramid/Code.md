@@ -570,7 +570,7 @@ PrintPackedMessage:
 08E9: 27 EA           BEQ     $08D5               ; {} ... no CR
 08EB: 34 10           PSHS    X                   ; Hold pointer
 08ED: 1F 98           TFR     B,A                 ; Character to A
-08EF: BD 09 45        JSR     $0945               ; {code.PrintCharacterAutoWrap} Print character to screen
+08EF: BD 09 45        JSR     $0945               ; {code.PrintCharAutoWrap} Print character to screen
 08F2: 35 10           PULS    X                   ; Restore pointer
 08F4: A6 80           LDA     ,X+                 ; Get next byte from unpacked
 08F6: 81 0A           CMPA    #$0A                ; Mark for another packing?
@@ -596,14 +596,14 @@ PrintUnpacked:
 0904: 81 40           CMPA    #$40                ; Is it '@'
 0906: 27 07           BEQ     $090F               ; {} Just ignore it
 0908: 34 10           PSHS    X                   ; Save X
-090A: BD 09 45        JSR     $0945               ; {code.PrintCharacterAutoWrap} A to screen
+090A: BD 09 45        JSR     $0945               ; {code.PrintCharAutoWrap} A to screen
 090D: 35 10           PULS    X                   ; Restore X
 090F: 30 01           LEAX    1,X                 ; Next in message
 0911: 20 E9           BRA     $08FC               ; {code.PrintUnpacked} Keep going
 ;
 ; Print a CR
 0913: 86 0D           LDA     #$0D                ; CR
-0915: BD 09 45        JSR     $0945               ; {code.PrintCharacterAutoWrap} Print a CR
+0915: BD 09 45        JSR     $0945               ; {code.PrintCharAutoWrap} Print a CR
 0918: 7A 01 B0        DEC     $01B0               ; {ram.m01B0} Rows left before more
 091B: 2B 01           BMI     $091E               ; {code.MorePrompt} Pause print out with MORE
 091D: 39              RTS                         ; Done
@@ -637,7 +637,7 @@ ReadKey:
 0942: 35 20           PULS    Y                   ; Restore
 0944: 39              RTS                         ; Out
 
-PrintCharacterAutoWrap:
+PrintCharAutoWrap:
 ; Print character in A to screen. This handles auto word-wrapping and
 ; auto MORE prompting.
 ;
@@ -1770,7 +1770,7 @@ UnpackMessage:
 10ED: C6 03           LDB     #$03                ; 3 characters
 10EF: A6 A0           LDA     ,Y+                 ; Get next byte
 10F1: 34 04           PSHS    B                   ; Save B
-10F3: BD 09 45        JSR     $0945               ; {code.PrintCharacterAutoWrap} Print A to screen
+10F3: BD 09 45        JSR     $0945               ; {code.PrintCharAutoWrap} Print A to screen
 10F6: 35 04           PULS    B                   ; Restore B
 10F8: 5A              DECB                        ; All 3 done?
 10F9: 26 F4           BNE     $10EF               ; {} Do all 3 characters in this pair

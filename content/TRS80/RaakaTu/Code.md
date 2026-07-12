@@ -263,7 +263,7 @@ MainLoop:
 44F5: 21 FF 3F        LD      HL,$3FFF            
 44F8: 22 20 40        LD      ($4020),HL          ; {ram.screenPtr}
 44FB: 3E 0D           LD      A,$0D               
-44FD: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+44FD: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4500: 3A 11 50        LD      A,($5011)           ; {ram.FIRST_NOUN_NUM}
 4503: A7              AND     A                   
 4504: C2 13 45        JP      NZ,$4513            ; {}
@@ -276,7 +276,7 @@ MainLoop:
 4519: CD 94 48        CALL    $4894               ; {}
 451C: CD D5 4B        CALL    $4BD5               ; {}
 451F: 3E 0D           LD      A,$0D               
-4521: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4521: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4524: 3A 1F 50        LD      A,($501F)           ; {ram.PHRASE_FORM}
 4527: C3 20 43        JP      $4320               ; {code.MainLoop} Top of game loop
 
@@ -1141,7 +1141,7 @@ Com_06_print_inventory:
 ; print_inventory()
 4A65: E5              PUSH    HL                  
 4A66: 3E 0D           LD      A,$0D               
-4A68: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4A68: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4A6B: 21 51 56        LD      HL,$5651            ; {+code.ObjectData}
 4A6E: CD 05 47        CALL    $4705               ; {code.SkipIDLoadEnd}
 4A71: CD 19 47        CALL    $4719               ; {code.CompareXY}
@@ -1554,9 +1554,9 @@ Com_23_heal_VAR:
 Com_25_restart_game:
 ; restart_game()
 4CF7: 3E 0D           LD      A,$0D               
-4CF9: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4CF9: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4CFC: 3E 0D           LD      A,$0D               
-4CFE: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4CFE: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4D01: C3 00 43        JP      $4300               ; {code.Start}
 
 Com_24_endless_loop:
@@ -1623,10 +1623,10 @@ Com_27_load_game:
 4D73: CD ED 46        CALL    $46ED               ; {code.FindSublist}
 4D76: 22 24 50        LD      ($5024),HL          ; {ram.CUR_ROOM_DATA}
 4D79: 3E 0D           LD      A,$0D               
-4D7B: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4D7B: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4D7E: CD D0 49        CALL    $49D0               ; {code.PrintRoomDescription}
 4D81: 3E 0D           LD      A,$0D               
-4D83: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4D83: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4D86: C3 23 43        JP      $4323               ; {}
 4D89: CD F8 01        CALL    $01F8               ; {hard.TapeOff}
 4D8C: 11 95 4D        LD      DE,$4D95            
@@ -1662,7 +1662,7 @@ Com_27_load_game:
 4DB0: A7              AND     A                   
 4DB1: C8              RET     Z                   
 4DB2: D5              PUSH    DE                  
-4DB3: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4DB3: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4DB6: D1              POP     DE                  
 4DB7: 13              INC     DE                  
 4DB8: C3 AF 4D        JP      $4DAF               ; {}
@@ -1761,18 +1761,18 @@ Com_26_print_score:
 4E61: E6 0F           AND     $0F                 
 4E63: C6 30           ADD     $30                 
 4E65: 47              LD      B,A                 
-4E66: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4E66: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4E69: 3A FD 4F        LD      A,($4FFD)           ; {ram.not1AF}
 4E6C: E6 0F           AND     $0F                 
 4E6E: C6 30           ADD     $30                 
 4E70: 47              LD      B,A                 
-4E71: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4E71: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4E74: 3E 2E           LD      A,$2E               
 4E76: 47              LD      B,A                 
-4E77: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4E77: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4E7A: 3E 20           LD      A,$20               
 4E7C: 47              LD      B,A                 
-4E7D: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4E7D: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4E80: E1              POP     HL                  
 4E81: 97              SUB     A                   
 4E82: C9              RET                         
@@ -1785,7 +1785,7 @@ Com_26_print_score:
 4E8F: C3 89 4E        JP      $4E89               ; {}
 4E92: CD 9B 4E        CALL    $4E9B               ; {}
 4E95: 3E 0D           LD      A,$0D               
-4E97: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4E97: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4E9A: C9              RET                         
 4E9B: 01 00 00        LD      BC,$0000            
 4E9E: 7E              LD      A,(HL)              
@@ -1814,7 +1814,7 @@ Com_26_print_score:
 4EC7: 11 BF FF        LD      DE,$FFBF            
 4ECA: 19              ADD     HL,DE               
 4ECB: 3E 0D           LD      A,$0D               
-4ECD: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4ECD: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4ED0: 3E 20           LD      A,$20               
 4ED2: 32 0C 50        LD      ($500C),A           ; {ram.lastChar}
 4ED5: 7E              LD      A,(HL)              
@@ -1830,7 +1830,7 @@ Com_26_print_score:
 4EE8: FE 1B           CP      $1B                 
 4EEA: D2 EF 4E        JP      NC,$4EEF            ; {}
 4EED: C6 40           ADD     $40                 
-4EEF: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4EEF: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4EF2: C3 DF 4E        JP      $4EDF               ; {}
 4EF5: E1              POP     HL                  
 4EF6: C3 AB 4E        JP      $4EAB               ; {}
@@ -1838,15 +1838,15 @@ Com_26_print_score:
 4EFA: A7              AND     A                   
 4EFB: CA 07 4F        JP      Z,$4F07             ; {}
 4EFE: 7E              LD      A,(HL)              
-4EFF: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4EFF: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4F02: 23              INC     HL                  
 4F03: 0D              DEC     C                   
 4F04: C3 F9 4E        JP      $4EF9               ; {}
 4F07: 3E 20           LD      A,$20               
-4F09: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4F09: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4F0C: C9              RET                         
 
-PrintCharacterAutoWrap:
+PrintCharAutoWrap:
 ; Print character in A to screen. This handles auto word-wrapping and
 ; auto MORE prompting.
 ;
@@ -1936,7 +1936,7 @@ PrintCharacterAutoWrap:
 4F93: 21 CF 4F        LD      HL,$4FCF            
 4F96: 06 03           LD      B,$03               
 4F98: 7E              LD      A,(HL)              
-4F99: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharacterAutoWrap}
+4F99: CD 0D 4F        CALL    $4F0D               ; {code.PrintCharAutoWrap}
 4F9C: 23              INC     HL                  
 4F9D: 05              DEC     B                   
 4F9E: C2 98 4F        JP      NZ,$4F98            ; {}

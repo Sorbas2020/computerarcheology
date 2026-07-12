@@ -40,7 +40,7 @@ Start:
 0625: BF 01 D6        STX     $01D6               ; {ram.CUR_ROOM_DATA} Store current room data
 0628: BD 0D 4A        JSR     $0D4A               ; {code.PrintRoomDescription} Print room description
 062B: 86 0D           LDA     #$0D                ; Print ...
-062D: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... CR
+062D: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... CR
 ```
 
 # Main Loop
@@ -253,7 +253,7 @@ list for BEDLAM and RAAKATU is empty so the code is never used anyway.
 07F3: 8E 05 FF        LDX     #$05FF              ; Move cursor to ...
 07F6: 9F 88           STX     <$88                ; {ram.printCursor} ... end of line
 07F8: 86 0D           LDA     #$0D                ; Print ...
-07FA: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... CR
+07FA: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... CR
 07FD: B6 01 C3        LDA     $01C3               ; {ram.FIRST_NOUN_NUM} First noun given?
 0800: 26 0C           BNE     $80E                ; {} Yes ... keep what we have
 0802: BE 01 CC        LDX     $01CC               ; {ram.SECOND_NOUN_DATA} Move 2nd ...
@@ -265,7 +265,7 @@ list for BEDLAM and RAAKATU is empty so the code is never used anyway.
 0814: BD 0C 03        JSR     $0C03               ; {code.ProcessCommand} Execute script
 0817: BD 0F 66        JSR     $0F66               ; {} Allow objects to move
 081A: 86 0D           LDA     #$0D                ; Print ...
-081C: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... CR
+081C: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... CR
 081F: 7E 06 30        JMP     $0630               ; {code.MainLoop} Top of game loop
 
 ; This function decodes the NOUN descriptor pointed to by X. The AJECTIVE-NOUN
@@ -1107,7 +1107,7 @@ Com_06_print_inventory:
 ; print_inventory()
 0DE9: 34 10           PSHS    X                   ; Hold script pointer
 0DEB: 86 0D           LDA     #$0D                ; Print ...
-0DED: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... CR
+0DED: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... CR
 0DF0: 8E 20 FF        LDX     #$20FF              ; Objects
 0DF3: BD 0A 42        JSR     $0A42               ; {code.SkipIDLoadEnd} Skip size of objects
 ;
@@ -1489,9 +1489,9 @@ Com_25_restart_game:
 ; restart_game()
 ; No return to script
 10A8: 86 0D           LDA     #$0D                ; Print first ...
-10AA: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... CR
+10AA: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... CR
 10AD: 86 0D           LDA     #$0D                ; Print second ...
-10AF: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... CR
+10AF: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... CR
 10B2: 7E 06 0C        JMP     $060C               ; {} Restart game
 
 Com_24_endless_loop:
@@ -1507,7 +1507,7 @@ Com_24_endless_loop:
 10B7: A6 A0           LDA     ,Y+                 ; Get next character
 10B9: 27 09           BEQ     $10C4               ; {} Null means done
 10BB: 34 20           PSHS    Y                   ; Hold Y
-10BD: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} Print character
+10BD: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} Print character
 10C0: 35 20           PULS    Y                   ; Restore Y
 10C2: 20 F3           BRA     $10B7               ; {} Keep going
 10C4: 39              RTS                         ; Done
@@ -1555,15 +1555,15 @@ Com_26_print_score:
 1114: 47              ASRA                        ; ... digit ...
 1115: 47              ASRA                        ; ... value
 1116: 8B 30           ADDA    #$30                ; Convert to ASCII
-1118: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} Print the left digit
+1118: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} Print the left digit
 111B: B6 01 AF        LDA     $01AF               ; {ram.not1AF} Score value
 111E: 84 0F           ANDA    #$0F                ; Mask off the right digit
 1120: 8B 30           ADDA    #$30                ; Convert ot ASCII
-1122: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} Print the right digit
+1122: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} Print the right digit
 1125: 86 2E           LDA     #$2E                ; Print ...
-1127: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... "."
+1127: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... "."
 112A: 86 20           LDA     #$20                ; Print ...
-112C: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... SPACE
+112C: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... SPACE
 112F: 35 10           PULS    X                   ; Restore script
 1131: 4F              CLRA                        ; OK
 1132: 39              RTS                         ; Done
@@ -1580,7 +1580,7 @@ Com_26_print_score:
 ; Print packed message and CR
 1143: BD 11 4C        JSR     $114C               ; {code.PrintPackedMessage} Print packed message at X
 1146: 86 0D           LDA     #$0D                ; Print ...
-1148: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... CR
+1148: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... CR
 114B: 39              RTS                         ; Done
 ```
 
@@ -1608,18 +1608,18 @@ PrintPackedMessage:
 1173: 5D              TSTB                        ; Any characters on the end to print?
 1174: 27 08           BEQ     $117E               ; {} No ... skip
 1176: A6 80           LDA     ,X+                 ; Get character
-1178: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} Print the character
+1178: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} Print the character
 117B: 5A              DECB                        ; Decrement count
 117C: 20 F5           BRA     $1173               ; {} Keeop going
 117E: 86 20           LDA     #$20                ; Print ...
-1180: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} ... space on end
+1180: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} ... space on end
 1183: 39              RTS                         ; Done
 ```
 
 # Print Character
 
 ```code
-PrintCharacterAutoWrap:
+PrintCharAutoWrap:
 ; Print character in A to screen. This handles auto word-wrapping and
 ; auto MORE prompting.
 ;
@@ -1736,7 +1736,7 @@ UnpackBytes:
 1267: 10 8E 12 A4     LDY     #$12A4              ; 
 126B: C6 03           LDB     #$03                ; 
 126D: A6 A0           LDA     ,Y+                 ; 
-126F: BD 11 84        JSR     $1184               ; {code.PrintCharacterAutoWrap} Print character
+126F: BD 11 84        JSR     $1184               ; {code.PrintCharAutoWrap} Print character
 1272: 5A              DECB                        ; 
 1273: 26 F8           BNE     $126D               ; {}
 1275: FC 01 AB        LDD     $01AB               ; {ram.tmp1AB}

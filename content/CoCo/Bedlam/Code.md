@@ -42,13 +42,13 @@ Start:
 0622: BD 0C 44        JSR     $0C44               ; {code.ProcessCommand} ... "you feel as though"
 ;
 0625: 86 0D           LDA     #$0D                ; Print ...
-0627: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} .. CR
+0627: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} .. CR
 062A: BD 0B 6C        JSR     $0B6C               ; {code.GetKey} Get a key
 ;
 062D: 8E 13 54        LDX     #$1354              ; Init random game, place player object, ...
 0630: BD 0C 44        JSR     $0C44               ; {code.ProcessCommand} ... and look
 0633: 86 0D           LDA     #$0D                ; Print ...
-0635: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... CR
+0635: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... CR
 ```
 
 # Main Loop
@@ -283,7 +283,7 @@ list for BEDLAM and RAAKATU is empty so the code is never used anyway.
 0823: B7 01 D2        STA     $01D2               ; {ram.ACTIVE_OBJ_NUM} Active object
 0826: BF 01 D3        STX     $01D3               ; {ram.ACTIVE_OBJ_DATA} Active object data
 0829: 86 0D           LDA     #$0D                ; Print ...
-082B: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... CR
+082B: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... CR
 082E: BD 0A 83        JSR     $0A83               ; {code.SkipIDLoadEnd} Skip ID and load end
 0831: 30 03           LEAX    3,X                 ; Skip object data
 0833: C6 0B           LDB     #$0B                ; Get handle-request ...
@@ -298,14 +298,14 @@ list for BEDLAM and RAAKATU is empty so the code is never used anyway.
 0848: 20 0E           BRA     $858                ; {} Continue with giving objects their turns
 
 084A: 86 0D           LDA     #$0D                ; Print ...
-084C: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... CR
+084C: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... CR
 084F: 8E 2F 24        LDX     #$2F24              ; General command scripts
 0852: BD 0A 83        JSR     $0A83               ; {code.SkipIDLoadEnd} Skip over end delta
 0855: BD 0C 44        JSR     $0C44               ; {code.ProcessCommand} Execute script
 ;
 0858: BD 10 51        JSR     $1051               ; {code.EveryTurn} Allow objects to move
 085B: 86 0D           LDA     #$0D                ; Print ...
-085D: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... CR
+085D: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... CR
 0860: 7E 06 38        JMP     $0638               ; {code.MainLoop} Top of game loop
 
 
@@ -1185,7 +1185,7 @@ Com_06_print_inventory:
 ; print_inventory()
 0E8F: 34 10           PSHS    X                   ; Hold script pointer
 0E91: 86 0D           LDA     #$0D                ; Print ...
-0E93: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... CR
+0E93: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... CR
 0E96: 8E 1B 42        LDX     #$1B42              ; Objects
 0E99: BD 0A 83        JSR     $0A83               ; {code.SkipIDLoadEnd} Skip size of objects
 ;
@@ -1595,7 +1595,7 @@ Com_28_save_game:
 116F: 26 08           BNE     $1179               ; {} No ... ignore
 1171: 7A 01 E3        DEC     $01E3               ; {ram.tillMORE} Decrement rows-till-more-prompt
 1174: 86 0D           LDA     #$0D                ; Print ...
-1176: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... CR
+1176: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... CR
 1179: 4F              CLRA                        ; OK
 117A: 39              RTS                         ; Done
 
@@ -1615,7 +1615,7 @@ Com_24_endless_loop:
 ; Print packed message and CR
 118D: BD 11 99        JSR     $1199               ; {code.PrintPackedMessage} Print packed message at X
 1190: 86 0D           LDA     #$0D                ; Print ...
-1192: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... CR
+1192: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... CR
 1195: 7A 01 E3        DEC     $01E3               ; {ram.tillMORE} Rows till MORE PROMPT
 1198: 39              RTS                         ; Done
 
@@ -1641,19 +1641,19 @@ PrintPackedMessage:
 11C1: 27 0C           BEQ     $11CF               ; {} No ... skip
 11C3: A6 80           LDA     ,X+                 ; Get character
 11C5: 34 04           PSHS    B                   ; Hold count
-11C7: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} Print character
+11C7: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} Print character
 11CA: 35 04           PULS    B                   ; Restore count
 11CC: 5A              DECB                        ; Decrement count
 11CD: 20 F1           BRA     $11C0               ; {} Keep going
 11CF: 86 20           LDA     #$20                ; Print ...
-11D1: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} ... space on end
+11D1: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} ... space on end
 11D4: 39              RTS                         ; Done
 ```
 
 # Print Character
 
 ```code
-PrintCharacterAutoWrap:
+PrintCharAutoWrap:
 ; Print character in A to screen. This handles auto word-wrapping and
 ; auto MORE prompting.
 ;
@@ -1782,7 +1782,7 @@ UnpackBytes:
 12D8: C6 03           LDB     #$03                ; 
 12DA: A6 A0           LDA     ,Y+                 ; 
 12DC: 34 04           PSHS    B                   ; 
-12DE: BD 11 D5        JSR     $11D5               ; {code.PrintCharacterAutoWrap} Print character
+12DE: BD 11 D5        JSR     $11D5               ; {code.PrintCharAutoWrap} Print character
 12E1: 35 04           PULS    B                   ; 
 12E3: 5A              DECB                        ; 
 12E4: 26 F4           BNE     $12DA               ; {}

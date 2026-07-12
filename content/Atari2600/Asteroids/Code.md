@@ -463,7 +463,7 @@ D297: A9 00           LDA     #$00                ; Clear ...
 D299: 85 0D           STA     $0D                 ; {hard.PF0} ... PF0 ...PF0:51
 D29B: 85 0E           STA     $0E                 ; {hard.PF1} ... and PF1 ...PF1:51
 D29D: B0 02           BCS     $D2A1               ; {code.DrawOddFieldPlayer} Odd frames ... go handle player
-D29F: 90 52           BCC     $D2F3               ; {code.DrawEvenFieldAsteroids} Otherwise even frames ... go handle asteroids
+D29F: 90 52           BCC     $D2F3               ; {code.DrawEvenField} Otherwise even frames ... go handle asteroids
 ```
 
 # Draw Odd Field Player
@@ -521,7 +521,7 @@ D2F0: 6C E3 00        JMP     ($00E3)             ; {ram.mE3}
 # Draw Even Field Asteroids
 
 ```code
-DrawEvenFieldAsteroids:
+DrawEvenField:
 D2F3: A5 FF           LDA     $FF                 ; {ram.mFF}
 D2F5: 85 0F           STA     $0F                 ; {hard.PF2} PF2:51
 D2F7: A1 83           LDA     ($83,X)             ; {ram.m83} CXBLPF:51 CXM1FB:51 INPT5:51

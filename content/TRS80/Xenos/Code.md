@@ -24,7 +24,7 @@ Start:
 5D0E: 3E 01           LD      A,$01               ; The player is ...
 5D10: 32 1E 72        LD      ($721E),A           ; {code.activeObject} ... the active object
 5D13: 47              LD      B,A                 ; Look up ...
-5D14: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... the player object
+5D14: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... the player object
 5D17: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Find start and end
 5D1A: 3A 21 72        LD      A,($7221)           ; {code.currentRoom} The current room number
 5D1D: 77              LD      (HL),A              ; Set the player's location
@@ -63,14 +63,14 @@ GameLoop:
 5D63: 3E 01           LD      A,$01               ; Set active object ...
 5D65: 32 1E 72        LD      ($721E),A           ; {code.activeObject} ... to the player
 5D68: 47              LD      B,A                 ; Get the player ...
-5D69: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... object pointer
+5D69: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... object pointer
 5D6C: 22 1F 72        LD      ($721F),HL          ; {code.activeObjectPtr} Hold this for others
 5D6F: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Get to the data
 5D72: 7E              LD      A,(HL)              ; Get the player's room number
 5D73: A7              AND     A                   ; Is the player in a room (as opposed to an object)?
 5D74: FA 83 5D        JP      M,$5D83             ; {} Yes ... use it
 5D77: 47              LD      B,A                 ; Must be an object ...
-5D78: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... find object ...
+5D78: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... find object ...
 5D7B: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} ... that has the player
 5D7E: 7E              LD      A,(HL)              ; Is this object contained ...
 5D7F: A7              AND     A                   ; ... by yet another object?
@@ -79,7 +79,7 @@ GameLoop:
 5D83: 32 21 72        LD      ($7221),A           ; {code.currentRoom} Room that has the player
 5D86: 47              LD      B,A                 ; Look up ...
 5D87: 21 00 52        LD      HL,$5200            ; {+ram.sectionData} ... the room ...
-5D8A: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID} ... object
+5D8A: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID} ... object
 5D8D: 22 22 72        LD      ($7222),HL          ; {code.currentRoomPtr} Hold onto the current room ptr
 5D90: A7              AND     A                   ; Did we find the room number in the section?
 5D91: C3 9A 5D        JP      $5D9A               ; {} Skip over the DIE sequence (this should be a "JP NZ,$5D9A")
@@ -138,7 +138,7 @@ GameLoop:
 5DEC: 3D              DEC     A                   
 5DED: C2 14 5E        JP      NZ,$5E14            ; {}
 5DF0: 21 DF 72        LD      HL,$72DF            
-5DF3: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID}
+5DF3: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID}
 5DF6: D2 0D 5E        JP      NC,$5E0D            ; {}
 5DF9: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 5DFC: CD DC 61        CALL    $61DC               ; {code.CompareHLandDE}
@@ -340,7 +340,7 @@ GameLoop:
 5FAA: 7E              LD      A,(HL)              
 5FAB: 32 1B 72        LD      ($721B),A           ; {}
 5FAE: 21 7A 88        LD      HL,$887A            
-5FB1: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID}
+5FB1: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID}
 5FB4: D2 14 60        JP      NC,$6014            ; {}
 5FB7: D5              PUSH    DE                  
 5FB8: E5              PUSH    HL                  
@@ -420,7 +420,7 @@ InInRoomOrPack:
 604F: 3A 1E 72        LD      A,($721E)           ; {code.activeObject}
 6052: B8              CP      B                   
 6053: C8              RET     Z                   
-6054: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6054: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 6057: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 605A: 23              INC     HL                  
 605B: 7E              LD      A,(HL)              
@@ -611,7 +611,7 @@ FlashError:
 ;       .....  : data for the item
 ;    ..
 
-FindCollectionItemByID:
+FindCollectItemByID:
 ; B is the desired item ID
 ; 71F1 is the index of the item in the list of items
 61A5: 23              INC     HL                  ; Skip collection ID
@@ -906,7 +906,7 @@ ExecuteCommand:
 635F: E5              PUSH    HL                  ; Hold script pointer
 6360: D5              PUSH    DE                  ; Hold end pointer
 6361: 21 AF B3        LD      HL,$B3AF            ; {+code.SubroutineCommands} Subroutine commands
-6364: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID} Look up the routine
+6364: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID} Look up the routine
 6367: D2 70 63        JP      NC,$6370            ; {} Not found, out
 636A: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Get beginning and end of routine
 636D: CD 57 63        CALL    $6357               ; {code.ExecuteCommand} Execute the routine
@@ -1033,7 +1033,7 @@ COM_19_move_to_room:
 63F8: 32 21 72        LD      ($7221),A           ; {code.currentRoom} Set new room number
 63FB: 47              LD      B,A                 ; Room to B for the function
 63FC: 21 00 52        LD      HL,$5200            ; {+ram.sectionData} Room descriptions
-63FF: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID} Find the room data
+63FF: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID} Find the room data
 6402: 22 22 72        LD      ($7222),HL          ; {code.currentRoomPtr} Store pointer to current room
 6405: 2A 1F 72        LD      HL,($721F)          ; {code.activeObjectPtr} Point to ...
 6408: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} ... the active object
@@ -1050,7 +1050,7 @@ COM_19_move_to_room:
 COM_37_is_player_in_any_object:
 6412: 06 01           LD      B,$01               ; Player object number
 6414: E5              PUSH    HL                  ; Hold script pointer
-6415: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Get the player object
+6415: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Get the player object
 6418: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Start of the data
 641B: 7E              LD      A,(HL)              ; Get the player's room number
 641C: E1              POP     HL                  ; Restore script pointer
@@ -1059,7 +1059,7 @@ COM_37_is_player_in_any_object:
 641F: 47              LD      B,A                 ; The player must be in an object
 6420: E5              PUSH    HL                  ; Hold script pointer
 6421: 32 0B 72        LD      ($720B),A           ; {code.varObject} Set the var object to the container object
-6424: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Look up the container object
+6424: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Look up the container object
 6427: 22 0C 72        LD      ($720C),HL          ; {code.varObjectPtr} Set var pointer to player's containing object
 642A: E1              POP     HL                  ; Restore script
 642B: 97              SUB     A                   ; Z=1 PASS
@@ -1108,7 +1108,7 @@ COM_1C_set_var_object:
 6450: 32 0B 72        LD      ($720B),A           ; {code.varObject} ... var object number
 6453: A7              AND     A                   ; Are we nulling the var object?
 6454: CA 5D 64        JP      Z,$645D             ; {} Yes, skip setting the pointer
-6457: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Look up the object
+6457: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Look up the object
 645A: 22 0C 72        LD      ($720C),HL          ; {code.varObjectPtr} Set the var object pointer
 645D: E1              POP     HL                  ; Restore script pointer
 645E: 97              SUB     A                   ; Z=1 PASS
@@ -1145,14 +1145,14 @@ COM_21_execute_phrase:
 6483: 32 0F 72        LD      ($720F),A           ; {code.firstNoun}
 6486: A7              AND     A                   
 6487: CA 90 64        JP      Z,$6490             ; {}
-648A: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+648A: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 648D: 22 12 72        LD      ($7212),HL          ; {code.firstNounPtr}
 6490: 79              LD      A,C                 
 6491: 32 15 72        LD      ($7215),A           ; {code.secondNoun}
 6494: A7              AND     A                   
 6495: CA 9F 64        JP      Z,$649F             ; {}
 6498: 47              LD      B,A                 
-6499: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6499: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 649C: 22 18 72        LD      ($7218),HL          ; {code.secondNounPtr}
 649F: 21 4E 7D        LD      HL,$7D4E            ; {+code.GeneralScript}
 64A2: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
@@ -1183,7 +1183,7 @@ PrintRoomDescription:
 64CB: C0              RET     NZ                  ; No ... print nothing
 ;
 64CC: 06 01           LD      B,$01               ; Find the ...
-64CE: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... player ...
+64CE: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... player ...
 64D1: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} ... object
 64D4: 7E              LD      A,(HL)              ; Location of player
 64D5: E6 80           AND     $80                 ; Is the contained by another object?
@@ -1191,7 +1191,7 @@ PrintRoomDescription:
 ;
 ; If the player is contained by an object, print the container's short name first.
 64DA: 46              LD      B,(HL)              ; Find the ...
-64DB: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... player's container
+64DB: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... player's container
 64DE: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Skip the length
 64E1: 23              INC     HL                  ; Skip ...
 64E2: 23              INC     HL                  ; ... object ...
@@ -1499,7 +1499,7 @@ printedSomethingOn??:
 6737: 47              LD      B,A                 
 6738: 32 0B 72        LD      ($720B),A           ; {code.varObject}
 673B: D5              PUSH    DE                  
-673C: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+673C: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 673F: 22 0C 72        LD      ($720C),HL          ; {code.varObjectPtr}
 6742: D1              POP     DE                  
 6743: EB              EX      DE,HL               
@@ -1543,7 +1543,7 @@ COM_01_is_in_pack_or_room:
 677E: 46              LD      B,(HL)              ; Get the object number
 677F: 23              INC     HL                  ; Bump script pointer
 6780: E5              PUSH    HL                  ; Hold script pointer
-6781: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Find the requested object
+6781: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Find the requested object
 6784: CD 23 60        CALL    $6023               ; {code.InInRoomOrPack} Check if object is in room or pack
 6787: E1              POP     HL                  ; Restore script pointer
 6788: C9              RET                         
@@ -1568,7 +1568,7 @@ COM_2C_set_active:
 6791: E5              PUSH    HL                  ; Hold
 6792: 78              LD      A,B                 ; Set the ...
 6793: 32 1E 72        LD      ($721E),A           ; {code.activeObject} ... active object number
-6796: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Find the object structure
+6796: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Find the object structure
 6799: 22 1F 72        LD      ($721F),HL          ; {code.activeObjectPtr} Hold the active object structure
 679C: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 679F: 7E              LD      A,(HL)              
@@ -1576,13 +1576,13 @@ COM_2C_set_active:
 67A2: 7E              LD      A,(HL)              
 67A3: C2 AE 67        JP      NZ,$67AE            ; {}
 67A6: 47              LD      B,A                 
-67A7: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+67A7: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 67AA: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 67AD: 7E              LD      A,(HL)              
 67AE: 32 21 72        LD      ($7221),A           ; {code.currentRoom}
 67B1: 47              LD      B,A                 
 67B2: 21 00 52        LD      HL,$5200            ; {+ram.sectionData}
-67B5: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID}
+67B5: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID}
 67B8: 22 22 72        LD      ($7222),HL          ; {code.currentRoomPtr}
 67BB: E1              POP     HL                  
 67BC: 97              SUB     A                   ; Z=1 PASS
@@ -1618,7 +1618,7 @@ COM_03_is_located:
 67CC: 46              LD      B,(HL)              
 67CD: 23              INC     HL                  
 67CE: E5              PUSH    HL                  
-67CF: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+67CF: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 67D2: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 67D5: 5E              LD      E,(HL)              
 67D6: 23              INC     HL                  
@@ -1655,7 +1655,7 @@ COM_04_print:
 COM_1F_print2:
 67EC: 06 01           LD      B,$01               ; Find player object
 67EE: E5              PUSH    HL                  ; Hold
-67EF: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+67EF: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 67F2: CD 23 60        CALL    $6023               ; {code.InInRoomOrPack}
 67F5: E1              POP     HL                  
 67F6: CA 00 68        JP      Z,$6800             ; {}
@@ -1761,7 +1761,7 @@ COM_08_is_noun1:
 6894: 79              LD      A,C                 
 6895: CA A8 68        JP      Z,$68A8             ; {}
 6898: E5              PUSH    HL                  
-6899: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6899: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 689C: EB              EX      DE,HL               
 689D: E1              POP     HL                  
 689E: 3A 24 72        LD      A,($7224)           ; {}
@@ -1811,7 +1811,7 @@ COM_0A_is_input_phrase:
 COM_0F_pick_up_var_object:
 68C5: E5              PUSH    HL                  ; Hold the script pointer
 68C6: 06 01           LD      B,$01               ; Look up ...
-68C8: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... the player object
+68C8: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... the player object
 68CB: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Find end of player object
 68CE: 4E              LD      C,(HL)              ; Player's room number
 68CF: 2A 0C 72        LD      HL,($720C)          ; {code.varObjectPtr} Get the var object
@@ -1930,7 +1930,7 @@ COM_11_print_noun1:
 6977: CA 63 69        JP      Z,$6963             ; {}
 697A: 06 01           LD      B,$01               
 697C: E5              PUSH    HL                  
-697D: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+697D: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 6980: CD 23 60        CALL    $6023               ; {code.InInRoomOrPack}
 6983: E1              POP     HL                  
 6984: C2 99 69        JP      NZ,$6999            ; {}
@@ -2106,14 +2106,14 @@ DescribeCurrentRoom:
 6A6F: 3A 21 72        LD      A,($7221)           ; {code.currentRoom} Current room number
 6A72: 47              LD      B,A                 ; Look up ...
 6A73: 21 00 52        LD      HL,$5200            ; {+ram.sectionData} ... current room ...
-6A76: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID} ... structure
+6A76: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID} ... structure
 6A79: 22 22 72        LD      ($7222),HL          ; {code.currentRoomPtr} Hold current room ptr
 6A7C: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Start of data (and end)
 6A7F: 7E              LD      A,(HL)              ; If this room has been visited ...
 6A80: 32 F0 71        LD      ($71F0),A           ; {code.stopAtPeriod} ... stop printing description after first period
 6A83: 36 01           LD      (HL),$01            ; Now this room has been visited for sure
 6A85: 06 01           LD      B,$01               ; Get the player ...
-6A87: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... object
+6A87: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... object
 6A8A: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Start of data (and end)
 6A8D: 3A 21 72        LD      A,($7221)           ; {code.currentRoom} Current room
 6A90: 77              LD      (HL),A              ; Make sure the player is in this room
@@ -2247,7 +2247,7 @@ COM_17_move_object_to:
 6C6E: 46              LD      B,(HL)              ; Target object from script
 6C6F: 23              INC     HL                  ; Bump script
 6C70: E5              PUSH    HL                  ; Hold script pointer
-6C71: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Look up the target object
+6C71: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Look up the target object
 6C74: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Start of data (and end)
 6C77: D1              POP     DE                  ; Script pinter to DE now
 6C78: 1A              LD      A,(DE)              ; Get the target destination
@@ -2294,7 +2294,7 @@ COM_18_is_var_owned_by_active:
 6CAA: C0              RET     NZ                  ; Yes, Z=0 FAIL (can't be owned by var)
 ; Not a room ... muat be owned by an object. Recurse up the tree to see if THAT object is owned by var.
 6CAB: E5              PUSH    HL                  ; Hold script pointer
-6CAC: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Recurse into the owning object
+6CAC: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Recurse into the owning object
 6CAF: C3 98 6C        JP      $6C98               ; {} Check this outer object
 
 6CB2: 21 7A 88        LD      HL,$887A            ; {+code.ObjectData}
@@ -2317,7 +2317,7 @@ COM_18_is_var_owned_by_active:
 6CD4: C2 F6 6C        JP      NZ,$6CF6            ; {} Yes
 6CD7: E5              PUSH    HL                  
 6CD8: 46              LD      B,(HL)              
-6CD9: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6CD9: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 6CDC: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 6CDF: 7E              LD      A,(HL)              
 6CE0: A7              AND     A                   
@@ -2352,13 +2352,13 @@ COM_18_is_var_owned_by_active:
 6D13: 3A 1C 72        LD      A,($721C)           ; {} Our current object ...
 6D16: 32 1E 72        LD      ($721E),A           ; {code.activeObject} ... is now the active object
 6D19: 47              LD      B,A                 ; To B for lookup
-6D1A: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Find the object
+6D1A: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Find the object
 6D1D: 22 1F 72        LD      ($721F),HL          ; {code.activeObjectPtr}
 6D20: 79              LD      A,C                 
 6D21: A7              AND     A                   
 6D22: FA 35 6D        JP      M,$6D35             ; {} This object is in a room, we can run its script
 6D25: 47              LD      B,A                 
-6D26: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6D26: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 6D29: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 6D2C: 7E              LD      A,(HL)              
 6D2D: A7              AND     A                   
@@ -2369,7 +2369,7 @@ COM_18_is_var_owned_by_active:
 6D35: 32 21 72        LD      ($7221),A           ; {code.currentRoom}
 6D38: 21 00 52        LD      HL,$5200            ; {+ram.sectionData}
 6D3B: 47              LD      B,A                 
-6D3C: CD A5 61        CALL    $61A5               ; {code.FindCollectionItemByID}
+6D3C: CD A5 61        CALL    $61A5               ; {code.FindCollectItemByID}
 6D3F: 22 22 72        LD      ($7222),HL          ; {code.currentRoomPtr}
 6D42: E1              POP     HL                  
 6D43: CD 57 63        CALL    $6357               ; {code.ExecuteCommand} Run the EVERY_TURN script
@@ -2447,13 +2447,13 @@ COM_1E_swap_object_locations:
 6D9D: 4E              LD      C,(HL)              
 6D9E: 23              INC     HL                  
 6D9F: E5              PUSH    HL                  
-6DA0: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6DA0: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 6DA3: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 6DA6: 5E              LD      E,(HL)              
 6DA7: 41              LD      B,C                 
 6DA8: E5              PUSH    HL                  
 6DA9: D5              PUSH    DE                  
-6DAA: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6DAA: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 6DAD: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 6DB0: D1              POP     DE                  
 6DB1: 7E              LD      A,(HL)              
@@ -2559,7 +2559,7 @@ COM_36_is_in_room_or_open_container:
 6E1C: C2 3E 6E        JP      NZ,$6E3E            ; {} Yes, this command PASSes
 6E1F: 46              LD      B,(HL)              ; Not a room, get the owner object
 6E20: 48              LD      C,B                 ; Hold
-6E21: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Look up the owning object
+6E21: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Look up the owning object
 6E24: 54              LD      D,H                 ; Owning object ...
 6E25: 5D              LD      E,L                 ; ... to DE
 6E26: D5              PUSH    DE                  ; Hold ptr to owning object
@@ -2602,13 +2602,13 @@ COM_28_save_game:
 6E50: 32 03 6F        LD      ($6F03),A           ; {} LSB of 4420 in CALL bellow
 6E53: E5              PUSH    HL                  ; Hold script pointer
 6E54: 06 92           LD      B,$92               ; Look up ...
-6E56: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... score object
+6E56: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... score object
 6E59: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Skip to data
 6E5C: 23              INC     HL                  ; Second byte of data
 6E5D: 3A FA 71        LD      A,($71FA)           ; {code.currentLoadedSection} Write section number ...
 6E60: 77              LD      (HL),A              ; ... to the score object's loaded-disk-sector data
 6E61: 06 9B           LD      B,$9B               ; ?? Object 9B ??
-6E63: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex}
+6E63: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex}
 6E66: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd}
 6E69: 77              LD      (HL),A              ; ?? loaded section number to the room number ??
 6E6A: C3 DA 6E        JP      $6EDA               ; {} Common access routine
@@ -2631,11 +2631,11 @@ COM_27_load_game:
 6E82: C3 DA 6E        JP      $6EDA               ; {} Common access then come back below
 ;
 6E85: 06 9B           LD      B,$9B               ; ?? Mystery object 9B
-6E87: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Look up ...
+6E87: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Look up ...
 6E8A: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} ... object 9B
 6E8D: 7E              LD      A,(HL)              ; Object 9B's location
 6E8E: 06 01           LD      B,$01               ; Look up ...
-6E90: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... the player object
+6E90: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... the player object
 6E93: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Find start and end
 ;
 ; !! Why did we look up object 9B's room number? We clobber it next instruction.
@@ -2645,12 +2645,12 @@ COM_27_load_game:
 6E99: 7E              LD      A,(HL)              ; Player's current room
 6E9A: C2 A5 6E        JP      NZ,$6EA5            ; {} Player is in a room, use this room
 6E9D: 46              LD      B,(HL)              ; Not a room but an object number
-6E9E: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} Find the object the ...
+6E9E: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} Find the object the ...
 6EA1: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} ... player is inside
 6EA4: 7E              LD      A,(HL)              ; The room the player's owner is in
 6EA5: 32 21 72        LD      ($7221),A           ; {code.currentRoom} Reset the current room number after the load
 6EA8: 06 92           LD      B,$92               ; Look up ...
-6EAA: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... the score object
+6EAA: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... the score object
 6EAD: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Skip to data
 6EB0: 23              INC     HL                  ; Skip to disk section data
 6EB1: 3A FA 71        LD      A,($71FA)           ; {code.currentLoadedSection} Is the needed disk ...
@@ -2792,7 +2792,7 @@ Thus score is "00", "10", "20", "30", etc. You will never see 100%.
 COM_26_print_score:
 6FB0: E5              PUSH    HL                  ; Hold
 6FB1: 06 92           LD      B,$92               ; Look up the ...
-6FB3: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... score object
+6FB3: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... score object
 6FB6: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Skip to data
 6FB9: 7E              LD      A,(HL)              ; Get the score value
 6FBA: 32 FB 71        LD      ($71FB),A           ; {} Hold on to score value ?? why
@@ -2820,7 +2820,7 @@ COM_26_print_score:
 COM_38_bump_score:
 6FDB: E5              PUSH    HL                  ; Hold
 6FDC: 06 92           LD      B,$92               ; Look up ...
-6FDE: CD 57 70        CALL    $7057               ; {code.GetObjectScriptByIndex} ... the score object
+6FDE: CD 57 70        CALL    $7057               ; {code.GetObjScriptByIndex} ... the score object
 6FE1: CD C8 61        CALL    $61C8               ; {code.SkipIDCalcEnd} Skip to data
 6FE4: 7E              LD      A,(HL)              ; Current score nibble
 6FE5: C6 01           ADD     $01                 ; Bump the score
@@ -2910,7 +2910,7 @@ COM_3B_wait_for_key_123:
 7055: 97              SUB     A                   ; Z=1 PASS
 7056: C9              RET                         
 
-GetObjectScriptByIndex:
+GetObjScriptByIndex:
 ; B is object index
 ; Return pointer to object in HL
 7057: 21 7A 88        LD      HL,$887A            ; Object scripts
