@@ -653,7 +653,7 @@ PromptAndReadLine:
 ; !! This is the same hole-within-a-hole needs decoding
 InputBuffer:
 ; 32 bytes
-465A: 15 46 36 00 C9 45 20 49 50 20 53 49 47 4E 00 00    ;
+465A: 15 46 36 00 C9 45 20 49 50 20 53 49 47 4E 00 00    ; Matches generated 465A FROM 2nd floor -- could be 4655 above but no can't be
 466A: 47 FE 78 28 26 FE 3C 20 F5 CD 82 47 47 CD 9C 46    ;
 
 467A: 00
@@ -682,7 +682,7 @@ currentParsePtr:
 
 ; Uninitialized stack space with some leftover data in it!
 ; This might be interesting stuff?
-; !! more uninitalized to decode
+; !! more uninitalized to decode matches stack of floor 2. odd
 StackRAM:
 4693: 15 40 0D 02 C0 3F 80 04 DD 03 1D 40 15 40 D4 4D
 46A3: 5E 0D 08 46 5F 46 FA 48 97 4A FA 48 FA 48 26 44
