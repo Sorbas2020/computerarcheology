@@ -947,15 +947,15 @@ L0430:
 0441: 2D              DEC     L                   ; 
 0442: 7E              LD      A,(HL)              ; get GameOrAttract
 0443: FE 01           CP      $01                 ; 
-0445: C8              RET     Z                   ; return if 'One player game mode'
+0445: C8              RET     Z                   ; one-player mode -> no switch
 0446: 2C              INC     L                   ; 
 0447: 7E              LD      A,(HL)              ; get GameAndDemoOrSplash
 0448: A7              AND     A                   ; updates the zero flag
-0449: CA A0 04        JP      Z,$04A0             ; {code.L04A0} if 'Game and demo'
+0449: CA A0 04        JP      Z,$04A0             ; {code.L04A0} currently player 1 -> switch to player 2
 044C: 2E 90           LD      L,$90               ; 
-044E: 7E              LD      A,(HL)              ; get Player1Lives
+044E: 7E              LD      A,(HL)              ; else currently player 2: check Player1Lives
 044F: A7              AND     A                   ; updates the zero flag
-0450: C8              RET     Z                   ; return if no lives left.
+0450: C8              RET     Z                   ; player 1 has no lives -> don't switch back
 0451: 2E A3           LD      L,$A3               ; 
 0453: 36 00           LD      (HL),$00            ; set GameAndDemoOrSplash to 'Game and demo for player 1'
 0455: 01 00 01        LD      BC,$0100            ; from bank 1 to bank 0
@@ -970,14 +970,14 @@ L0430:
 ;* Starts at 4320
 ;*****************************************************************************
 CopyMemoryBank:
-0460: 21 00 50        LD      HL,$5000            ; 50xx video register
+0460: 21 00 50        LD      HL,$5000            ; video/RAM bank-select register
 0463: 11 20 43        LD      DE,$4320            ; {+ram.ForegroundScreen+320} 1st row 1st line
 ;
 L0466:
-0466: 70              LD      (HL),B              ; 
-0467: 1A              LD      A,(DE)              ; 
-0468: 71              LD      (HL),C              ; 
-0469: 12              LD      (DE),A              ; 
+0466: 70              LD      (HL),B              ; select SOURCE bank
+0467: 1A              LD      A,(DE)              ; read byte from source bank
+0468: 71              LD      (HL),C              ; select DEST bank
+0469: 12              LD      (DE),A              ; write byte to dest bank
 046A: 1C              INC     E                   ; 
 046B: 7B              LD      A,E                 ; 
 046C: E6 03           AND     $03                 ; 0000_0011
@@ -991,7 +991,7 @@ L0466:
 047B: 7A              LD      A,D                 ; 
 047C: FE 3F           CP      $3F                 ; 
 047E: C2 66 04        JP      NZ,$0466            ; {code.L0466}
-0481: 11 80 43        LD      DE,$4380            ; {+ram.M4380}
+0481: 11 80 43        LD      DE,$4380            ; {+ram.M4380} then the state/score block...
 ;
 L0484:
 0484: 70              LD      (HL),B              ; 
@@ -1002,7 +1002,7 @@ L0484:
 0489: 7B              LD      A,E                 ; 
 048A: FE B8           CP      $B8                 ; 
 048C: C2 84 04        JP      NZ,$0484            ; {code.L0484}
-048F: 11 C0 4B        LD      DE,$4BC0            ; {!+ram.B4BC0}
+048F: 11 C0 4B        LD      DE,$4BC0            ; {!+ram.B4BC0} then the object buffer...
 ;
 L0492:
 0492: 70              LD      (HL),B              ; 
@@ -2545,7 +2545,7 @@ L0C00:
 0C13: DA A4 0E        JP      C,$0EA4             ; {code.L0EA4} phase < $07: normal kill
 0C16: FE 09           CP      $09                 ; 
 0C18: D2 A4 0E        JP      NC,$0EA4            ; {code.L0EA4} phase >= $09: normal kill
-;Else phase is $07 or $08 -> BONUS
+; Else phase is $07 or $08 -> BONUS
 0C1B: 11 20 10        LD      DE,$1020            ; D=$10 anim index, E=$20 bonus explosion score 200
 0C1E: 3E FF           LD      A,$FF               ; set bonus explosion flag
 0C20: 32 69 43        LD      ($4369),A           ; {ram.M4369} $4369 = 'bonus explosion'
@@ -2575,15 +2575,15 @@ EnemyBulletUpdate:
 L0C56:
 0C56: 21 CC 43        LD      HL,$43CC            ; {+ram.EnemyBullet0State}
 L0C59:
-0C59: E5              PUSH    HL                  
+0C59: E5              PUSH    HL                  ; 
 0C5A: CD 84 0C        CALL    $0C84               ; {code.L0C84} movement and animation of enemy bullet
-0C5D: E1              POP     HL                  
-0C5E: 7D              LD      A,L                 
-0C5F: C6 04           ADD     $04                 
-0C61: 6F              LD      L,A                 
-0C62: FE E0           CP      $E0                 
+0C5D: E1              POP     HL                  ; 
+0C5E: 7D              LD      A,L                 ; 
+0C5F: C6 04           ADD     $04                 ; 
+0C61: 6F              LD      L,A                 ; 
+0C62: FE E0           CP      $E0                 ; 
 0C64: C2 59 0C        JP      NZ,$0C59            ; {code.L0C59} loop for 5 enemy bullet slots
-0C67: C9              RET                         
+0C67: C9              RET                         ; 
 
 0C68: FF FF FF
 
@@ -2595,16 +2595,16 @@ L0C6B:
 0C6E: 11 EE 43        LD      DE,$43EE            ; {+ram.EnemyBullet0MSB}
 L0C71:
 0C71: CD BA 09        CALL    $09BA               ; {code.GetScreenRamAddress}
-0C74: 03              INC     BC                  
-0C75: 03              INC     BC                  
-0C76: 03              INC     BC                  
-0C77: 13              INC     DE                  
-0C78: 13              INC     DE                  
-0C79: 13              INC     DE                  
-0C7A: 79              LD      A,C                 
-0C7B: FE E2           CP      $E2                 
+0C74: 03              INC     BC                  ; 
+0C75: 03              INC     BC                  ; 
+0C76: 03              INC     BC                  ; 
+0C77: 13              INC     DE                  ; 
+0C78: 13              INC     DE                  ; 
+0C79: 13              INC     DE                  ; 
+0C7A: 79              LD      A,C                 ; 
+0C7B: FE E2           CP      $E2                 ; 
 0C7D: C2 71 0C        JP      NZ,$0C71            ; {code.L0C71} loop for 5 enemy bullet slots
-0C80: C9              RET                         
+0C80: C9              RET                         ; 
 
 0C81: FF FF FF
 
@@ -2683,26 +2683,28 @@ EnemyBulletDataController:
 0CD8: 01 CC 43        LD      BC,$43CC            ; {+ram.EnemyBullet0State} data structure (grid)
 0CDB: 11 EC 43        LD      DE,$43EC            ; {+ram.OldEnemyBullet0MSB} screen ram
 L0CDE:
-0CDE: C5              PUSH    BC                  
+0CDE: C5              PUSH    BC                  ; 
 0CDF: CD 18 07        CALL    $0718               ; {code.UpdateScreenObjects}
-0CE2: C1              POP     BC                  
-0CE3: 79              LD      A,C                 
-0CE4: C6 04           ADD     $04                 
-0CE6: 4F              LD      C,A                 
-0CE7: C6 20           ADD     $20                 
-0CE9: 5F              LD      E,A                 
-0CEA: 50              LD      D,B                 
+0CE2: C1              POP     BC                  ; 
+0CE3: 79              LD      A,C                 ; 
+0CE4: C6 04           ADD     $04                 ; 
+0CE6: 4F              LD      C,A                 ; 
+0CE7: C6 20           ADD     $20                 ; 
+0CE9: 5F              LD      E,A                 ; 
+0CEA: 50              LD      D,B                 ; 
 0CEB: A7              AND     A                   ; updates the zero flag
 0CEC: C2 DE 0C        JP      NZ,$0CDE            ; {code.L0CDE} loop for all bullet slots
-0CEF: C9              RET                         
+0CEF: C9              RET                         ; 
 ; 
 0CF0: FF FF FF FF
-;
-; Alien collision on left or right side of player ship.
+
+;*****************************************************************************
+;* Alien collision on left or right side of player ship.
+;*****************************************************************************
 L0CF4:
-0CF4: D1              POP     DE                  
-0CF5: C1              POP     BC                  
-0CF6: C9              RET                         
+0CF4: D1              POP     DE                  ; 
+0CF5: C1              POP     BC                  ; 
+0CF6: C9              RET                         ; 
 
 0CF7: FF FF FF FF FF FF FF FF
 0CFF: FF FF FF FF FF FF FF FF FF
@@ -2968,9 +2970,9 @@ L0E39:
 0E3F: E6 F8           AND     $F8                 ; 1111_1000 (snap to character row)
 0E41: 5F              LD      E,A                 ; E = bullet Y (masked)
 0E42: 21 70 4B        LD      HL,$4B70            ; {+ram.M4B70} alien data structure (16 entries x 4 bytes)
-;-----------------------------------------------------------------------------
-; Scan every alien slot; test the active ones for a hit.
-;-----------------------------------------------------------------------------
+;*****************************************************************************
+;* Scan every alien slot; test the active ones for a hit.
+;*****************************************************************************
 L0E45:
 0E45: 7E              LD      A,(HL)              ; alien control state A (+0)
 0E46: 23              INC     HL                  ; +1
@@ -2990,6 +2992,10 @@ L0E45:
 ;* Bounding-box test for one flying alien.
 ;* HL -> alien screen X (+2); D = bullet X, E = bullet Y (masked).
 ;* Box: alienX <= bulletX <= alienX+8  and  alienY-8 < bulletY <= alienY+4.
+;* If the bullet falls inside that box, it's a hit and control jumps to `L0C00`
+;* (with `HL` still pointing at the alien's `+2` field),
+;* which reads the alien's movement pattern phase to choose the score/bonus
+;* and then routes to `L0EA4` to blow it up.
 ;*****************************************************************************
 L0E58:
 0E58: 7A              LD      A,D                 ; bullet X
@@ -3122,179 +3128,223 @@ L0ED5:
 ;*****************************************************************************
 ;* 'Alien with player' collision check.
 ;* MAME cheat code "Invisibility for aliens": Set $0F00 to $C9 (RET)
+;* Uses a 2x2 box normally; a 4x4 box when the shield/explosion state is high.
+;* This is the counterpart to the bullet vs alien check:
+;* It asks "has a diving alien run into the player's ship?".
+;* - Box size depends on the shield (`ShieldCount`, `$43A6`).
+;*   If it's below `$C0`, `L0F00` uses a 2×2 collision box around the ship.
+;*   If it's `$C0` or higher (shield up / ship showing explosion tiles),
+;*   it branches to `L0F74`, which uses a larger 4×4 box and a wider vertical band.
+;* - `L0F56` is the fast screen test.
+;*   Given the ship's screen address and a `cols × rows` size,
+;*   It reads each character cell the ship occupies.
+;*   If any cell holds an alien glyph (`$60`–`$BF`) it immediately jumps to `L0CF4`
+;*   to handle the player being hit.
+;*   If it walks the whole box with no alien, it returns with `Z` set ("no collision").
+;* - `L0F38` / `L0FA6` identify and kill the offending alien.
+;*   After a collision is detected, the caller derives the ship's horizontal bounds (`B`,`C`)
+;*   and scans all 16 alien slots at `$4B70`. For each active alien
+;*   it checks that the alien's Y is in the player's bottom band
+;*   (small box `($D2,$E7)`, big box `($CA,$EF)`) and its X overlaps the ship (`B ≤ X < C`).
+;*   On a match it loads the animation/score values into `DE` (`$0D04` small, `$0D02` big),
+;*   rewinds `HL` to the alien's control byte, and jumps to `L0EAD`
+;*   (the shared "enemy destroyed" tail, same one used by the bullet kill path) to blow the alien up.
 ;*****************************************************************************
 L0F00:
 0F00: 21 A6 43        LD      HL,$43A6            ; {+ram.ShieldCount}
 0F03: 7E              LD      A,(HL)              ; 
 0F04: FE C0           CP      $C0                 ; 
-0F06: D2 74 0F        JP      NC,$0F74            ; {code.L0F74} if >= $C0 (fgtiles all explosion parts)
+0F06: D2 74 0F        JP      NC,$0F74            ; {code.L0F74} ShieldCount >= $C0 -> big-box path (fg all explosion parts)
 0F09: 2E E2           LD      L,$E2               ; 
-0F0B: 56              LD      D,(HL)              ; get $43E2 PlayerShipMSB
+0F0B: 56              LD      D,(HL)              ; D = $43E2 PlayerShipMSB
 0F0C: 2C              INC     L                   ; 
-0F0D: 5E              LD      E,(HL)              ; get $43E3 PlayerShipLSB
-0F0E: 01 02 02        LD      BC,$0202            
-0F11: CD 56 0F        CALL    $0F56               ; {code.L0F56} 'alien with player' collision check
-0F14: C8              RET     Z                   ; if no collision
-0F15: 00              NOP                         
-0F16: 00              NOP                         
-0F17: 21 9E 43        LD      HL,$439E            ; {+ram.M439E} Mapped player ship position, left part: ($09 to $C0)
-0F1A: 7E              LD      A,(HL)              
-0F1B: D6 06           SUB     $06                 
-0F1D: 47              LD      B,A                 
-0F1E: 2C              INC     L                   
-0F1F: 4E              LD      C,(HL)              
-0F20: 21 70 4B        LD      HL,$4B70            ; {+ram.M4B70}
+0F0D: 5E              LD      E,(HL)              ; E = $43E3 PlayerShipLSB  (DE = ship screen addr)
+0F0E: 01 02 02        LD      BC,$0202            ; 2x2 image (B=cols, C=rows)
+0F11: CD 56 0F        CALL    $0F56               ; {code.L0F56} scan ship cells for an alien char
+0F14: C8              RET     Z                   ; no collision -> done
+0F15: 00              NOP                         ; (patched-out code)
+0F16: 00              NOP                         ; 
+0F17: 21 9E 43        LD      HL,$439E            ; {+ram.M439E} mapped player ship position, left part ($09..$C0)
+0F1A: 7E              LD      A,(HL)              ; 
+0F1B: D6 06           SUB     $06                 ; 
+0F1D: 47              LD      B,A                 ; B = ship left X bound
+0F1E: 2C              INC     L                   ; 
+0F1F: 4E              LD      C,(HL)              ; C = $439F ship right X bound
+0F20: 21 70 4B        LD      HL,$4B70            ; {+ram.M4B70} alien data structure
 L0F23:
-0F23: 7E              LD      A,(HL)              
-0F24: 2C              INC     L                   
-0F25: 2C              INC     L                   
-0F26: E6 08           AND     $08                 ; 0000_1000
-0F28: C4 38 0F        CALL    NZ,$0F38            ; {code.L0F38}
-0F2B: 2C              INC     L                   
-0F2C: 2C              INC     L                   
-0F2D: 3E B0           LD      A,$B0               
-0F2F: BD              CP      L                   
+0F23: 7E              LD      A,(HL)              ; alien control state (+0)
+0F24: 2C              INC     L                   ; +1
+0F25: 2C              INC     L                   ; +2 -> alien screen X
+0F26: E6 08           AND     $08                 ; 0000_1000 alien active ?
+0F28: C4 38 0F        CALL    NZ,$0F38            ; {code.L0F38} if so, position-match test
+0F2B: 2C              INC     L                   ; +3
+0F2C: 2C              INC     L                   ; +4 -> next entry
+0F2D: 3E B0           LD      A,$B0               ; 
+0F2F: BD              CP      L                   ; end of 16 aliens ?
 0F30: C2 23 0F        JP      NZ,$0F23            ; {code.L0F23}
-0F33: C9              RET                         
+0F33: C9              RET                         ; 
 ; 
 0F34: FF FF FF FF
-; 
+
+;*****************************************************************************
+;* Find the specific colliding alien (small box). HL -> alien screen X (+2).
+;* B/C = ship X bounds. Alien Y must be in the bottom band ($D2,$E7).
+;*****************************************************************************
 L0F38:
-0F38: 2C              INC     L                   
-0F39: 7E              LD      A,(HL)              
-0F3A: 2D              DEC     L                   
-0F3B: FE D2           CP      $D2                 
-0F3D: D8              RET     C                   
-0F3E: FE E7           CP      $E7                 
-0F40: D0              RET     NC                  
-0F41: 7E              LD      A,(HL)              
-0F42: B9              CP      C                   
-0F43: D0              RET     NC                  
-0F44: B8              CP      B                   
-0F45: D8              RET     C                   
-0F46: CD C4 0C        CALL    $0CC4               ; {code.L0CC4}
-0F49: 11 04 0D        LD      DE,$0D04            
-0F4C: 2B              DEC     HL                  
-0F4D: 2B              DEC     HL                  
-0F4E: C3 AD 0E        JP      $0EAD               ; {code.L0EAD}
+0F38: 2C              INC     L                   ; +3 -> alien screen Y
+0F39: 7E              LD      A,(HL)              ; alien Y
+0F3A: 2D              DEC     L                   ; back to +2
+0F3B: FE D2           CP      $D2                 ; 
+0F3D: D8              RET     C                   ; alien above player band -> skip
+0F3E: FE E7           CP      $E7                 ; 
+0F40: D0              RET     NC                  ; alien below band -> skip
+0F41: 7E              LD      A,(HL)              ; alien X (+2)
+0F42: B9              CP      C                   ; 
+0F43: D0              RET     NC                  ; alien right of ship -> skip
+0F44: B8              CP      B                   ; 
+0F45: D8              RET     C                   ; alien left of ship -> skip
+0F46: CD C4 0C        CALL    $0CC4               ; {code.L0CC4} register the player collision
+0F49: 11 04 0D        LD      DE,$0D04            ; D=$0D anim index, E=$04 score selector
+0F4C: 2B              DEC     HL                  ; 
+0F4D: 2B              DEC     HL                  ; HL -> alien entry +0
+0F4E: C3 AD 0E        JP      $0EAD               ; {code.L0EAD} destroy this alien
 ; Ghost code bytes from an older version.
 ; The code was probably shortened at this point during development and the following bytes were not specifically deleted.
 0F51: AD 0E FF FF FF
 
-; 'alien with player' collision check.
-; All parts of the player ship object are checked for a collision with aliens.
+;*****************************************************************************
+;* 'Alien with player' collision check.
+;* All parts of the player ship object are checked for a collision with aliens.
+;*****************************************************************************
 L0F56:
 0F56: C5              PUSH    BC                  ; 
 0F57: D5              PUSH    DE                  ; 
 L0F58:
-0F58: 1A              LD      A,(DE)              ; get upper left character of player ship
-0F59: FE 60           CP      $60                 ; alien characters ($60 to $BF)
-0F5B: DA 63 0F        JP      C,$0F63             ; {code.L0F63} if no collision on left side
+0F58: 1A              LD      A,(DE)              ; character at a ship cell
+0F59: FE 60           CP      $60                 ; alien chars are $60..$BF
+0F5B: DA 63 0F        JP      C,$0F63             ; {code.L0F63} < $60 : not an alien here
 0F5E: FE C0           CP      $C0                 ; 
-0F60: DA F4 0C        JP      C,$0CF4             ; {code.L0CF4} if collision on left or right side
+0F60: DA F4 0C        JP      C,$0CF4             ; {code.L0CF4} $60..$BF : collision -> handle player hit
 L0F63:
-0F63: 13              INC     DE                  ; get upper right character of player ship
+0F63: 13              INC     DE                  ; next cell (right)
 0F64: 05              DEC     B                   ; 
-0F65: C2 58 0F        JP      NZ,$0F58            ; {code.L0F58}
+0F65: C2 58 0F        JP      NZ,$0F58            ; {code.L0F58} across B columns
 0F68: D1              POP     DE                  ; 
 0F69: C1              POP     BC                  ; 
-0F6A: CD 17 02        CALL    $0217               ; {code.RightOneColumn} for lower part of player ship
+0F6A: CD 17 02        CALL    $0217               ; {code.RightOneColumn} step down to the next ship row
 0F6D: 0D              DEC     C                   ; 
-0F6E: C2 56 0F        JP      NZ,$0F56            ; {code.L0F56}
-0F71: C9              RET                         ; 
+0F6E: C2 56 0F        JP      NZ,$0F56            ; {code.L0F56} for all C rows
+0F71: C9              RET                         ; Z set = no collision
 ; 
 0F72: FF FF
-;
+
+;*****************************************************************************
+;* Big-box variant: used when ShieldCount >= $C0 (4x4 box, wider Y band).
+;*****************************************************************************
 L0F74:
 0F74: 2E E2           LD      L,$E2               ; PlayerShipMSB
-0F76: 56              LD      D,(HL)              
+0F76: 56              LD      D,(HL)              ; 
 0F77: 2C              INC     L                   ; PlayerShipLSB
-0F78: 5E              LD      E,(HL)              
-0F79: CD 17 02        CALL    $0217               ; {code.RightOneColumn}
-0F7C: 1B              DEC     DE                  
-0F7D: 01 04 04        LD      BC,$0404            
-0F80: CD 56 0F        CALL    $0F56               ; {code.L0F56}
-0F83: C8              RET     Z                   
-0F84: 00              NOP                         
-0F85: 00              NOP                         
+0F78: 5E              LD      E,(HL)              ; 
+0F79: CD 17 02        CALL    $0217               ; {code.RightOneColumn} shift to top-left of the 4x4 box
+0F7C: 1B              DEC     DE                  ; 
+0F7D: 01 04 04        LD      BC,$0404            ; 4x4 image
+0F80: CD 56 0F        CALL    $0F56               ; {code.L0F56} scan the enlarged ship area
+0F83: C8              RET     Z                   ; no collision -> done
+0F84: 00              NOP                         ; (patched-out code)
+0F85: 00              NOP                         ; 
 0F86: 3A C2 43        LD      A,($43C2)           ; {ram.PlayerShipX}
-0F89: D6 0E           SUB     $0E                 
-0F8B: 47              LD      B,A                 
-0F8C: C6 2D           ADD     $2D                 
-0F8E: 4F              LD      C,A                 
-0F8F: 21 70 4B        LD      HL,$4B70            ; {+ram.M4B70}
+0F89: D6 0E           SUB     $0E                 ; 
+0F8B: 47              LD      B,A                 ; B = ship left X bound
+0F8C: C6 2D           ADD     $2D                 ; 
+0F8E: 4F              LD      C,A                 ; C = ship right X bound
+0F8F: 21 70 4B        LD      HL,$4B70            ; {+ram.M4B70} alien data structure
 L0F92:
-0F92: 7E              LD      A,(HL)              
-0F93: 2C              INC     L                   
-0F94: 2C              INC     L                   
-0F95: E6 08           AND     $08                 ; 0000_1000
-0F97: C4 A6 0F        CALL    NZ,$0FA6            ; {code.L0FA6}
-0F9A: 2C              INC     L                   
-0F9B: 2C              INC     L                   
-0F9C: 3E B0           LD      A,$B0               
-0F9E: BD              CP      L                   
+0F92: 7E              LD      A,(HL)              ; alien control state (+0)
+0F93: 2C              INC     L                   ; +1
+0F94: 2C              INC     L                   ; +2 -> alien screen X
+0F95: E6 08           AND     $08                 ; 0000_1000 active ?
+0F97: C4 A6 0F        CALL    NZ,$0FA6            ; {code.L0FA6} position-match test (big box)
+0F9A: 2C              INC     L                   ; +3
+0F9B: 2C              INC     L                   ; +4 -> next entry
+0F9C: 3E B0           LD      A,$B0               ; 
+0F9E: BD              CP      L                   ; end of 16 aliens ?
 0F9F: C2 92 0F        JP      NZ,$0F92            ; {code.L0F92}
-0FA2: C9              RET                         
+0FA2: C9              RET                         ; 
 ; 
 0FA3: FF FF FF
-; 
+
+;*****************************************************************************
+;* Find the specific colliding alien (big box). Y band ($CA,$EF).
+;*****************************************************************************
 L0FA6:
-0FA6: 2C              INC     L                   
-0FA7: 7E              LD      A,(HL)              
-0FA8: 2D              DEC     L                   
-0FA9: FE CA           CP      $CA                 
-0FAB: D8              RET     C                   
-0FAC: FE EF           CP      $EF                 
-0FAE: D0              RET     NC                  
-0FAF: 7E              LD      A,(HL)              
-0FB0: B9              CP      C                   
-0FB1: D0              RET     NC                  
-0FB2: B8              CP      B                   
-0FB3: D8              RET     C                   
-0FB4: 11 02 0D        LD      DE,$0D02            
-0FB7: 2B              DEC     HL                  
-0FB8: 2B              DEC     HL                  
-0FB9: C3 AD 0E        JP      $0EAD               ; {code.L0EAD}
-; Ghost code bytes from an older version.
+0FA6: 2C              INC     L                   ; +3 -> alien screen Y
+0FA7: 7E              LD      A,(HL)              ; alien Y
+0FA8: 2D              DEC     L                   ; back to +2
+0FA9: FE CA           CP      $CA                 ; 
+0FAB: D8              RET     C                   ; above band -> skip
+0FAC: FE EF           CP      $EF                 ; 
+0FAE: D0              RET     NC                  ; below band -> skip
+0FAF: 7E              LD      A,(HL)              ; alien X (+2)
+0FB0: B9              CP      C                   ; 
+0FB1: D0              RET     NC                  ; right of ship -> skip
+0FB2: B8              CP      B                   ; 
+0FB3: D8              RET     C                   ; left of ship -> skip
+0FB4: 11 02 0D        LD      DE,$0D02            ; D=$0D anim index, E=$02 score selector
+0FB7: 2B              DEC     HL                  ; 
+0FB8: 2B              DEC     HL                  ; HL -> alien entry +0
+0FB9: C3 AD 0E        JP      $0EAD               ; {code.L0EAD} destroy this alien
+; Ghost code bytes from an older version. 
 ; The code was probably shortened at this point during development and the following bytes were not specifically deleted.
 0FBC: AD 0E FF FF
 
 ;*****************************************************************************
-;* Handle animations for killed aliens
+;* Handle animations for killed aliens.
+;* Services 4 explosion slots (4-byte records at $4370/$4374/$4378/$437C):
+;*   +0 = animation counter (0 = slot free)
+;*   +1 = unused
+;*   +2 = screen-RAM MSB
+;*   +3 = screen-RAM LSB
+;* Slots 0/1 are ordinary alien explosions (L0FD8); slots 2/3 use L3758
+;* (the bonus-explosion animator).
 ;*****************************************************************************
 L0FC0:
-0FC0: 21 70 43        LD      HL,$4370            ; {+ram.M4370}
-0FC3: CD D8 0F        CALL    $0FD8               ; {code.L0FD8}
-0FC6: 21 74 43        LD      HL,$4374            ; {+ram.M4374}
-0FC9: CD D8 0F        CALL    $0FD8               ; {code.L0FD8}
-0FCC: 21 78 43        LD      HL,$4378            ; {+ram.M4378}
-0FCF: CD 58 37        CALL    $3758               ; {code.L3758}
-0FD2: 21 7C 43        LD      HL,$437C            ; {+ram.M437C}
-0FD5: C3 58 37        JP      $3758               ; {code.L3758}
-; 
+0FC0: 21 70 43        LD      HL,$4370            ; {+ram.M4370} explosion slot 0
+0FC3: CD D8 0F        CALL    $0FD8               ; {code.L0FD8} advance alien explosion
+0FC6: 21 74 43        LD      HL,$4374            ; {+ram.M4374} explosion slot 1
+0FC9: CD D8 0F        CALL    $0FD8               ; {code.L0FD8} advance alien explosion
+0FCC: 21 78 43        LD      HL,$4378            ; {+ram.M4378} slot 2 (bonus explosion counter)
+0FCF: CD 58 37        CALL    $3758               ; {code.L3758} advance bonus explosion
+0FD2: 21 7C 43        LD      HL,$437C            ; {+ram.M437C} slot 3 (bonus explosion)
+0FD5: C3 58 37        JP      $3758               ; {code.L3758} advance bonus explosion (tail-call)
+
+;*****************************************************************************
+;* Advance and draw one alien-explosion slot.
+;* HL -> slot record (+0 = counter). Returns immediately if the slot is idle.
+;*****************************************************************************
 L0FD8:
-0FD8: 7E              LD      A,(HL)              
-0FD9: A7              AND     A                   ; updates the zero flag
-0FDA: C8              RET     Z                   
-0FDB: 46              LD      B,(HL)              
-0FDC: 35              DEC     (HL)                
-0FDD: 2C              INC     L                   
-0FDE: 2C              INC     L                   
-0FDF: 56              LD      D,(HL)              
-0FE0: 2C              INC     L                   
-0FE1: 5E              LD      E,(HL)              
-0FE2: 00              NOP                         
-0FE3: CD 10 02        CALL    $0210               ; {code.LeftOneColumn}
-0FE6: 78              LD      A,B                 
-0FE7: E6 0E           AND     $0E                 ; 0000_1110
-0FE9: 0F              RRCA                        
-0FEA: C6 B0           ADD     $B0                 
-0FEC: 6F              LD      L,A                 
-0FED: 26 17           LD      H,$17               
-0FEF: 6E              LD      L,(HL)              
-0FF0: EB              EX      DE,HL               
+0FD8: 7E              LD      A,(HL)              ; animation counter (+0)
+0FD9: A7              AND     A                   ; set zero flag
+0FDA: C8              RET     Z                   ; slot free -> nothing to do
+0FDB: 46              LD      B,(HL)              ; B = current counter value
+0FDC: 35              DEC     (HL)                ; advance the animation (count down)
+0FDD: 2C              INC     L                   ; +1 (unused)
+0FDE: 2C              INC     L                   ; +2
+0FDF: 56              LD      D,(HL)              ; D = screen-RAM MSB
+0FE0: 2C              INC     L                   ; +3
+0FE1: 5E              LD      E,(HL)              ; E = screen-RAM LSB (DE = draw position)
+0FE2: 00              NOP                         ; 
+0FE3: CD 10 02        CALL    $0210               ; {code.LeftOneColumn} nudge the draw origin
+0FE6: 78              LD      A,B                 ; counter value
+0FE7: E6 0E           AND     $0E                 ; 0000_1110 keep even bits (0,2,4,...,14)
+0FE9: 0F              RRCA                        ; /2 -> frame index 0..7
+0FEA: C6 B0           ADD     $B0                 ; -> LSB of T17B0 sequence table
+0FEC: 6F              LD      L,A                 ; 
+0FED: 26 17           LD      H,$17               ; HL = $17B0 + frame index
+0FEF: 6E              LD      L,(HL)              ; L = LSB of the explosion frame image
+0FF0: EB              EX      DE,HL               ; HL = frame image ($17xx), DE = screen pos
 0FF1: 01 DF FF        LD      BC,$FFDF            ; Screen offset constant -33 right one column (-1), up one row (-32)
-0FF4: C3 40 35        JP      $3540               ; {code.Draw3x2}
+0FF4: C3 40 35        JP      $3540               ; {code.Draw3x2} draw the 3x2 explosion frame
 
 ; not used 
 0FF7: 68              LD      L,B                 
@@ -3542,27 +3592,40 @@ T1420:
 14D8: AC BC AD 00     ;#38
 14DC: AA BA AB BB     ;#37
 
-;
+;*****************************************************************************
+;* Coin-text fixup, run after each character of the '$18xx' text is printed.
+;* If the coinage DIP bit is set, three positions in the "INSERT COIN"
+;* block are overwritten with alternate glyphs, otherwise the text is
+;* left as printed.
+;* In:  A = printed char, HL = source text ptr ($18xx), DE = screen addr.
+;* The quirky flag trick:
+;* Notice the routine writes to the screen before it tests the match
+;* (`LD (HL),$22` sits before `RET Z`). Because `LD (HL),n` doesn't touch the flags,
+;* the `RET Z` still reflects the preceding `CP`. So on a non match
+;* the "wrong" byte is written but then immediately corrected by the next `LD (HL),...`
+;* (and ultimately by `LD (HL),B` at `$14FC`). It's a code size optimization:
+;* only the last write that is followed by a taken `RET Z` actually sticks.
+;*****************************************************************************
 L14E0:
-14E0: 47              LD      B,A                 ; save A
-14E1: 3A 00 78        LD      A,($7800)           ; {hard.DSW0} 78xx DSW0
+14E0: 47              LD      B,A                 ; save the printed character
+14E1: 3A 00 78        LD      A,($7800)           ; {hard.DSW0} 78xx DSW0 (DIP switches)
 14E4: E6 10           AND     $10                 ; 0001_0000 Coinage
-14E6: C8              RET     Z                   ; return if no coins entered
-14E7: EB              EX      DE,HL               ; 
-14E8: 7A              LD      A,D                 ; 
-14E9: FE 18           CP      $18                 ; 
-14EB: C0              RET     NZ                  ; 
-14EC: 7B              LD      A,E                 ; 
-14ED: FE 95           CP      $95                 ; 
-14EF: 36 22           LD      (HL),$22            ; 
-14F1: C8              RET     Z                   ; 
-14F2: FE 9A           CP      $9A                 ; 
-14F4: 36 13           LD      (HL),$13            ; 
-14F6: C8              RET     Z                   ; 
-14F7: FE B5           CP      $B5                 ; 
-14F9: 36 24           LD      (HL),$24            ; 
-14FB: C8              RET     Z                   ; 
-14FC: 70              LD      (HL),B              ; 
+14E6: C8              RET     Z                   ; coinage bit clear -> keep text as-is
+14E7: EB              EX      DE,HL               ; HL = screen addr, DE = source text ptr
+14E8: 7A              LD      A,D                 ; source MSB
+14E9: FE 18           CP      $18                 ; is this the $18xx text block ?
+14EB: C0              RET     NZ                  ; if not, leave it alone
+14EC: 7B              LD      A,E                 ; source LSB (position within text)
+14ED: FE 95           CP      $95                 ; position $1895 ?
+14EF: 36 22           LD      (HL),$22            ; overwrite screen char with $22: "2"
+14F1: C8              RET     Z                   ; ...and done if it was $1895
+14F2: FE 9A           CP      $9A                 ; position $189A ?
+14F4: 36 13           LD      (HL),$13            ; overwrite with $13: "S"
+14F6: C8              RET     Z                   ; ...done if $189A
+14F7: FE B5           CP      $B5                 ; position $18B5 ?
+14F9: 36 24           LD      (HL),$24            ; overwrite with $24: "4"
+14FB: C8              RET     Z                   ; ...done if $18B5
+14FC: 70              LD      (HL),B              ; otherwise restore the original character
 14FD: C9              RET                         ; 
 ;
 14FE: FF FF
@@ -4149,38 +4212,38 @@ T1A00:
 ; "%% % % %%% %%% % %% % %  %"
 1B26: 64 65 00 68 00 68 00 68 68 68 00 68 64 65 00 68 00 66 67 00 68 00 68 00 00 68
 
-;Character block shapes table using setB.
-;Parts of the mothership's purple conveyor belt.
-;So an ordinary belt hit:
-;1. Consumes the bullet (`AND $F7`).
-;2. Sets the "mother-ship hit" flag `$4366` -> plays the hit sound; no score is awarded.
-;3. Swaps the hit tile for a "damaged" belt tile from `T1B40/T1B48/T1B50`,
-;   chosen by the bullet's X position (left/right half) and the tile's low nibble
-;    — so the belt visibly chips/breaks apart where you shoot it.
+; Character block shapes table using setB.
+; Parts of the mothership's purple conveyor belt.
+; So an ordinary belt hit:
+; 1. Consumes the bullet (`AND $F7`).
+; 2. Sets the "mother-ship hit" flag `$4366` -> plays the hit sound; no score is awarded.
+; 3. Swaps the hit tile for a "damaged" belt tile from `T1B40/T1B48/T1B50`,
+;    chosen by the bullet's X position (left/right half) and the tile's low nibble
+;     — so the belt visibly chips/breaks apart where you shoot it.
 T1B40:
 1B40: 6C 6D 6E 6F
 ;
 1B44: FF FF FF FF
 
-;Replacement tiles.
+; Replacement tiles.
 T1B48:
 1B48: 6C 6D 6E 6F
 1B4C: 64 65 66 67
 
-;Right-half belt-parts table.
+; Right-half belt-parts table.
 T1B50:
 1B50: 63 FF 63 61
 1B54: 67 FF 67 65
 1B58: 6B FF 6B 69
 1B5C: 6F FF 6F 6D
 
-;characters used for explosions using setB
+; Characters used for explosions using setB
 T1B60:
 1B60: 80 83 83 85 81 8C 8C 86 81 8C 8C 86 82 84 84 87
 1B70: 00 89 89 00 88 8D 8D 8B 88 8D 8D 8B 00 8A 8A 00
 1B80: 00 00 00 00 00 80 85 00 00 82 87 00 00 00 00 00
 
-;adress table for instumentation of explosion
+; Adress table for instumentation of explosion
 T1B90:
 1B90: 1B 80
 1B92: 1B 70
@@ -4191,13 +4254,13 @@ T1B90:
 1B9C: 17 F0                         ;
 1B9E: 17 F0                         ;
 
-;characters using setA: '1 OR 2 PLAYERS BUTTON'
+; Characters using setA: '1 OR 2 PLAYERS BUTTON'
 T1BA0:
 1BA0: 43 2C                         ; screen ram position
 1BA2: 00 00 00 00 00 00 00 21 00 0F 12 00 22 10
 1BB0: 0C 01 19 05 12 13 00 02 15 14 14 0F 0E 00 00 00
 
-;characters using setB for animation of the mothership's
+; Characters using setB for animation of the mothership's
 ;.....antenna animation and the
 ;...........alien pilot animation
 T1BC0:
@@ -4218,7 +4281,7 @@ T1BC0:
 1BF8: 41 51 76 7E   ; frame 7
 1BFC: 42 52 77 7F   ; 
 
-;part of the starfield (without planets) using setB
+; Part of the starfield (without planets) using setB
 ; This is a 20x9 tile image used to erase the mothership
 T1C00:
 1C00: 00 01 00 06 00 02 03 04 00 01 00 08 00 02 03 04 00 00 07 00 
@@ -4231,8 +4294,8 @@ T1C00:
 1C8C: 04 00 01 00 00 06 00 01 00 02 00 01 03 04 01 03 01 02 03 04 
 1CA0: 00 05 00 01 02 00 09 00 03 04 00 01 00 01 02 03 04 00 02 00 
 
-;Tail of the star field tile pattern that occupies page `$1C` (`$1C00`–`$1CFF`).
-;It's the remaining 76 bytes that complete the 256 byte star page used to paint the whole background.
+; Tail of the star field tile pattern that occupies page `$1C` (`$1C00`–`$1CFF`).
+; It's the remaining 76 bytes that complete the 256 byte star page used to paint the whole background.
 1CB4: 00 01 02 00 03 04 00 06 00 00 01 00 
 1CC0: 00 01 02 00 05 00 00 03 00 04 00 07 00 01 00 02 
 1CD0: 00 00 03 00 04 00 04 00 0A 00 01 00 02 00 03 00 
@@ -4262,7 +4325,7 @@ L1DF0:
 1DF0: 3A 1D 43        LD      A,($431D)           ; {ram.ForegroundScreen+31D} 'A' from 'AMSTAR ..' copyright text
 1DF3: D6 01           SUB     $01                 ; 
 1DF5: C8              RET     Z                   ; 
-; crash the program and reset.
+; Crash the program and reset.
 1DF6: 32 8F 43        LD      ($438F),A           ; {ram.CoinCount}
 1DF9: 00              NOP                         ; 
 1DFA: 00              NOP                         ; 
@@ -4272,7 +4335,7 @@ L1DF0:
 1DFE: 00              NOP                         ; 
 1DFF: 00              NOP                         ; 
 ;
-;data for the 8 (2x2) planets / galaxies from setB
+; Data for the 8 (2x2) planets / galaxies from setB
 T1E00:
 1E00: 20 30 21 31
 1E04: 22 32 23 33
@@ -4282,7 +4345,7 @@ T1E00:
 1E14: 2A 3A 2B 3B
 1E18: 2C 3C 2D 3D
 1E1C: 2E 3E 2F 3F
-;MSB's of screen ram for planets / galaxies
+; MSB's of screen ram for planets / galaxies
 T1E20:
 1E20: 49 48 4A 4B
 1E24: 4A 49 4A 49
@@ -4292,7 +4355,7 @@ T1E20:
 1E34: 4B 4A 49 48
 1E38: 49 49 4A 4A
 1E3C: 48 49 4A 48
-;The low byte (LSB) half of the background screen destination addresses for the (2×2) planets
+; The low byte (LSB) half of the background screen destination addresses for the (2×2) planets
 T1E40:
 1E40: A0 60 40 00
 1E44: E0 C0 C0 60
@@ -4302,7 +4365,7 @@ T1E40:
 1E54: 00 60 00 A0
 1E58: E0 20 80 00
 1E5C: C0 80 A0 E0
-;LSB's of screen ram for planets / galaxies
+; LSB's of screen ram for planets / galaxies
 T1E60:
 1E60: 00 04 08 0C
 1E64: 10 14 18 1C
@@ -4312,7 +4375,7 @@ T1E60:
 1E74: 04 1C 08 14
 1E78: 00 10 04 14
 1E7C: 08 18 0C 1C
-;data for the 16 (1x1) small galaxies from setB
+; data for the 16 (1x1) small galaxies from setB
 T1E80:
 1E80: 10 11 12 13
 1E84: 14 15 16 17
@@ -4405,7 +4468,7 @@ L2000:
 2010: 34              INC     (HL)                ; increment alien movement counter
 2011: 3A BA 43        LD      A,($43BA)           ; {ram.AliensLeft}
 2014: A7              AND     A                   ; updates the zero flag
-2015: CA BA 21        JP      Z,$21BA             ; {code.L21BA} if no AliensLeft
+2015: CA BA 21        JP      Z,$21BA             ; {code.L21BA} if no AliensLeft -> Mothership-wave dispatcher (and end-of-wave handling)
 2018: FE 05           CP      $05                 ; 
 201A: D2 30 21        JP      NC,$2130            ; {code.L2130} if >= 5 left
 201D: 2D              DEC     L                   ; $435E
@@ -4417,7 +4480,7 @@ L2025:
 2025: 7E              LD      A,(HL)              ; get $435E
 2026: A7              AND     A                   ; updates the zero flag
 2027: CA 30 21        JP      Z,$2130             ; {code.L2130} if $435E = 0
-202A: C3 46 21        JP      $2146               ; {code.L2146}
+202A: C3 46 21        JP      $2146               ; {code.L2146} Game's per frame level dispatcher (even/odd phase)
 ; 
 202D: FF FF FF
 ;
@@ -4570,63 +4633,86 @@ L20E1:
 20E2: C9              RET                         ; 
 ;
 20E3: 20 FF FF FF FF
-;
+
+;*****************************************************************************
+;* Draw one 4x4 ship-fragment sprite during the player-ship explosion.
+;* Entry (from L0BC4): A = CounterA5 phase, DE = ship screen address.
+;* Fragment image pointer comes from T1B90; position is scattered using
+;* CounterB9 (via L211C) and the phase.
+;* Purpose:
+;* `L20E8` draws the flying debris sprites of the exploding player ship
+;* (fragment image chosen from `T1B90`, scattered by `CounterB9`/phase,
+;* `L211C` freezing the scroll).
+;*****************************************************************************
 L20E8:
-20E8: 47              LD      B,A                 
-20E9: 7A              LD      A,D                 
-20EA: C6 08           ADD     $08                 
-20EC: 57              LD      D,A                 
-20ED: CD 1C 21        CALL    $211C               ; {code.L211C}
-20F0: 0F              RRCA                        
-20F1: 0F              RRCA                        
-20F2: 0F              RRCA                        
-20F3: 83              ADD     A,E                 
-20F4: E6 1F           AND     $1F                 ; 0001_1111
-20F6: 4F              LD      C,A                 
-20F7: 7B              LD      A,E                 
-20F8: E6 E0           AND     $E0                 ; 1110_0000
-20FA: B1              OR      C                   
-20FB: 5F              LD      E,A                 
-20FC: 78              LD      A,B                 
-20FD: 0F              RRCA                        
-20FE: 0F              RRCA                        
-20FF: E6 0E           AND     $0E                 ; 0000_1110
-2101: C6 90           ADD     $90                 
-2103: 6F              LD      L,A                 
-2104: 26 1B           LD      H,$1B               
-2106: 7E              LD      A,(HL)              
-2107: 2C              INC     L                   
-2108: 6E              LD      L,(HL)              
-2109: 67              LD      H,A                 
+20E8: 47              LD      B,A                 ; B = phase (CounterA5)
+20E9: 7A              LD      A,D                 ; 
+20EA: C6 08           ADD     $08                 ; nudge the row
+20EC: 57              LD      D,A                 ; 
+20ED: CD 1C 21        CALL    $211C               ; {code.L211C} clamp scroll during explosion
+20F0: 0F              RRCA                        ; 
+20F1: 0F              RRCA                        ; scatter offset from CounterB9
+20F2: 0F              RRCA                        ; 
+20F3: 83              ADD     A,E                 ; 
+20F4: E6 1F           AND     $1F                 ; 0001_1111 keep within a column
+20F6: 4F              LD      C,A                 ; 
+20F7: 7B              LD      A,E                 ; 
+20F8: E6 E0           AND     $E0                 ; 1110_0000 column bits
+20FA: B1              OR      C                   ; 
+20FB: 5F              LD      E,A                 ; E = scattered LSB
+20FC: 78              LD      A,B                 ; phase
+20FD: 0F              RRCA                        ; 
+20FE: 0F              RRCA                        ; 
+20FF: E6 0E           AND     $0E                 ; 0000_1110 -> even index 0..14
+2101: C6 90           ADD     $90                 ; -> T1B90 entry
+2103: 6F              LD      L,A                 ; 
+2104: 26 1B           LD      H,$1B               ; HL = T1B90 + index
+2106: 7E              LD      A,(HL)              ; fragment image MSB
+2107: 2C              INC     L                   ; 
+2108: 6E              LD      L,(HL)              ; fragment image LSB
+2109: 67              LD      H,A                 ; HL = fragment image
 210A: 01 04 04        LD      BC,$0404            ; images are 4x4
-210D: C3 D6 0A        JP      $0AD6               ; {code.DrawImageCbyB}
+210D: C3 D6 0A        JP      $0AD6               ; {code.DrawImageCbyB} draw it
 
 2110: FF FF FF FF FF FF FF FF FF FF FF FF
-; 
+
+;*****************************************************************************
+;* Clamp the scroll register to $10 while CounterB9 is in ($10,$30).
+;*****************************************************************************
 L211C:
 211C: 21 B9 43        LD      HL,$43B9            ; {+ram.CounterB9}
-211F: 7E              LD      A,(HL)              
-2120: FE 10           CP      $10                 
-2122: D8              RET     C                   
-2123: FE 30           CP      $30                 
-2125: D0              RET     NC                  
-2126: 3E 10           LD      A,$10               
-2128: 77              LD      (HL),A              
+211F: 7E              LD      A,(HL)              ; 
+2120: FE 10           CP      $10                 ; 
+2122: D8              RET     C                   ; < $10: leave alone
+2123: FE 30           CP      $30                 ; 
+2125: D0              RET     NC                  ; >= $30: leave alone
+2126: 3E 10           LD      A,$10               ; 
+2128: 77              LD      (HL),A              ; pin CounterB9 = $10
 2129: 32 00 58        LD      ($5800),A           ; {hard.scrollRegister} 58xx scroll register
-212C: C9              RET                         
+212C: C9              RET                         ; 
 ; 
 212D: FF FF FF
 
-; 
+;*****************************************************************************
+;* Per-frame update dispatchers for the alien-wave levels.
+;* B = frame phase (rotating counter). Each phase runs a different subset of
+;* the heavy per-frame work, spreading it across frames.
+;* `L2130`/`L2146`/`L21BA` are the game's per frame level dispatchers:
+;* A rotating frame phase counter (`B`) selects one of several groups of update calls
+;* (`AlienDataController`, `AlienBehaviorUpdate`, `AlienMovementUpdate`,
+;* `AlienAnimationUpdate`, `EnemyBulletUpdate`, collision `L0F00`, killed alien anim `L0FC0`,
+;* bomb drop `L2560`, mothership housekeeping `L24C4`),
+;* so the heavy work is spread over multiple frames.
+;*****************************************************************************
 L2130:
-2130: 78              LD      A,B                 ; get masked counter
+2130: 78              LD      A,B                 ; frame phase
 2131: A7              AND     A                   ; updates the zero flag
-2132: CA 50 21        JP      Z,$2150             ; {code.L2150} if = 0
+2132: CA 50 21        JP      Z,$2150             ; {code.L2150} phase 0
 2135: FE 01           CP      $01                 ; 
-2137: CA 60 21        JP      Z,$2160             ; {code.L2160} if = 1
+2137: CA 60 21        JP      Z,$2160             ; {code.L2160} phase 1
 213A: FE 02           CP      $02                 ; 
-213C: CA 70 21        JP      Z,$2170             ; {code.L2170} if = 2
-213F: C3 80 21        JP      $2180               ; {code.L2180} counter = 3
+213C: CA 70 21        JP      Z,$2170             ; {code.L2170} phase 2
+213F: C3 80 21        JP      $2180               ; {code.L2180} phase 3
 
 ; not used 
 2142: 90              SUB     B                   
@@ -4634,18 +4720,22 @@ L2130:
 2144: 50              LD      D,B                 
 2145: 60              LD      H,B                 
 
-; 
+;*****************************************************************************
+;* Game's per frame level dispatcher (even/odd phase)
+;*****************************************************************************
 L2146:
-2146: 78              LD      A,B                 
-2147: 0F              RRCA                        
-2148: D2 90 21        JP      NC,$2190            ; {code.L2190}
-214B: C3 A5 21        JP      $21A5               ; {code.L21A5}
+2146: 78              LD      A,B                 ; 
+2147: 0F              RRCA                        ; test phase bit 0
+2148: D2 90 21        JP      NC,$2190            ; {code.L2190} even phase
+214B: C3 A5 21        JP      $21A5               ; {code.L21A5} odd phase
 
 ; not used 
 214E: F0              RET     P                   
 214F: F9              LD      SP,HL               
 
-; masked counter = 0
+;*****************************************************************************
+;* Phase 0
+;*****************************************************************************
 L2150:
 2150: CD 50 0A        CALL    $0A50               ; {code.AlienDataController} draw or delete alien
 2153: CD 00 30        CALL    $3000               ; {code.AlienBehaviorUpdate}
@@ -4653,25 +4743,31 @@ L2150:
 ; 
 2159: FF FF FF FF FF FF FF
 
-; masked counter = 1
+;*****************************************************************************
+;* Phase 1
+;*****************************************************************************
 L2160:
-2160: CD C4 24        CALL    $24C4               ; {code.L24C4}
+2160: CD C4 24        CALL    $24C4               ; {code.L24C4} background / mothership housekeeping
 2163: CD 40 0C        CALL    $0C40               ; {code.EnemyBulletUpdate}
 2166: CD 1C 0D        CALL    $0D1C               ; {code.AlienMovementUpdate}
 2169: C3 C0 0F        JP      $0FC0               ; {code.L0FC0} Handle animations for killed aliens
 ; 
 216C: FF FF FF  FF
 
-; masked counter = 2
+;*****************************************************************************
+;* Phase 2
+;*****************************************************************************
 L2170:
 2170: CD 70 0D        CALL    $0D70               ; {code.AlienAnimationUpdate}
-2173: C3 60 25        JP      $2560               ; {code.L2560}
+2173: C3 60 25        JP      $2560               ; {code.L2560} try to drop a bomb on the player
 ; 
 2176: FF FF FF FF FF FF FF FF FF FF
 
-; masked counter = 3
+;*****************************************************************************
+;* Phase 3
+;*****************************************************************************
 L2180:
-2180: CD C4 24        CALL    $24C4               ; {code.L24C4}
+2180: CD C4 24        CALL    $24C4               ; {code.L24C4} background / mothership housekeeping
 2183: CD 40 0C        CALL    $0C40               ; {code.EnemyBulletUpdate}
 2186: CD 6C 0A        CALL    $0A6C               ; {code.L0A6C} get screen ram adress for all aliens
 2189: C3 C0 0F        JP      $0FC0               ; {code.L0FC0} Handle animations for killed aliens
@@ -4682,7 +4778,7 @@ L2190:
 2190: CD 50 0A        CALL    $0A50               ; {code.AlienDataController} draw or delete alien
 2193: CD 00 30        CALL    $3000               ; {code.AlienBehaviorUpdate}
 2196: CD 00 0F        CALL    $0F00               ; {code.L0F00} 'alien with player' collision check
-2199: CD 60 25        CALL    $2560               ; {code.L2560}
+2199: CD 60 25        CALL    $2560               ; {code.L2560} try to drop a bomb
 219C: C3 40 0C        JP      $0C40               ; {code.EnemyBulletUpdate}
 
 219F: FF FF FF FF FF FF
@@ -4692,23 +4788,26 @@ L21A5:
 21A8: CD 70 0D        CALL    $0D70               ; {code.AlienAnimationUpdate}
 21AB: CD 6C 0A        CALL    $0A6C               ; {code.L0A6C} get screen ram adress for all aliens
 21AE: CD C0 0F        CALL    $0FC0               ; {code.L0FC0} Handle animations for killed aliens
-21B1: C3 C4 24        JP      $24C4               ; {code.L24C4}
+21B1: C3 C4 24        JP      $24C4               ; {code.L24C4} background / mothership housekeeping
 
 21B4: FF FF FF FF FF FF
-; 
+
+;*****************************************************************************
+;* Mothership-wave dispatcher (and end-of-wave handling).
+;*****************************************************************************
 L21BA:
 21BA: 78              LD      A,B                 ; 
-21BB: 0F              RRCA                        ; 
-21BC: D2 04 22        JP      NC,$2204            ; {code.L2204}
+21BB: 0F              RRCA                        ; test phase bit 0
+21BC: D2 04 22        JP      NC,$2204            ; {code.L2204} even phase: end-of-wave countdown (L2204)
 21BF: CD 40 0C        CALL    $0C40               ; {code.EnemyBulletUpdate}
 21C2: CD C0 0F        CALL    $0FC0               ; {code.L0FC0} Handle animations for killed aliens
-21C5: CD C4 24        CALL    $24C4               ; {code.L24C4}
+21C5: CD C4 24        CALL    $24C4               ; {code.L24C4} mothership housekeeping
 21C8: 3A B8 43        LD      A,($43B8)           ; {ram.LevelAndRound}
 21CB: E6 0F           AND     $0F                 ; mask out 0000_1111
 21CD: FE 0B           CP      $0B                 ; 
-21CF: DA 04 22        JP      C,$2204             ; {code.L2204} if < game level B
-21D2: 3E 10           LD      A,$10               ; 16 aliens for a new wave
-21D4: 32 BA 43        LD      ($43BA),A           ; {ram.AliensLeft}
+21CF: DA 04 22        JP      C,$2204             ; {code.L2204} if < level $B: fall through to wave end
+21D2: 3E 10           LD      A,$10               ; else 16 aliens ...
+21D4: 32 BA 43        LD      ($43BA),A           ; {ram.AliensLeft} ... for a new wave
 21D7: C3 26 05        JP      $0526               ; {code.L0526} init alien data
 
 21DA: FF FF
@@ -4867,15 +4966,20 @@ L227B:
 228D: 1D              DEC     E                   ; All columns done?
 228E: C2 7A 22        JP      NZ,$227A            ; {+code.L227A} no ... do all columns
 2291: C9              RET                         ; Done
-; spiral step
+
+;*****************************************************************************
+;* Spiral step
+;*****************************************************************************
 L2292:
 2292: 21 B8 43        LD      HL,$43B8            ; {+ram.LevelAndRound}
 2295: 7E              LD      A,(HL)              ; 
 2296: E6 08           AND     $08                 ; mask out 0000_1000
 2298: CA F0 22        JP      Z,$22F0             ; {+code.L22F0}
-; Fill the entire background with stars (uses the whole `$1C00`–`$1CFF` page, including `$1CB4`–`$1CFF`).
-; `L2292` copies the star page into background VRAM from `$4B3F` downward, reading `T1C00` with `INC L`
-; (which wraps inside page `$1C`), until it has filled `$4800`–`$4B3F`.
+;*****************************************************************************
+;* Fill the entire background with stars (uses the whole `$1C00`–`$1CFF` page, including `$1CB4`–`$1CFF`).
+;* `L2292` copies the star page into background VRAM from `$4B3F` downward, reading `T1C00` with `INC L`
+;* (which wraps inside page `$1C`), until it has filled `$4800`–`$4B3F`.
+;*****************************************************************************
 229B: 21 00 1C        LD      HL,$1C00            ; {+code.T1C00} Background stars to erase mother ship
 229E: 11 3F 4B        LD      DE,$4B3F            ; End of background screen memory
 22A1: 06 47           LD      B,$47               ; 
@@ -5189,22 +5293,22 @@ L23D6:
 L2400:
 2400: CD 2C 24        CALL    $242C               ; {code.L242C}
 2403: CA 52 25        JP      Z,$2552             ; {code.L2552}
-2406: FE 20           CP      $20                 
+2406: FE 20           CP      $20                 ; 
 2408: DA 6A 24        JP      C,$246A             ; {code.EraseMothership}
 240B: CA 20 25        JP      Z,$2520             ; {code.L2520} Calculation and display of the bonus score for mothership explosion
-240E: 47              LD      B,A                 
-240F: 0F              RRCA                        
-2410: 00              NOP                         
-2411: 78              LD      A,B                 
+240E: 47              LD      B,A                 ; 
+240F: 0F              RRCA                        ; 
+2410: 00              NOP                         ; 
+2411: 78              LD      A,B                 ; 
 2412: D2 E8 20        JP      NC,$20E8            ; {code.L20E8}
-2415: 7B              LD      A,E                 
-2416: D6 05           SUB     $05                 
-2418: C6 C0           ADD     $C0                 
-241A: 4F              LD      C,A                 
-241B: 7A              LD      A,D                 
-241C: CE 00           ADC     $00                 
-241E: 47              LD      B,A                 
-241F: 7E              LD      A,(HL)              
+2415: 7B              LD      A,E                 ; 
+2416: D6 05           SUB     $05                 ; 
+2418: C6 C0           ADD     $C0                 ; 
+241A: 4F              LD      C,A                 ; 
+241B: 7A              LD      A,D                 ; 
+241C: CE 00           ADC     $00                 ; 
+241E: 47              LD      B,A                 ; 
+241F: 7E              LD      A,(HL)              ; 
 2420: 11 00 2A        LD      DE,$2A00            ; {+code.T2A00} get the foreground tiles of the mothership particles explosion
 2423: 21 00 2B        LD      HL,$2B00            ; {+code.T2B00} get the control data
 2426: C3 85 20        JP      $2085               ; {code.L2085}
@@ -5362,34 +5466,44 @@ L24E0:
 
 ; not used 
 24EF: FA 22 C3        JP      M,$C322             
-; 
+
+;*****************************************************************************
+;* Mother ship bomb attack (reached from L24A0 on level >= 8, when
+;* Counter9A+1 & 3 == 3). Randomly targets the player's column, then fires.
+;* Purpose:
+;* On mother ship levels this fires a bomb only when a random number happens
+;* to line up horizontally with the player ship (a "semi aimed" attack,
+;* further rate limited by the `Counter9A` gate). It builds the bomb's `B`=X / `C`=Y
+;* (Y derived from the scroll counter) and jumps into the shared spawner `L25B7`.
+;* The two `PUSH HL` match the two `POP HL` that `L25B7`/`L25E0` do on exit.
+;*****************************************************************************
 L24F2:
 24F2: CD AA 30        CALL    $30AA               ; {code.GetRandomNumber}
-24F5: C6 60           ADD     $60                 
-24F7: 00              NOP                         
-24F8: 47              LD      B,A                 
+24F5: C6 60           ADD     $60                 ; 
+24F7: 00              NOP                         ; 
+24F8: 47              LD      B,A                 ; B = random target X ($60 + rnd)
 24F9: 21 9B 43        LD      HL,$439B            ; {+ram.Counter9A+1}
 24FC: E6 0E           AND     $0E                 ; 0000_1110
-24FE: A6              AND     (HL)                
-24FF: C0              RET     NZ                  
-2500: 3A 9E 43        LD      A,($439E)           ; {ram.M439E}
-2503: B8              CP      B                   
-2504: D0              RET     NC                  
-2505: 3A 9F 43        LD      A,($439F)           ; {ram.M439F}
-2508: B8              CP      B                   
-2509: D8              RET     C                   
-250A: 78              LD      A,B                 
-250B: D6 04           SUB     $04                 
-250D: 47              LD      B,A                 
+24FE: A6              AND     (HL)                ; 
+24FF: C0              RET     NZ                  ; probabilistic gate: usually skip
+2500: 3A 9E 43        LD      A,($439E)           ; {ram.M439E} player ship left bound
+2503: B8              CP      B                   ; 
+2504: D0              RET     NC                  ; target left of player -> skip
+2505: 3A 9F 43        LD      A,($439F)           ; {ram.M439F} player ship right bound
+2508: B8              CP      B                   ; 
+2509: D8              RET     C                   ; target right of player -> skip
+250A: 78              LD      A,B                 ; target aligns with the player
+250B: D6 04           SUB     $04                 ; 
+250D: 47              LD      B,A                 ; B = bomb X
 250E: 3A B9 43        LD      A,($43B9)           ; {ram.CounterB9}
-2511: 2F              CPL                         
-2512: 3C              INC     A                   
+2511: 2F              CPL                         ; 
+2512: 3C              INC     A                   ; = -CounterB9
 2513: E6 F8           AND     $F8                 ; 1111_1000
-2515: C6 48           ADD     $48                 
-2517: 4F              LD      C,A                 
-2518: E5              PUSH    HL                  
-2519: E5              PUSH    HL                  
-251A: C3 B7 25        JP      $25B7               ; {code.L25B7}
+2515: C6 48           ADD     $48                 ; 
+2517: 4F              LD      C,A                 ; C = bomb Y (from scroll position)
+2518: E5              PUSH    HL                  ; 
+2519: E5              PUSH    HL                  ; two dummy stack frames for L25B7's POPs
+251A: C3 B7 25        JP      $25B7               ; {code.L25B7} fire the enemy bullet
 ; 
 251D: FF FF FF
 
@@ -5440,128 +5554,145 @@ L2552:
 
 255E: FF FF
 
+;*****************************************************************************
+;* Alien bomb-drop: pick a group of 8 aliens, find one lined up with the
+;* player at attack depth, and fire an enemy bullet at it.
+;* Purpose:
+;* `L2560` is the alien bomb drop selector. 
+;* It picks one of two 8 alien groups (alternating on `Counter93`),
+;* computes the player's horizontal window (`B`,`C`) and the required attack depth `D`
+;* (scaled by the attack escalation counter `$4357`), then scans the group with `L2596`.
+;*****************************************************************************
 L2560:
 2560: 21 93 43        LD      HL,$4393            ; {+ram.Counter93}
-2563: 7E              LD      A,(HL)              
-2564: E6 01           AND     $01                 ; 0000_0001
+2563: 7E              LD      A,(HL)              ; 
+2564: E6 01           AND     $01                 ; 0000_0001 alternate between the two halves...
 2566: 07              RLCA                        ; Multiply by 32 ..
 2567: 07              RLCA                        ; ..
 2568: 07              RLCA                        ; ..
 2569: 07              RLCA                        ; ..
-256A: 07              RLCA                        ; ..
-256B: C6 70           ADD     $70                 
-256D: 6F              LD      L,A                 
-256E: 26 4B           LD      H,$4B               
-2570: 1E 08           LD      E,$08               
-2572: 3A 57 43        LD      A,($4357)           ; {ram.M4357}
+256A: 07              RLCA                        ; ...(0 or $20)
+256B: C6 70           ADD     $70                 ; 
+256D: 6F              LD      L,A                 ; 
+256E: 26 4B           LD      H,$4B               ; HL = $4B70 or $4B90 (8-alien group)
+2570: 1E 08           LD      E,$08               ; 8 aliens to scan
+2572: 3A 57 43        LD      A,($4357)           ; {ram.M4357} attack escalation counter
 2575: 07              RLCA                        ; Multiply by 8 ..
 2576: 07              RLCA                        ; ..
 2577: 07              RLCA                        ; ..
-2578: 00              NOP                         
-2579: C6 AD           ADD     $AD                 
-257B: 57              LD      D,A                 
+2578: 00              NOP                         ; 
+2579: C6 AD           ADD     $AD                 ; 
+257B: 57              LD      D,A                 ; D = Y depth threshold
 257C: 3A 9F 43        LD      A,($439F)           ; {ram.M439F}
-257F: C6 03           ADD     $03                 
-2581: 4F              LD      C,A                 
+257F: C6 03           ADD     $03                 ; 
+2581: 4F              LD      C,A                 ; C = player right bound + 3
 2582: 3A 9E 43        LD      A,($439E)           ; {ram.M439E}
-2585: D6 0A           SUB     $0A                 
-2587: 47              LD      B,A                 
+2585: D6 0A           SUB     $0A                 ; 
+2587: 47              LD      B,A                 ; B = player left bound - $0A
 L2588:
-2588: E5              PUSH    HL                  
-2589: CD 96 25        CALL    $2596               ; {code.L2596}
-258C: E1              POP     HL                  
-258D: 7D              LD      A,L                 
-258E: C6 04           ADD     $04                 
-2590: 6F              LD      L,A                 
-2591: 1D              DEC     E                   
-2592: C2 88 25        JP      NZ,$2588            ; {code.L2588}
-2595: C9              RET                         
-;
+2588: E5              PUSH    HL                  ; 
+2589: CD 96 25        CALL    $2596               ; {code.L2596} test this alien
+258C: E1              POP     HL                  ; 
+258D: 7D              LD      A,L                 ; 
+258E: C6 04           ADD     $04                 ; 
+2590: 6F              LD      L,A                 ; next alien entry
+2591: 1D              DEC     E                   ; 
+2592: C2 88 25        JP      NZ,$2588            ; {code.L2588} loop 8 aliens
+2595: C9              RET                         ; 
+
+;*****************************************************************************
+;* Per-alien attack candidacy test. HL -> alien entry.
+;* Must be active, valid shape, horizontally over the player, and deep enough.
+;* `L2596` accepts an alien that is active, a valid shape, horizontally over the player,
+;* and deep enough on screen. When one qualifies it loads its position into `B`/`C` and drops into `L25B7`.
+;*****************************************************************************
 L2596:
-2596: 7E              LD      A,(HL)              
+2596: 7E              LD      A,(HL)              ; control state (+0)
 2597: E6 08           AND     $08                 ; 0000_1000
-2599: C8              RET     Z                   
-259A: 2C              INC     L                   
-259B: 7E              LD      A,(HL)              
-259C: FE 08           CP      $08                 
-259E: C8              RET     Z                   
-259F: FE 88           CP      $88                 
-25A1: D0              RET     NC                  
-25A2: 2C              INC     L                   
-25A3: 7E              LD      A,(HL)              
-25A4: B8              CP      B                   
-25A5: D8              RET     C                   
-25A6: B9              CP      C                   
-25A7: D0              RET     NC                  
-25A8: 2C              INC     L                   
-25A9: 7E              LD      A,(HL)              
-25AA: BA              CP      D                   
-25AB: D0              RET     NC                  
-25AC: FE 80           CP      $80                 
-25AE: D8              RET     C                   
-25AF: 00              NOP                         
-25B0: 00              NOP                         
-25B1: 00              NOP                         
-25B2: 00              NOP                         
-25B3: 00              NOP                         
-25B4: 4F              LD      C,A                 
-25B5: 2D              DEC     L                   
-25B6: 46              LD      B,(HL)              
-; 
-; Finds a free enemy-bullet slot (max 3/4/5 depending on round) and,
-; if one exists, activates it at `(B,C)`; if all slots are busy
-; it returns up two stack levels (cancelling the scan for this frame).
+2599: C8              RET     Z                   ; not active -> skip
+259A: 2C              INC     L                   ; +1 shape/char
+259B: 7E              LD      A,(HL)              ; 
+259C: FE 08           CP      $08                 ; 
+259E: C8              RET     Z                   ; skip specific value
+259F: FE 88           CP      $88                 ; 
+25A1: D0              RET     NC                  ; shape out of range -> skip
+25A2: 2C              INC     L                   ; +2 screen X
+25A3: 7E              LD      A,(HL)              ; 
+25A4: B8              CP      B                   ; 
+25A5: D8              RET     C                   ; left of player -> skip
+25A6: B9              CP      C                   ; 
+25A7: D0              RET     NC                  ; right of player -> skip
+25A8: 2C              INC     L                   ; +3 screen Y
+25A9: 7E              LD      A,(HL)              ; 
+25AA: BA              CP      D                   ; 
+25AB: D0              RET     NC                  ; not deep enough -> skip
+25AC: FE 80           CP      $80                 ; 
+25AE: D8              RET     C                   ; too high -> skip
+25AF: 00              NOP                         ; (patched-out code)
+25B0: 00              NOP                         ; 
+25B1: 00              NOP                         ; 
+25B2: 00              NOP                         ; 
+25B3: 00              NOP                         ; 
+25B4: 4F              LD      C,A                 ; C = alien Y
+25B5: 2D              DEC     L                   ; back to +2
+25B6: 46              LD      B,(HL)              ; B = alien X  (fall into spawner)
+;*****************************************************************************
+;* Fire the enemy bullet (shared by alien and mother-ship attacks):
+;* Finds a free enemy-bullet slot (max 3/4/5 depending on round) and,
+;* if one exists, activates it at `(B,C)`; if all slots are busy
+;* it returns up two stack levels (cancelling the scan for this frame).
+;*****************************************************************************
 L25B7:
 25B7: 3A B8 43        LD      A,($43B8)           ; {ram.LevelAndRound}
-25BA: 16 03           LD      D,$03               ; 
+25BA: 16 03           LD      D,$03               ; base: 3 bullets
 25BC: FE 10           CP      $10                 ; 0001_0000
-25BE: DA CA 25        JP      C,$25CA             ; {code.L25CA} if game round < 1
-25C1: 16 04           LD      D,$04               ; 
+25BE: DA CA 25        JP      C,$25CA             ; {code.L25CA} round 0
+25C1: 16 04           LD      D,$04               ; round 1: 4 bullets
 25C3: FE 20           CP      $20                 ; 0010_0000
 25C5: DA CA 25        JP      C,$25CA             ; {code.L25CA} if game round < 2
-25C8: 16 05           LD      D,$05               ; 
+25C8: 16 05           LD      D,$05               ; round >=2: 5 bullets
 L25CA:
 25CA: 21 CC 43        LD      HL,$43CC            ; {+ram.EnemyBullet0State}
 L25CD:
 25CD: 7E              LD      A,(HL)              ; 
-25CE: E6 08           AND     $08                 ; mask out 0000_1000
-25D0: CA E0 25        JP      Z,$25E0             ; {code.L25E0}
+25CE: E6 08           AND     $08                 ; 0000_1000 slot in use?
+25D0: CA E0 25        JP      Z,$25E0             ; {code.L25E0} found a free slot -> spawn
 25D3: 7D              LD      A,L                 ; 
 25D4: C6 04           ADD     $04                 ; 
-25D6: 6F              LD      L,A                 ; 
+25D6: 6F              LD      L,A                 ; next slot
 25D7: 15              DEC     D                   ; 
-25D8: C2 CD 25        JP      NZ,$25CD            ; {code.L25CD}
+25D8: C2 CD 25        JP      NZ,$25CD            ; {code.L25CD} try D slots
 25DB: E1              POP     HL                  ; 
-25DC: E1              POP     HL                  ; 
-25DD: C9              RET                         ; 
+25DC: E1              POP     HL                  ; discard the two pushed frames
+25DD: C9              RET                         ; no free slot -> abort
 
 25DE: FF FF
 
 L25E0:
-25E0: 78              LD      A,B                 
-25E1: C6 04           ADD     $04                 
-25E3: 47              LD      B,A                 
-25E4: 79              LD      A,C                 
-25E5: C6 0C           ADD     $0C                 
-25E7: 4F              LD      C,A                 
-25E8: 36 08           LD      (HL),$08            
-25EA: 2C              INC     L                   
-25EB: 78              LD      A,B                 
-25EC: 0F              RRCA                        
+25E0: 78              LD      A,B                 ; 
+25E1: C6 04           ADD     $04                 ; 
+25E3: 47              LD      B,A                 ; adjust bullet X
+25E4: 79              LD      A,C                 ; 
+25E5: C6 0C           ADD     $0C                 ; 
+25E7: 4F              LD      C,A                 ; adjust bullet Y
+25E8: 36 08           LD      (HL),$08            ; state = active (bit3)
+25EA: 2C              INC     L                   ; 
+25EB: 78              LD      A,B                 ; 
+25EC: 0F              RRCA                        ; 
 25ED: E6 03           AND     $03                 ; 0000_0011
-25EF: 57              LD      D,A                 
-25F0: 79              LD      A,C                 
+25EF: 57              LD      D,A                 ; 
+25F0: 79              LD      A,C                 ; 
 25F1: E6 04           AND     $04                 ; 0000_0100
-25F3: 82              ADD     A,D                 
-25F4: C6 58           ADD     $58                 
-25F6: 77              LD      (HL),A              
-25F7: 2C              INC     L                   
-25F8: 70              LD      (HL),B              
-25F9: 2C              INC     L                   
-25FA: 71              LD      (HL),C              
-25FB: E1              POP     HL                  
-25FC: E1              POP     HL                  
-25FD: C9              RET                         
+25F3: 82              ADD     A,D                 ; 
+25F4: C6 58           ADD     $58                 ; 
+25F6: 77              LD      (HL),A              ; bullet character/type ($58 + variant)
+25F7: 2C              INC     L                   ; 
+25F8: 70              LD      (HL),B              ; bullet X
+25F9: 2C              INC     L                   ; 
+25FA: 71              LD      (HL),C              ; bullet Y
+25FB: E1              POP     HL                  ; 
+25FC: E1              POP     HL                  ; discard the two pushed frames
+25FD: C9              RET                         ; 
 
 25FE: FF FF
 
@@ -5786,7 +5917,10 @@ L2739:
 2743: C3 10 3A        JP      $3A10               ; {code.UpdateSounds}
 
 2746: FF FF
-; Add score values for enemies hit.
+
+;*****************************************************************************
+;* Add score values for enemies hit.
+;*****************************************************************************
 L2748:
 2748: 1A              LD      A,(DE)              ; get $4370
 2749: 1C              INC     E                   ; 
@@ -5932,10 +6066,10 @@ L27E9:
 ; h6-ic50.6a
 ;*****************************************************************************
 
-;Foreground tiles of the player ship particles explosion:
-;This is the character code to draw in each cell of the explosion field.
-;Non zero bytes are the debris glyphs (`E0 E1 E2`, `C1 C2 C3`, `3D 3B 30 32 42 5A 4D 4F`, ...).
-;`00` means "no particle in this cell".
+; Foreground tiles of the player ship particles explosion:
+; This is the character code to draw in each cell of the explosion field.
+; Non zero bytes are the debris glyphs (`E0 E1 E2`, `C1 C2 C3`, `3D 3B 30 32 42 5A 4D 4F`, ...).
+; `00` means "no particle in this cell".
 T2800:
 2800: 00 32 00 00 00 00 00 00 00 00 00 00 00 00 42 42
 2810: 00 00 00 00 00 00 00 00 00 00 E1 00 00 E2 00 00
@@ -5954,11 +6088,11 @@ T2800:
 28E0: 00 3B 00 00 00 00 00 00 00 C2 00 00 00 4F 00 00
 28F0: 00 00 3B 00 00 00 00 00 00 00 00 00 00 00 4D 4D
 
-;Control data of the player ship particles explosion:
-;`T2900` is paired 1:1 with `T2800` and holds a 1 bit per cell "draw/erase" flag.
-;The renderer `L2070`->`L2085`->`L20B0` selects a phase offset into both tables,
-;then processes cells 8 at a time: it clears each screen cell, rotates a control byte,
-;and only where a bit is set does it stamp the matching `T2800` tile.
+; Control data of the player ship particles explosion:
+; `T2900` is paired 1:1 with `T2800` and holds a 1 bit per cell "draw/erase" flag.
+; The renderer `L2070`->`L2085`->`L20B0` selects a phase offset into both tables,
+; then processes cells 8 at a time: it clears each screen cell, rotates a control byte,
+; and only where a bit is set does it stamp the matching `T2800` tile.
 T2900:
 2900: 00 00 00 00 00 00 00 00 00 00 00 00 00 20 00 38
 2910: 00 34 00 28 00 00 00 00 00 00 00 00 00 00 00 00
@@ -5977,7 +6111,7 @@ T2900:
 29E0: 02 80 00 04 00 00 40 00 00 00 00 00 00 00 00 00
 29F0: 01 00 00 00 00 00 40 00 00 00 00 00 00 02 04 08
 
-;foreground tiles of the mothership particles explosion
+; Foreground tiles of the mothership particles explosion
 T2A00:
 2A00: 00 00 00 00 00 00 00 D2 00 00 00 00 00 00 00 00
 2A10: 00 00 00 00 00 DE 00 5E E0 00 00 E1 00 00 00 00
@@ -5996,7 +6130,7 @@ T2A00:
 2AE0: 00 00 00 00 00 DE 00 E1 D3 00 E2 00 00 00 00 00
 2AF0: 00 00 00 00 00 00 00 5E D0 00 00 00 00 00 00 00
 
-;control data of the mothership particles explosion
+; Control data of the mothership particles explosion
 T2B00:
 2B00: 00 00 00 00 00 00 00 00 00 00 80 01 40 02 80 05
 2B10: A0 01 40 02 00 01 00 00 00 00 00 00 00 00 00 00
@@ -6221,8 +6355,10 @@ L3028:
 3059: C9              RET                         ; 
 ; 
 305A: FF FF
-; 
-; End of movement pattern reached. Get the next start pointer.
+
+;*****************************************************************************
+;* End of movement pattern reached. Get the next start pointer.
+;*****************************************************************************
 L305C:
 305C: CD 74 30        CALL    $3074               ; {code.L3074} C = scaled random magnitude
 305F: 21 57 43        LD      HL,$4357            ; {+ram.M4357}
@@ -6329,7 +6465,9 @@ L30BA:
 ; not used 
 30D9: FE                                          
 
-; Tick one timer (does not go below 0).
+;*****************************************************************************
+;* Tick one timer (does not go below 0).
+;*****************************************************************************
 L30DA:
 30DA: 2C              INC     L                   ; 
 30DB: 7E              LD      A,(HL)              ; 
@@ -6343,7 +6481,9 @@ L30DA:
 30E1: FE 01           CP      $01                 
 30E3: D0              RET     NC                  
 
-; Recompute the attack delay $4355 and reload the 3 group timers.
+;*****************************************************************************
+;* Recompute the attack delay $4355 and reload the 3 group timers.
+;*****************************************************************************
 L30E4:
 30E4: CD 74 30        CALL    $3074               ; {code.L3074} C = magnitude
 30E7: 21 9A 43        LD      HL,$439A            ; {+ram.Counter9A}
@@ -6374,7 +6514,9 @@ L30F2:
 ; not used
 3110: 21 50                                       
 
-; Reload one group timer (only if it is currently 0).
+;*****************************************************************************
+;* Reload one group timer (only if it is currently 0).
+;*****************************************************************************
 L3112:
 3112: 2C              INC     L                   ; 
 3113: 7E              LD      A,(HL)              ; 
@@ -6478,7 +6620,9 @@ L318A:
 ; 
 318F: FF FF FF
 
-; Match test: active alien whose control bytes equal the start pointer.
+;*****************************************************************************
+;* Match test: active alien whose control bytes equal the start pointer.
+;*****************************************************************************
 L3192:
 3192: 1A              LD      A,(DE)              ; 
 3193: E6 08           AND     $08                 ; 0000_1000 alien active?
@@ -6574,7 +6718,9 @@ L31D6:
 320E: 81              ADD     A,C                 
 320F: 6F              LD      L,A                 
 
-; Get the attack phase at Reg. B (0..3) from the alien Y (only when one attacker).
+;*****************************************************************************
+;* Get the attack phase at Reg. B (0..3) from the alien Y (only when one attacker).
+;*****************************************************************************
 L3210:
 3210: 3A 53 43        LD      A,($4353)           ; {ram.M4353} Number of aliens doing the closed loop pattern
 3213: FE 01           CP      $01                 ; 
@@ -7547,8 +7693,10 @@ L379F:
 37AA: C3 40 35        JP      $3540               ; {code.Draw3x2}
 ; 
 37AD: FF FF FF
-; Prints the score value in the middle of the bonus explosion animation.
-; First two digits are from $4379. Last digit is ever 0.
+;*****************************************************************************
+;* Prints the score value in the middle of the bonus explosion animation.
+;* First two digits are from $4379. Last digit is ever 0.
+;*****************************************************************************
 L37B0:
 37B0: 2C              INC     L                   ; 
 37B1: 7E              LD      A,(HL)              ; 
@@ -7601,7 +7749,6 @@ L37DD:
 ;* The routine computes a shape index `B = displayedChar − $90`,
 ;* and loads the bullet's pixel column bit into `C` from `T3E00[PlayerBulletX & 7]`.
 ;* It then does two mask tests against the same `C`.
-
 ;*****************************************************************************
 L3800:
 3800: 3A C4 43        LD      A,($43C4)           ; {ram.PlayerBulletState}
@@ -7645,7 +7792,9 @@ L3800:
 383E: DC 44 38        CALL    C,$3844             ; {code.L3844}
 3841: C3 1C 39        JP      $391C               ; {code.L391C}
 
-; A bird has been hit
+;*****************************************************************************
+;* A bird has been hit
+;*****************************************************************************
 L3844:
 3844: C6 60           ADD     $60                 ; index = (birdChar - $90), table base $3B60 (body masks)
 3846: 6F              LD      L,A                 ; HL = $3B60 + B
@@ -7704,8 +7853,10 @@ L3894:
 
 389F: FF FF
 
-; Clears the hit cell and even contains the game's copy protection check that
-; reads the "R" of "AMSTAR ELECTRONICS CORP." — corrupting the bird graphics if patched.
+;*****************************************************************************
+;* Clears the hit cell and even contains the game's copy protection check that
+;* reads the "R" of "AMSTAR ELECTRONICS CORP." — corrupting the bird graphics if patched.
+;*****************************************************************************
 L38A1:
 38A1: D5              PUSH    DE                  ; 
 38A2: 0E 20           LD      C,$20               ; 
@@ -7714,9 +7865,11 @@ L38A1:
 38A6: 56              LD      D,(HL)              ; 
 38A7: 23              INC     HL                  ; 
 38A8: 5E              LD      E,(HL)              ; 
-; This is a simple protection against piracy !
-; Changing this single letter will result in a disturbing graphics garbage,
-; when you hit a bird.
+;*****************************************************************************
+;* This is a simple protection against piracy !
+;* Changing this single letter will result in a disturbing graphics garbage,
+;* when you hit a bird.
+;*****************************************************************************
 38A9: 3A 8C 19        LD      A,($198C)           ; {code.L198C} First letter 'R' from: " AMSTAR ELECTRONICS CORP. "
 38AC: C6 DE           ADD     $DE                 ; 1101_1110
 38AE: 6F              LD      L,A                 ; 
@@ -7732,7 +7885,9 @@ L38A1:
 ; 
 38B9: FF FF FF
 
-; Test the wing mask
+;*****************************************************************************
+;* Test the wing mask
+;*****************************************************************************
 L38BC:
 38BC: C6 B0           ADD     $B0                 ; LSB of the wing-mask table
 38BE: 6F              LD      L,A                 ; HL = $3BB0 + B
@@ -7763,7 +7918,9 @@ L38BC:
 38E5: 26 3D           LD      H,$3D               ; 
 38E7: 7E              LD      A,(HL)              ; replacement (wing shot off) character
 38E8: 12              LD      (DE),A              ; overwrite the bird tile
-; A bird's wing was hit
+;*****************************************************************************
+;* A bird's wing was hit
+;*****************************************************************************
 L38E9:
 38E9: 3E FF           LD      A,$FF               ; set the flag for
 38EB: 32 66 43        LD      ($4366),A           ; {ram.M4366} bird wing hit detected
@@ -7797,8 +7954,11 @@ L3906:
 3913: 3A C4 43        LD      A,($43C4)           ; {ram.PlayerBulletState}
 3916: E6 F7           AND     $F7                 ; 1111_0111
 3918: 32 C4 43        LD      ($43C4),A           ; {ram.PlayerBulletState}
-391B: C9              RET                         
-; Wing mask (`$3BB0`+B) — `L38BC`, reached from `L391C` when `B >= $20`.
+391B: C9              RET                         ; 
+
+;*****************************************************************************
+;* Wing mask (`$3BB0`+B) — `L38BC`, reached from `L391C` when `B >= $20`.
+;*****************************************************************************
 L391C:
 391C: 78              LD      A,B                 ; 
 391D: FE 20           CP      $20                 ; 
@@ -7906,8 +8066,9 @@ L3980:
 3985: D8              RET     C                   ; only when phase is in $0C..$1B
 3986: FE 10           CP      $10                 ; 
 3988: D0              RET     NC                  ; 
-
-; --- save the real player bullet state into the $4BC0 buffer ---
+;*****************************************************************************
+;* --- save the real player bullet state into the $4BC0 buffer ---
+;*****************************************************************************
 3989: 21 C4 43        LD      HL,$43C4            ; {+ram.PlayerBulletState} $43C4
 398C: 11 C0 4B        LD      DE,$4BC0            ; {!+ram.B4BC0}
 398F: 06 04           LD      B,$04               ; 
@@ -7915,8 +8076,9 @@ L3980:
 3994: 2E E6           LD      L,$E6               ; AbovePlayerBulletMSB
 3996: 06 02           LD      B,$02               ; 
 3998: CD E0 05        CALL    $05E0               ; {code.CopyBbytesHLtoDE} $43E6..E7 -> $4BC4..C5
-
-; --- aim the probe at the player ship and force it "active" ---
+;*****************************************************************************
+;* --- aim the probe at the player ship and force it "active" ---
+;*****************************************************************************
 399B: 2E E2           LD      L,$E2               ; PlayerShipMSB
 399D: 11 E6 43        LD      DE,$43E6            ; {+ram.AbovePlayerBulletMSB}
 39A0: 06 02           LD      B,$02               ; 
@@ -7939,11 +8101,12 @@ L3980:
 L39BF:
 39BF: 1A              LD      A,(DE)              ; 
 39C0: 32 C6 43        LD      ($43C6),A           ; {ram.PlayerBulletX} probe X = player mapped position
-
-; --- Use (the sweep)
-; After saving, the routine forces `PlayerBulletState` active (`$39A7: LD (HL),$08`),
-; seeds the aim X, and repeatedly calls the bird collision routine `L3800`
-; while stepping the "above-player bullet" address down one row at a time — checking up to ~`$1D` rows for a hit.
+;*****************************************************************************
+;* --- Use (the sweep)
+;* After saving, the routine forces `PlayerBulletState` active (`$39A7: LD (HL),$08`),
+;* seeds the aim X, and repeatedly calls the bird collision routine `L3800`
+;* while stepping the "above-player bullet" address down one row at a time — checking up to ~`$1D` rows for a hit.
+;*****************************************************************************
 L39C3:
 39C3: CD 00 38        CALL    $3800               ; {code.L3800} bird collision check at this row
 39C6: 21 C4 43        LD      HL,$43C4            ; {+ram.PlayerBulletState}
@@ -7956,10 +8119,11 @@ L39C3:
 39D4: E6 1F           AND     $1F                 ; 0001_1111
 39D6: FE 1D           CP      $1D                 ; 
 39D8: DA C3 39        JP      C,$39C3             ; {code.L39C3} step down a row, repeat (~29 rows)
-
-; --- Restore buffer
-; When the sweep finishes (or the shield branch at `L39F0` completes),
-; the saved bytes are copied back, returning the player bullet to exactly its previous state
+;*****************************************************************************
+;* --- Restore buffer
+;* When the sweep finishes (or the shield branch at `L39F0` completes),
+;* the saved bytes are copied back, returning the player bullet to exactly its previous state
+;*****************************************************************************
 L39DB:
 39DB: 21 C0 4B        LD      HL,$4BC0            ; {!+ram.B4BC0} restore the saved player bullet state
 39DE: 11 C4 43        LD      DE,$43C4            ; {+ram.PlayerBulletState}
@@ -8259,7 +8423,9 @@ L3B28:
 
 3B32: FF
 
-; Play the sound for 'Bonus live added'.
+;*****************************************************************************
+;* Play the sound for 'Bonus live added'.
+;*****************************************************************************
 L3B33:
 3B33: 21 6A 43        LD      HL,$436A            ; {+ram.M436A} get flag for: 'Bonus live added'
 3B36: 7E              LD      A,(HL)              ; 
@@ -8275,7 +8441,9 @@ L3B33:
 ; not used 
 3B42: 8D              ADC     A,L                 
 
-; Update all synth sounds and melody triggers.
+;*****************************************************************************
+;* Update all synth sounds and melody triggers.
+;*****************************************************************************
 L3B43:
 3B43: 21 A4 43        LD      HL,$43A4            ; {+ram.GameState}
 3B46: 7E              LD      A,(HL)              ; 
@@ -8290,35 +8458,35 @@ L3B43:
 ;
 3B5E: FF FF
 
-;Per-character horizontal hit-mask table for bird collision used at $3844.
-;It's the lookup that lets the player's bullet hit a bird only
-;where the bird's graphic tile actually has solid pixels, rather than treating the whole 8-pixel character cell as solid.
-;Body mask table:
+; Per-character horizontal hit-mask table for bird collision used at $3844.
+; It's the lookup that lets the player's bullet hit a bird only
+; where the bird's graphic tile actually has solid pixels, rather than treating the whole 8-pixel character cell as solid.
+; Body mask table:
 T3B60:
 3B60: 1F 7C F0 01 C0 07 7F FC F0 07 C0 1F FF FC 03 F0   ; for bird background tiles 90 - 9F
 3B70: 0F C0 3F FC 1F F0 07 FE 3F F8 0F FF FF FC 1F FF   ; for bird background tiles A0 - AF
 3B80: FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0 FF 01 00 FF   ; for bird background tiles B0 - BF
 3B90: 07 00 FF 07 FC 1F FC 1F F0 7F F0 7F C0 FF 01 C0   ; for bird background tiles C0 - CF
 3BA0: FF 01 00 FF 07 FF 07 FC 1F F8 0F F0 C0 03 FF FF   ; for bird background tiles D0 - DF
-;Wing mask table:
-;The wing table base is `$3BB0` and it's indexed by `B`, but the wing test only runs for `B >= $20`.
-;So the addresses actually consulted are:
-; - `B = $20` -> `$3BB0 + $20` = `$3BD0` (bird character `$B0`)
-; - `B = $4F` -> `$3BB0 + $4F` = `$3BFF` (bird character `$DF`)
-;Entries `$3BB0`–`$3BCF` (which would correspond to `B < $20`) are never reached,
-;they're the dead lower part of the wing table. `$3BD0`–`$3BFF` are the real,
-;in use wing masks, one per bird shape in the `$B0`–`$DF` character range.
+; Wing mask table:
+; The wing table base is `$3BB0` and it's indexed by `B`, but the wing test only runs for `B >= $20`.
+; So the addresses actually consulted are:
+;  - `B = $20` -> `$3BB0 + $20` = `$3BD0` (bird character `$B0`)
+;  - `B = $4F` -> `$3BB0 + $4F` = `$3BFF` (bird character `$DF`)
+; Entries `$3BB0`–`$3BCF` (which would correspond to `B < $20`) are never reached,
+; they're the dead lower part of the wing table. `$3BD0`–`$3BFF` are the real,
+; in use wing masks, one per bird shape in the `$B0`–`$DF` character range.
 T3BB0:
 3BB0: 03 E0 03 E0 0F 80 0F 00 3C 00 1E 3F 00 FC F0 00   ; for bird background tiles E0 - EF
 3BC0: 7F FE 00 F0 03 E0 00 00 0F 80 00 00 3F 00 FE 30   ; for bird background tiles F0 - FF
 
-;Bird wing pixel column collision mask table:
+; Bird wing pixel column collision mask table:
 T3BD0:
 3BD0: 00 06 FF 00 F8 00 00 03 E0 00 E0 08 20 04 C0 01   ; 
 3BE0: E0 03 F8 0F 07 E0 3F 03 FF FF FF 3F FC FF F8 FF   ; 
 3BF0: FF 07 E0 1F F0 FF FC FF 07 1E FC 1F 1F 7F FF FF   ; 
 
-;bird character block shapes table (using character set B)
+; Bird character block shapes table (using character set B)
 T3C00:
 3C00: E8 00 E9 00 C4 C6 C5 C7 EA 00 EB 00 00 00       ;bird shape #24 [Object 3C00](bgtiles.html#object-3c00)
 3C0E: EC 00 E9 00 C8 CA C9 CB EA 00 ED 00 00 00       ;#28 [Object 3C0E](bgtiles.html#object-3c0E)
@@ -8412,7 +8580,7 @@ T3E08:
 
 3E0E: 3D B4 ;group of stars
 
-;growing up
+; Growing up
 3E10: 3D 90 ;#3                               3x2
 3E12: 3D 96 ;#4                               3x2
 3E14: 3D 9C ;#5                               3x2
@@ -8442,49 +8610,49 @@ T3E08:
 
 3E3E: 3C 00 ;#24                              7x2
 
-;get smaller and move to left
+; Get smaller and move to left
 3E40: 3D 58 ;#16                              4x2
 3E42: 3D 50 ;#11                              4x2
 3E44: 3D 48 ;#13                              4x2
 3E46: 3D 40 ;#12                              4x2
 
-;get smaller
+; Get smaller
 3E48: 3D 36 ;#20                              5x2
 3E4A: 3D 2C ;#19                              5x2
 3E4C: 3D 22 ;#18                              5x2
 3E4E: 3D 18 ;#17                              5x2
 
-;wings going down
+; Wings going down
 3E50: 3C 00 ;#24                              7x2
 3E52: 3D 0C ;#23                              6x2
 3E54: 3D 00 ;#22                              6x2
 3E56: 3C C0 ;#21                              6x2
 
-;wings up and move to right
+; Wings up and move to right
 3E58: 3C 00 ;#24                              7x2
 3E5A: 3C 0E ;#28                              7x2
 3E5C: 3C 1C ;#29                              7x2
 3E5E: 3C 2A ;#30                              7x2
 
-;wings up and move to right
+; Wings up and move to right
 3E60: 3C 38 ;#24 without right wing           5x2
 3E62: 3C 42 ;#28 without right wing           5x2
 3E64: 3C 4C ;#29 without right wing reg.      5x2
 3E66: 3C 56 ;#30 without right wing reg.      5x2
 
-;wings up and move to right
+; Wings up and move to right
 3E68: 3C 60 ;#24 without left wing            7x2
 3E6A: 3C 6E ;#28 without left wing reg.       7x2
 3E6C: 3C 7C ;#29 without left wing reg.       7x2
 3E6E: 3C 8A ;#30 without left wing            7x2
 
-;wings up and move to right
+; Wings up and move to right
 3E70: 3C 98 ;#24 without left/right wing      5x2
 3E72: 3C A2 ;#28 without left/right wing reg  5x2
 3E74: 3C AC ;#29 without left/right wing reg  5x2
 3E76: 3C B6 ;#30 without left/right wing reg  5x2
 
-;wings down and move to right
+; Wings down and move to right
 3E78: 3C C0 ;#21                              6x2
 3E7A: 3C CC ;#25                              6x2
 3E7C: 3C D8 ;#26                              6x2
@@ -8582,67 +8750,67 @@ T3EE0:
 ; Register contents and address for stack manipulation 
 ; used at level 3,4,8,9.
 T3F00:
-; for bird index to character block shape (0)
+; For bird index to character block shape (0)
 3F00: FF FF FF FF   ; not used
 3F04: FF FF         ; not used
 3F06: FF FF         ; not used
-; for bird index to character block shape (1)
+; For bird index to character block shape (1)
 3F08: 20 FF 02 FF   ;BC and DE register contents
 3F0C: 36 D2         ;address to call
 3F0E: 36 C0         ;address to call
-; for bird index to character block shape (2)
+; For bird index to character block shape (2)
 3F10: 20 FF 03 FF   ;
 3F14: 36 D2         ;address
 3F16: 35 E0         ;address
-; for bird index to character block shape (3)
+; For bird index to character block shape (3)
 3F18: 30 FF 04 FF   ;
 3F1C: 36 D2         ;address
 3F1E: 35 E0         ;address
-; for bird index to character block shape (4)
+; For bird index to character block shape (4)
 3F20: 10 FF 05 FF   ;
 3F24: 36 EA         ;     address
 3F26: 35 E0         ;address
-; for bird index to character block shape (5)
+; For bird index to character block shape (5)
 3F28: 10 FF 06 FF   ;
 3F2C: 36 EA         ;address
 3F2E: 36 C0         ;address
-; for bird index to character block shape (6)
+; For bird index to character block shape (6)
 3F30: 10 60 07 1F   ;
 3F34: 37 0A         ;address
 3F36: 36 C0         ;address
-; for bird index to character block shape (7)
+; For bird index to character block shape (7)
 3F38: F0 10 0B 1A   ;
 3F3C: 37 0A         ;address
 3F3E: 36 C0         ;address
-; for bird index to character block shape (8)
+; For bird index to character block shape (8)
 3F40: 40 FF 04 FF   ;
 3F44: 36 EA         ;address
 3F46: 36 C0         ;address
-; for bird index to character block shape (9)
+; For bird index to character block shape (9)
 3F48: 10 FF 08 FF   ;
 3F4C: 36 EA         ;address
 3F4E: 36 C0         ;address
-; for bird index to character block shape (A)
+; For bird index to character block shape (A)
 3F50: 40 10 0F 17   ;
 3F54: 37 0A         ;address
 3F56: 36 C0         ;address
-; for bird index to character block shape (B)
+; For bird index to character block shape (B)
 3F58: 10 FF 0A FF   ;
 3F5C: 36 EA         ;address
 3F5E: 35 E0         ;address
-; for bird index to character block shape (C)
+; For bird index to character block shape (C)
 3F60: FF FF FF FF   ;
 3F64: 36 CC         ;address
 3F66: 35 E0         ;address
-; for bird index to character block shape (D)
+; For bird index to character block shape (D)
 3F68: FF FF FF FF   ;
 3F6C: 36 CC         ;address
 3F6E: 35 E0         ;address
-; for bird index to character block shape (E)
+; For bird index to character block shape (E)
 3F70: 10 FF 06 FF   ;
 3F74: 36 EA         ;address
 3F76: 35 E0         ;address
-; for bird index to character block shape (F)
+; For bird index to character block shape (F)
 3F78: 10 10 07 79   ;
 3F7C: 37 0A         ;address
 3F7E: 35 E0         ;address
