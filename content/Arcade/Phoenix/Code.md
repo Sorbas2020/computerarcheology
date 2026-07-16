@@ -5668,6 +5668,13 @@ L25CD:
 
 25DE: FF FF
 
+;*****************************************************************************
+;* Bullet spawner:
+;* It fills that slot — marking it active, computing a bullet character/type from the position,
+;* and storing the X/Y. The paired `POP HL` at the ends unwind the two dummy
+;* stack frames the callers pushed, so control returns cleanly
+;* regardless of whether a bullet was actually fired.
+;*****************************************************************************
 L25E0:
 25E0: 78              LD      A,B                 ; 
 25E1: C6 04           ADD     $04                 ; 
