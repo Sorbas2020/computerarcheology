@@ -254,6 +254,157 @@ Put together, the invariants that make it safe are:
 - Ordinary code never notices, because the bank only changes inside `CopyMemoryBank`.
 - `CopyMemoryBank` survives the change because it copies the stack region (`$4BC0`–`$4BFF`) into the destination bank, performs no stack operations after switching, and returns with `$5000` pointing at that destination bank — so the `RET` (and the whole return chain) reads a valid, freshly copied stack.
 
+## What happens when aliens leave the visible area of the screen?
+
+I now have the full mechanism. The key is the coordinate system plus the screen-address lookup — let me lay it out.
+
+## Aliens have logical coordinates that are independent of the screen
+
+Every alien slot in the `$4B70` structure holds a single‑byte X grid coordinate and a single‑byte Y grid coordinate. Movement is nothing more than repeatedly *adding* signed increments to those bytes, taken from the movement choreography (`T1000` -> `T1700`):
+
+```2733:2748:(computerarcheology Phoenix disassembly)
+0D4B: 2B        DEC  HL              ; value for X movement
+0D4C: 0A        LD   A,(BC)          ; get alien screen coordinate X
+0D4D: 86        ADD  A,(HL)          ; add the X delta from T1700
+0D4E: 02        LD   (BC),A          ; save it back
+L0D4F:
+0D4F: 03        INC  BC              ; -> Y coordinate
+0D50: 23        INC  HL
+0D51: 0A        LD   A,(BC)          ; get alien screen coordinate Y
+0D52: 86        ADD  A,(HL)          ; add the Y delta
+0D53: 02        LD   (BC),A          ; save it back
+```
+
+There is no clamping and no edge test here. The coordinates are 8 bit, so they simply wrap modulo 256 (`$FF + 1 -> $00`). The only "border" check (`AND $07`) just detects when the alien has crossed a whole character cell so the pattern can step to its next entry — it has nothing to do with the screen edge. So logically an alien keeps moving forever along its pattern, on screen or not.
+
+## The screen edge lives entirely in the coordinate -> address lookup
+
+An alien is only *shown* when its coordinate is translated into a screen RAM address by `GetScreenRamAddress`. That routine takes the X coordinate, drops the sub cell pixel bits, and uses `X >> 3` (the column number) as an index into the `T0A00` address table:
+
+```2131:2150:(computerarcheology Phoenix disassembly)
+09BA: 21 00 0A  LD  HL,T0A00     ; Screen ram addresses for the top row
+09BD: 0A        LD  A,(BC)       ; get the X coordinate
+09BE: E6 F8     AND $F8          ; drop the low 3 (sub-cell) bits
+09C0: 0F        RRCA
+09C1: 0F        RRCA             ; A = column * 2  (2-byte entries)
+09C2: 85        ADD A,L
+09C3: 6F        LD  L,A          ; HL = T0A00 + column*2
+09C4: 7E        LD  A,(HL)       ; MSB of that column's screen address
+...
+09CF: 86        ADD A,(HL)       ; LSB += (Y >> 3)  -> row within the column
+```
+
+`T0A00` only has 26 real entries — columns 0–25, the visible width of the (rotated) playfield:
+
+```2158:2192:(computerarcheology Phoenix disassembly)
+T0A00:
+0A00: 43 20 ; column 0  (upper-left corner)
+...
+0A32: 40 00 ; column 25 (upper-right corner)
+; Mapping the 'out of screen' objects
+0A34: 00 00
+0A36: 00 00
+0A38: 00 00
+0A3A: 00 00
+0A3C: 00 00
+0A3E: 00 00
+```
+
+## What actually happens off-screen
+
+Because `column = X >> 3`, a byte X can address columns 0–31. Columns 0–25 are visible; columns 26–31 (X ≥ `$D0`) fall into the six `00 00` entries at `$0A34`–`$0A3F`. So for an off screen alien, `GetScreenRamAddress` returns address `$00xx` — the bottom of ROM.
+
+That's the whole trick:
+
+- Drawing/erasing an off-screen alien writes to `$00xx`, which is ROM. Writes to ROM do nothing, so the alien silently vanishes — no corruption, no wraparound garbage on the opposite edge.
+- The alien's logical coordinate keeps advancing (and wrapping mod 256) the entire time it's off-screen, because movement is decoupled from rendering.
+- When the coordinate comes back into columns 0–25, the lookup returns a real screen address again and the alien reappears seamlessly at the correct spot. Its "old address" (used for erasing) was also `$0000` while off-screen, so the erase step is equally harmless.
+
+Collision detection uses these same screen addresses/coordinates, so an off-screen alien can neither be hit by the player's bullet nor collide with the ship while it's parked in the `$00xx` region — consistent with it being invisible.
+
+## Two layers of movement
+
+- Formation aliens all share one looping choreography: the movement list pointer (`T4B50`) walks `T1000`, which indexes the X/Y delta pairs in `T1700`; when the list hits its end marker, `L0DDE` resets it to the start. That pattern is what sweeps the block side to side and down — it's authored so the formation turns around near the edges rather than actually running off.
+- Diving / flying aliens run their own patterns and *do* routinely swing past the edges; those are the ones that exploit the `$0000` off screen mapping to disappear on one side and re‑enter later.
+
+## Summary
+
+Aliens move by accumulating signed X/Y deltas into 8‑bit coordinates that wrap mod 256 and are never clamped. "Leaving the screen" isn't handled by the movement code at all — it's handled by `GetScreenRamAddress`, whose `T0A00` table only maps the 26 visible columns and sends columns 26–31 to the six `$0000` "out‑of‑screen" entries. Off screen aliens therefore draw/erase to harmless ROM (invisible), keep updating their position, and pop back into view unchanged once their coordinate re enters the visible range.
+
+## How does the JP (HL) at $0EE5 work?
+
+This is a hand rolled non local return (a "longjmp" style stack unwind), not an offset calculation at all. Here's exactly what's going on.
+
+## The three instructions
+
+```3063:3066:(computerarcheology Phoenix disassembly)
+0EE2: 35        DEC  (HL)            ; AliensLeft--
+0EE3: E1        POP  HL              ; discard one return address
+0EE4: E1        POP  HL              ; pop the NEXT return address into HL
+0EE5: E9        JP   (HL)            ; jump to it -> $0DF9, $0027, $2199, $2006
+```
+
+This is the tail of the shared "enemy destroyed" routine (`L0EA4`/`L0EAD`). By the time execution gets here the alien has been cleared, the explosion slot filled, the "enemy hit" flag set, and `AliensLeft` decremented.
+
+There is no computed offset. `JP (HL)` jumps to whatever address is in `HL`, and `HL` is filled by `POP` — i.e. it is taken straight off the Z80 call stack. The two `POP HL` instructions throw away two levels of nested `CALL` return addresses, and the second popped value becomes the jump target. So the destination is decided *dynamically* by how the collision code was entered — which is why the disassembler lists four possibilities.
+
+## Why exactly two POPs — a stack trace
+
+The destroy tail is always reached from inside a per alien scanning loop, which is itself inside a collision entry routine. Take an in formation alien hit by the first player bullet:
+
+```
+$2003: CALL L0DF0        ; push $2006   (dispatcher return)
+  $0DF6: CALL L0E10      ; push $0DF9   (continuation in L0DF0)
+    $0E83: CALL NZ,L0E90 ; push $0E86   (per-alien scan loop in L0E70)
+      L0E90 hit -> falls into L0EA4/L0EAD -> $0EE3
+```
+
+Stack at `$0EE3` (top -> bottom): `$0E86`, `$0DF9`, `$2006`.
+
+- `POP HL` → `$0E86` discarded — abandons the alien scan loop (we must *not* keep iterating the alien array we just modified, or we could double‑hit).
+- `POP HL` → `$0DF9` — this becomes the target.
+- `JP (HL)` → `$0DF9`, which is the instruction right after `CALL L0E10` in `L0DF0`, i.e. it goes on to run the second bullet's collision check. `$2006` stays on the stack for later.
+
+## Why the target varies (the four listed addresses)
+
+The trick is that the second collision pass is entered by a `JP`, not a `CALL`:
+
+```2882:2882:(computerarcheology Phoenix disassembly)
+0DFF: C3 10 0E  JP  L0E10           ; second bullet check - no return pushed
+```
+
+So depending on the entry path there is one fewer frame on the stack, and the second `POP` lands on a different address:
+
+| Situation | 1st POP discards | 2nd POP -> `JP (HL)` |
+|---|---|---|
+| 1st bullet destroys an alien (entered `L0E10` via `CALL`) | scan loop return (`$0E86`/`$0E4D`) | `$0DF9` — go do the 2nd bullet check |
+| 2nd bullet destroys an alien (entered `L0E10` via `JP`) | scan loop return | `$2006` — return to the frame dispatcher after `CALL L0DF0` (`$2003`) |
+| Alien touches ship (`L0F00`, entered via `CALL` at `$2196`) | scan loop return (`$0F2B`) | `$2199` — return to the dispatcher after `CALL L0F00` |
+| Same pattern in the top level update chain | scan loop return | `$0027` — return in the main game‑update sequence |
+
+I verified those call sites in the ROM:
+
+```101:102:(computerarcheology Phoenix disassembly)
+0024: CD 00 04  CALL GameStateMachine     ; return = $0027
+0027: CD 00 27  CALL UpdateScoresAndSound
+```
+
+```4310:4310:(computerarcheology Phoenix disassembly)
+2003: CD F0 0D  CALL L0DF0                 ; return = $2006
+```
+
+```4590:4591:(computerarcheology Phoenix disassembly)
+2196: CD 00 0F  CALL L0F00                 ; return = $2199
+2199: CD 60 25  CALL L2560
+```
+
+## Summary
+
+- `$0EE3`–`$0EE5` = `POP HL` / `POP HL` / `JP (HL)`.
+- It gets its target from the call stack, not from any offset: it pops two saved return addresses and jumps to the second one.
+- The first `POP` deliberately unwinds out of the inner alien scanning loop (so the loop doesn't keep running over an array that just changed); the second `POP` yields the point where the game should resume.
+- That resume point is `$0DF9`, `$2006`, `$2199`, or `$0027` depending on which collision entry path (and which of `CALL`/`JP`) led into the shared destroy routine. It's essentially a structured exception style early exit implemented by manual stack popping.
+
 ## 6/5/2024
 
 I got an awesome merge request from Peter (Sorbas2020 on github). He added lots of comments and data disassembly.

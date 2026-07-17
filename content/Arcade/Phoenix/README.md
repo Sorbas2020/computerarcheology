@@ -50,6 +50,10 @@ https://github.com/mamedev/mame/blob/master/src/mame/phoenix/phoenix.cpp
 
 # Pictures and Comments from Peter
 
+## The year is 2026.
+
+With the help of AI (Anthropic's Claude Opus 4.8), I was able to fill the remaining gaps and get answers to all the questions.
+
 A few years ago, I worked on a C16 and a C64 port of the classic arcade game.
 At this point in time the game was not available on the website `computerarcheology.com`.
 I had to manually copy all graphics from the screen.

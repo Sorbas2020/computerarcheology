@@ -336,50 +336,52 @@ GetPlayerInputsForDemo:
 0195: FF
 
 ;*****************************************************************************
-;* Slow printing the static texts for the score average table 
-;* and the big letters of phoenix title.
+;* Slow printing the static texts for the score average table
+;* and the big letters of the Phoenix title. Prints ONE character per call,
+;* driven by Counter98 ($4398:$4399). Attract-mode only.
+;* In: HL = $4399 (Counter98 LSB).
 ;*****************************************************************************
 SlowPrintScoreAverageTable:
-0196: 7E              LD      A,(HL)              ; get actual index for slow print ($4399)
-0197: E6 1F           AND     $1F                 ; mask out 0001_1111
-0199: FE 06           CP      $06                 ; reached state 6 ?
-019B: D8              RET     C                   ; no..return
-019C: 5F              LD      E,A                 ; save the state
-019D: 7E              LD      A,(HL)              ; get actual index for slow print ($4399)
-019E: E6 E0           AND     $E0                 ; mask out 1110_0000
-01A0: 4F              LD      C,A                 ; save bits 5,6,7
-01A1: 2D              DEC     L                   ; 
-01A2: 46              LD      B,(HL)              ; get zero reference from $4398
-01A3: 2E A8           LD      L,$A8               ; ..and..
-01A5: 70              LD      (HL),B              ; save it to $43A8
-01A6: 2C              INC     L                   ; 
-01A7: 71              LD      (HL),C              ; save bits 5,6,7 to $43A9
-01A8: 01 60 18        LD      BC,$1860            ; {+code.T1860} data block starting with 'INSERT  COIN' text
-01AB: CD 06 02        CALL    $0206               ; {code.AddBCtoMem} stores MSB LSB
-01AE: 7E              LD      A,(HL)              ; 
-01AF: 2D              DEC     L                   ; 
-01B0: 66              LD      H,(HL)              ; 
-01B1: 6F              LD      L,A                 ; 
-01B2: 7B              LD      A,E                 ; 
-01B3: 56              LD      D,(HL)              ; get the data
+0196: 7E              LD      A,(HL)              ; A = $4399 (Counter98 low byte)
+0197: E6 1F           AND     $1F                 ; low 5 bits = char position within the line
+0199: FE 06           CP      $06                 ; positions 0..5 are the inter-line gap
+019B: D8              RET     C                   ; ...nothing to print yet
+019C: 5F              LD      E,A                 ; E = char index (6..31)
+019D: 7E              LD      A,(HL)              ; A = $4399 again
+019E: E6 E0           AND     $E0                 ; top 3 bits = which line (0..7) * $20
+01A0: 4F              LD      C,A                 ; C = line offset (low byte)
+01A1: 2D              DEC     L                   ; -> $4398
+01A2: 46              LD      B,(HL)              ; B = Counter98 high byte = block-of-8-lines offset
+01A3: 2E A8           LD      L,$A8               ; scratch pointer $43A8...
+01A5: 70              LD      (HL),B              ; $43A8 = B (offset MSB)
+01A6: 2C              INC     L                   ; -> $43A9
+01A7: 71              LD      (HL),C              ; $43A9 = C (offset LSB)
+01A8: 01 60 18        LD      BC,$1860            ; {+code.T1860} base of the text-block table
+01AB: CD 06 02        CALL    $0206               ; {code.AddBCtoMem} ($43A8:$43A9) += $1860  -> pointer to the line record
+01AE: 7E              LD      A,(HL)              ; A = pointer LSB ($43A9)
+01AF: 2D              DEC     L                   ; -> $43A8
+01B0: 66              LD      H,(HL)              ; H = pointer MSB
+01B1: 6F              LD      L,A                 ; HL = record address ($1860 + offset)
+01B2: 7B              LD      A,E                 ; A = char index
+01B3: 56              LD      D,(HL)              ; D = record +0 = screen dest MSB
 01B4: 2C              INC     L                   ; 
-01B5: 5E              LD      E,(HL)              ; 
-01B6: 2D              DEC     L                   ; 
-01B7: 4F              LD      C,A                 ; 
+01B5: 5E              LD      E,(HL)              ; E = record +1 = screen dest LSB (DE = line start)
+01B6: 2D              DEC     L                   ; back to record +0
+01B7: 4F              LD      C,A                 ; C = char index
 01B8: 85              ADD     A,L                 ; 
-01B9: 6F              LD      L,A                 ; 
-01BA: 79              LD      A,C                 ; 
-01BB: D6 06           SUB     $06                 ; 
+01B9: 6F              LD      L,A                 ; HL = record + char index  (the char to print)
+01BA: 79              LD      A,C                 ; A = char index
+01BB: D6 06           SUB     $06                 ; columns to advance = index - 6
 01BD: 4F              LD      C,A                 ; 
-01BE: CA C8 01        JP      Z,$01C8             ; {code.L01C8}
+01BE: CA C8 01        JP      Z,$01C8             ; {code.L01C8} index 6 -> print at the line start
 L01C1:
-01C1: CD 17 02        CALL    $0217               ; {code.RightOneColumn} move to next screen position
+01C1: CD 17 02        CALL    $0217               ; {code.RightOneColumn} step DE right one column
 01C4: 0D              DEC     C                   ; 
-01C5: C2 C1 01        JP      NZ,$01C1            ; {code.L01C1}
+01C5: C2 C1 01        JP      NZ,$01C1            ; {code.L01C1} ...advance (index-6) columns
 L01C8:
-01C8: 7E              LD      A,(HL)              ; 
+01C8: 7E              LD      A,(HL)              ; the character at record+index
 01C9: 12              LD      (DE),A              ; print one character on the screen
-01CA: C3 E0 14        JP      $14E0               ; {code.L14E0} check for coin event
+01CA: C3 E0 14        JP      $14E0               ; {code.L14E0} coinage text fixup, then return
 ; Ghost code bytes from an older version.
 ; The code was probably shortened at this point during development and the following bytes were not specifically deleted.
 01CD: C2 C0 01        JP      NZ,$01C0            ; {}
@@ -965,53 +967,75 @@ L0430:
 045C: FF FF FF FF
 
 ;*****************************************************************************
-;* Copy memory bank to bank
-;* B=from bank number, C=to bank number
-;* Starts at 4320
+;* Copy memory bank to bank.
+;* B = from-bank number, C = to-bank number.  Copies three regions:
+;*   1) the foreground playfield (from $4320)
+;*      This loop walks the screen in the display's native (rotated) order:
+;*      It copies a 4 byte group (`E & 3` inner loop), then snaps `E` to
+;*      its `$x0` boundary and subtracts `$20` to jump to the group one screen line earlier,
+;*      when that underflows it decrements the page (`DEC D`).
+;*      It marches through pages `$43 -> $42 -> $41 -> $40` and stops when `D` reaches `$3F`
+;*      (i.e. below `$4000`). Net effect: the visible playfield is transferred between banks.
+;*   2) the game-state/score block  $4380-$43B7
+;*      A straight linear copy (`INC E` until `$B8`). This carries the two players' scores
+;*      (`$4380`–`$4387`) plus the level/round and assorted counters in that block.
+;*   3) the object buffer          $4BC0-$4BFF
+;*      Another linear copy that runs until `E` wraps from `$FF` to `$00`.
+;*      This preserves the in progress object/bird buffer.
+;* Role in the game:
+;* `CopyMemoryBank` is what makes alternating two player play possible:
+;* at each turn boundary the game flips the "current player" flag and calls this routine
+;* to move the departing player's screen and state into their bank while bringing
+;* the incoming player's bank live (the register ends on `C`). The three regions cover
+;* exactly what must persist across turns — the visible screen, the score/level/counter block,
+;* and the object buffer — so each player resumes precisely where they left off.
 ;*****************************************************************************
 CopyMemoryBank:
-0460: 21 00 50        LD      HL,$5000            ; video/RAM bank-select register
-0463: 11 20 43        LD      DE,$4320            ; {+ram.ForegroundScreen+320} 1st row 1st line
-;
+0460: 21 00 50        LD      HL,$5000            ; 50xx video / RAM bank-select register
+0463: 11 20 43        LD      DE,$4320            ; {+ram.ForegroundScreen+320} $4320 = 1st row, 1st line of playfield
+
+;----- Region 1: the visible foreground screen --------------------------------
 L0466:
-0466: 70              LD      (HL),B              ; select SOURCE bank
+0466: 70              LD      (HL),B              ; select source bank
 0467: 1A              LD      A,(DE)              ; read byte from source bank
-0468: 71              LD      (HL),C              ; select DEST bank
-0469: 12              LD      (DE),A              ; write byte to dest bank
-046A: 1C              INC     E                   ; 
+0468: 71              LD      (HL),C              ; select destination bank
+0469: 12              LD      (DE),A              ; write byte into destination bank
+046A: 1C              INC     E                   ; next byte
 046B: 7B              LD      A,E                 ; 
-046C: E6 03           AND     $03                 ; 0000_0011
-046E: C2 66 04        JP      NZ,$0466            ; {code.L0466}
-0471: 7B              LD      A,E                 ; 
-0472: E6 F0           AND     $F0                 ; 1111_0000
-0474: D6 20           SUB     $20                 ; 
+046C: E6 03           AND     $03                 ; still inside the 4-byte group?
+046E: C2 66 04        JP      NZ,$0466            ; {code.L0466} ...yes, copy the 4 bytes of this group
+0471: 7B              LD      A,E                 ; group done: move to the next screen line
+0472: E6 F0           AND     $F0                 ; snap E to its $x0 boundary
+0474: D6 20           SUB     $20                 ; step back one screen line (-32)
 0476: 5F              LD      E,A                 ; 
-0477: D2 66 04        JP      NC,$0466            ; {code.L0466}
-047A: 15              DEC     D                   ; 
+0477: D2 66 04        JP      NC,$0466            ; {code.L0466} no underflow -> keep copying this page
+047A: 15              DEC     D                   ; underflow -> previous page
 047B: 7A              LD      A,D                 ; 
-047C: FE 3F           CP      $3F                 ; 
-047E: C2 66 04        JP      NZ,$0466            ; {code.L0466}
-0481: 11 80 43        LD      DE,$4380            ; {+ram.M4380} then the state/score block...
-;
+047C: FE 3F           CP      $3F                 ; dropped below $4000 ?
+047E: C2 66 04        JP      NZ,$0466            ; {code.L0466} no -> continue ($43..$40 pages)
+0481: 11 80 43        LD      DE,$4380            ; {+ram.M4380} yes -> region 1 done
+
+;----- Region 2: game-state + score block $4380-$43B7 -------------------------
 L0484:
-0484: 70              LD      (HL),B              ; 
+0484: 70              LD      (HL),B              ; source bank
 0485: 1A              LD      A,(DE)              ; 
-0486: 71              LD      (HL),C              ; 
+0486: 71              LD      (HL),C              ; dest bank
 0487: 12              LD      (DE),A              ; 
 0488: 1C              INC     E                   ; 
 0489: 7B              LD      A,E                 ; 
-048A: FE B8           CP      $B8                 ; 
+048A: FE B8           CP      $B8                 ; until $43B8
 048C: C2 84 04        JP      NZ,$0484            ; {code.L0484}
 048F: 11 C0 4B        LD      DE,$4BC0            ; {!+ram.B4BC0} then the object buffer...
-;
+
+;----- Region 3: object buffer $4BC0-$4BFF ------------------------------------
 L0492:
-0492: 70              LD      (HL),B              ; 
+0492: 70              LD      (HL),B              ; source bank
 0493: 1A              LD      A,(DE)              ; 
-0494: 71              LD      (HL),C              ; 
+0494: 71              LD      (HL),C              ; dest bank
 0495: 12              LD      (DE),A              ; 
 0496: 1C              INC     E                   ; 
 0497: 7B              LD      A,E                 ; 
-0498: FE 00           CP      $00                 ; 
+0498: FE 00           CP      $00                 ; until E wraps ($4C00)
 049A: C2 92 04        JP      NZ,$0492            ; {code.L0492}
 049D: C9              RET                         ; 
 
@@ -2114,13 +2138,13 @@ L09A6:
 ;*****************************************************************************
 GetScreenRamAddress:
 09BA: 21 00 0A        LD      HL,$0A00            ; {+code.T0A00} Screen ram addresses for the top row (left to right)
-09BD: 0A              LD      A,(BC)              ; object X coordinate
-09BE: E6 F8           AND     $F8                 ; 1111_1000
-09C0: 0F              RRCA                        ; 0111_1100
-09C1: 0F              RRCA                        ; index = (X & $F8) >> 2  (even offset)
+09BD: 0A              LD      A,(BC)              ; get the X coordinate
+09BE: E6 F8           AND     $F8                 ; drop the low 3 (sub-cell) bits
+09C0: 0F              RRCA                        ; 
+09C1: 0F              RRCA                        ; A = column * 2  (2-byte entries)
 09C2: 85              ADD     A,L                 ; 
-09C3: 6F              LD      L,A                 ; 
-09C4: 7E              LD      A,(HL)              ; get MSB of screen ram address for row
+09C3: 6F              LD      L,A                 ; HL = T0A00 + column*2
+09C4: 7E              LD      A,(HL)              ; MSB of that column's screen address
 09C5: 12              LD      (DE),A              ; save it
 09C6: 03              INC     BC                  ; 
 09C7: 13              INC     DE                  ; 
@@ -2130,7 +2154,7 @@ GetScreenRamAddress:
 09CC: 0F              RRCA                        ; 0111_1100
 09CD: 0F              RRCA                        ; 0011_1110
 09CE: 0F              RRCA                        ; 0001_1111
-09CF: 86              ADD     A,(HL)              ; add to LSB of screen ram address for row
+09CF: 86              ADD     A,(HL)              ; LSB += (Y >> 3)  -> row within the column
 09D0: 12              LD      (DE),A              ; save it
 09D1: C9              RET                         ; 
 ;
@@ -2766,14 +2790,14 @@ L0D30:
 0D48: CA 5E 0D        JP      Z,$0D5E             ; {code.L0D5E} if no Y movement
 0D4B: 2B              DEC     HL                  ; value for X movement
 0D4C: 0A              LD      A,(BC)              ; get alien screen coordinate X
-0D4D: 86              ADD     A,(HL)              ; add both
-0D4E: 02              LD      (BC),A              ; save
+0D4D: 86              ADD     A,(HL)              ; add the X delta from T1700
+0D4E: 02              LD      (BC),A              ; save it back
 L0D4F:
-0D4F: 03              INC     BC                  ; alien screen coordinate Y
+0D4F: 03              INC     BC                  ; -> Y coordinate
 0D50: 23              INC     HL                  ; Y from alien movement direction table (T1700)
 0D51: 0A              LD      A,(BC)              ; get alien screen coordinate Y
-0D52: 86              ADD     A,(HL)              ; add both
-0D53: 02              LD      (BC),A              ; save
+0D52: 86              ADD     A,(HL)              ; add the Y delta
+0D53: 02              LD      (BC),A              ; save it back
 0D54: 0B              DEC     BC                  ; alien screen coordinate X
 0D55: E6 07           AND     $07                 ; 0000_0111
 0D57: EB              EX      DE,HL               ; 
@@ -3095,17 +3119,17 @@ L0EC3:
 0EC3: 7E              LD      A,(HL)              ; get explosion slot0 animation index
 0EC4: A7              AND     A                   ; updates the zero flag
 0EC5: CA D5 0E        JP      Z,$0ED5             ; {code.L0ED5} if explosion slot0 is free.
-0EC8: 2C              INC     L                   
-0EC9: 2C              INC     L                   
-0ECA: 2C              INC     L                   
-0ECB: 2C              INC     L                   
-0ECC: 7E              LD      A,(HL)              
+0EC8: 2C              INC     L                   ; 
+0EC9: 2C              INC     L                   ; 
+0ECA: 2C              INC     L                   ; 
+0ECB: 2C              INC     L                   ; 
+0ECC: 7E              LD      A,(HL)              ; 
 0ECD: A7              AND     A                   ; updates the zero flag
 0ECE: CA D5 0E        JP      Z,$0ED5             ; {code.L0ED5}
-0ED1: 2C              INC     L                   
-0ED2: 2C              INC     L                   
-0ED3: 2C              INC     L                   
-0ED4: 2C              INC     L                   
+0ED1: 2C              INC     L                   ; 
+0ED2: 2C              INC     L                   ; 
+0ED3: 2C              INC     L                   ; 
+0ED4: 2C              INC     L                   ; 
 L0ED5:
 0ED5: 72              LD      (HL),D              ; set explosion animation index
 0ED6: 2C              INC     L                   ; 
@@ -3118,9 +3142,9 @@ L0ED5:
 0EDE: 36 FF           LD      (HL),$FF            ; set flag for: 'Enemy hit detected'
 0EE0: 2E BA           LD      L,$BA               ; AliensLeft
 0EE2: 35              DEC     (HL)                ; decrement it
-0EE3: E1              POP     HL                  ; 
-0EE4: E1              POP     HL                  ; 
-0EE5: E9              JP      (HL)                ; to: $0DF9, $0027, $2199, $2006
+0EE3: E1              POP     HL                  ; discard one return address
+0EE4: E1              POP     HL                  ; pop the NEXT return address into HL
+0EE5: E9              JP      (HL)                ; jump to it -> $0DF9, $0027, $2199, $2006
 ; 
 0EE6: FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
 0EF6: FF FF FF FF FF FF FF FF FF  FF
@@ -7276,7 +7300,14 @@ L3586:
 35A2: C9              RET                         ; 
 ; 
 35A3: FF FF FF FF FF FF FF FF FF FF FF FF FF
-; 
+
+;*****************************************************************************
+;* The dispatch trick:
+;* `L35B0` is called with `HL` -> the bird's record.
+;* It reads the state index at record offset +0, then (crucially) advances `HL`
+;* to offset +4 and passes that pointer along.
+;* It then looks up `T3F00 + index*8` and pushes four 16 bit values, then does `RET`.
+;*****************************************************************************
 L35B0:
 35B0: 7E              LD      A,(HL)              ; get index character block shape
 35B1: A7              AND     A                   ; updates the zero flag
@@ -7291,35 +7322,43 @@ L35B0:
 35BA: CA BE 35        JP      Z,$35BE             ; {code.L35BE}
 35BD: 35              DEC     (HL)                ; count down
 L35BE:
-35BE: EB              EX      DE,HL               ; 
-35BF: D5              PUSH    DE                  ; 
-35C0: 78              LD      A,B                 ; load index
+35BE: EB              EX      DE,HL               ; DE = bird record + 4
+35BF: D5              PUSH    DE                  ; (1) push bird pointer(+4)
+35C0: 78              LD      A,B                 ; state index
 35C1: 07              RLCA                        ; Multiply by 8 ..
 35C2: 07              RLCA                        ; ..
 35C3: 07              RLCA                        ; ..
 35C4: 6F              LD      L,A                 ; 
-35C5: 26 3F           LD      H,$3F               ; MSB of table T3F00 for stack manipulation
-35C7: 46              LD      B,(HL)              ; get 1st byte
+35C5: 26 3F           LD      H,$3F               ; HL = T3F00 + index*8
+35C7: 46              LD      B,(HL)              ; +0,+1
 35C8: 23              INC     HL                  ; 
 35C9: 4E              LD      C,(HL)              ; get 2nd byte
-35CA: C5              PUSH    BC                  ; to stack
-35CB: 23              INC     HL                  ; 
+35CA: C5              PUSH    BC                  ; (2) push "BC constant"
+35CB: 23              INC     HL                  ; +2,+3
 35CC: 46              LD      B,(HL)              ; get 3rd byte
 35CD: 23              INC     HL                  ; 
 35CE: 4E              LD      C,(HL)              ; get 4rd byte
-35CF: C5              PUSH    BC                  ; to stack
-35D0: 23              INC     HL                  ; 
+35CF: C5              PUSH    BC                  ; (3) push "DE constant"
+35D0: 23              INC     HL                  ; +4,+5
 35D1: 46              LD      B,(HL)              ; get MSB of 1st address
 35D2: 23              INC     HL                  ; 
 35D3: 4E              LD      C,(HL)              ; get LSB of 1st address
-35D4: C5              PUSH    BC                  ; to stack
-35D5: 23              INC     HL                  ; 
+35D4: C5              PUSH    BC                  ; (4) push 1st address
+35D5: 23              INC     HL                  ; +6,+7
 35D6: 46              LD      B,(HL)              ; get MSB of 2nd address
 35D7: 23              INC     HL                  ; 
 35D8: 4E              LD      C,(HL)              ; get LSB of 2nd address
-35D9: C5              PUSH    BC                  ; to stack
-35DA: EB              EX      DE,HL               ; 
+35D9: C5              PUSH    BC                  ; (5) push 2nd address
+35DA: EB              EX      DE,HL               ; HL = bird record + 4 again
 35DB: C9              RET                         ; calls the 2nd address
+;*****************************************************************************
+;* Because the 2nd address was pushed last, `RET` jumps there first. So the sequence is:
+;* 1. `RET` -> 2nd address (`$35E0` or `$36C0`) runs first, with `HL` = bird record +4.
+;*    These are the movement / animation routines. They do their work and finish with their own `RET`.
+;* 2. That `RET` pops the next stack item — the 1st address (`$36CC`, `$36D2`, `$36EA`, or `$370A`)
+;*     — and jumps there. These are the state transition routines.
+;*     They begin by popping the two constants and the bird pointer back off the stack.
+;*****************************************************************************
 
 35DC: FF FF FF FF
 ; called by $35B0
@@ -7528,22 +7567,22 @@ L36CC:
 36D0: FF FF
 ; called by $35B0
 L36D2:
-36D2: D1              POP     DE                  ; 
-36D3: C1              POP     BC                  ; 
-36D4: E1              POP     HL                  ; 
-36D5: 7E              LD      A,(HL)              ; 
+36D2: D1              POP     DE                  ; DE = the "DE constant" (+2,+3)
+36D3: C1              POP     BC                  ; BC = the "BC constant" (+0,+1)
+36D4: E1              POP     HL                  ; HL = bird record + 4
+36D5: 7E              LD      A,(HL)              ; ...operate on the bird
 36D6: A7              AND     A                   ; updates the zero flag
 36D7: C0              RET     NZ                  ; 
-36D8: 70              LD      (HL),B              
-36D9: 2D              DEC     L                   
-36DA: 2D              DEC     L                   
-36DB: 2D              DEC     L                   
-36DC: 2D              DEC     L                   
-36DD: 72              LD      (HL),D              
+36D8: 70              LD      (HL),B              ; 
+36D9: 2D              DEC     L                   ; 
+36DA: 2D              DEC     L                   ; 
+36DB: 2D              DEC     L                   ; 
+36DC: 2D              DEC     L                   ; 
+36DD: 72              LD      (HL),D              ; 
 36DE: 3A 68 43        LD      A,($4368)           ; {ram.M4368} maturity of the birds
 36E1: F6 01           OR      $01                 ; 0000_0001
 36E3: 32 68 43        LD      ($4368),A           ; {ram.M4368}
-36E6: C9              RET                         
+36E6: C9              RET                         ; 
 
 36E7: FF FF FF
 ; called by $35B0
@@ -7573,46 +7612,76 @@ L36EA:
 3706: C9              RET                         
 ; 
 3707: FF FF FF
+
+;*****************************************************************************
 ; called by $35B0
+;* `L370A` is one of the four 1st address (state transition) handlers,
+;* selected by table entries `6`, `7`, `A`, and `F`.
+;* It runs after the frame's movement handler and decides whether the bird
+;* has finished its current growth phase; if so, it advances the bird to
+;* its next state and records progress in the global bird maturity flags `$4368`.
+;* Bird record fields it touches (relative to the +4 pointer it receives):
+;* offset +0 (via `-4`) = state index (the `T3F00` selector / character block shape),
+;* offset +4 = phase timer, offset +6 = sub counter.
+;* Step by step:
+;* 1. Recover parameters (`$370A`–`$370C`): pops the two `T3F00` constants for this state
+;*    into `DE`/`BC` and the bird pointer into `HL`.
+;* 2. Gate on completion (`$370D`–`$3715`): if the phase timer (offset +4) is still non zero,
+;*    or the low nibble of the sub counter (offset +6) is non zero,
+;*    the bird hasn't finished this growth phase yet, so it returns and leaves the state unchanged.
+;* 3. Default transition (`$3716`–`$371D`): once idle, it programs the *next* state
+;*    — new phase timer = `B` (table byte +0), new state index = `D` (table byte +2).
+;* 4. Record maturity (`$371E`–`$3723`): sets bit 2 (`$04`) of the global bird maturity flags at `$4368`.
+;* 5. Optional randomized branch (`$3726`–`$373E`): it samples the per wave random seed `$436F`,
+;*    masks it with table byte +3 (`E`) and tests the high nibble. If that misses (`RET NZ` not taken),
+;*    it *overrides* the transition — state index becomes `E & $0F`, phase timer becomes `C` (table byte +1)
+;*    — and sets an additional maturity bit 3 (`$08`).
+;* In other words, `L370A` is the "this bird has finished growing one stage" handler:
+;* it either promotes the bird to a fixed next shape or, with a seed driven probability,
+;* diverts it to an alternate shape, and it ticks up the flock's maturity progress in `$4368`
+;* so the wave logic knows how far the birds have developed. The sibling handlers work the same way
+;* but set different maturity bits: `L36D2` sets bit 0 (`$01`), `L36EA` sets bit 1 (`$02`),
+;* and `L36CC` is the plain "pop and return" terminator with no transition.
+;*****************************************************************************
 L370A:
-370A: D1              POP     DE                  
-370B: C1              POP     BC                  
-370C: E1              POP     HL                  
-370D: 7E              LD      A,(HL)              
+370A: D1              POP     DE                  ; DE = table +2/+3 (alt next-state + mask)
+370B: C1              POP     BC                  ; BC = table +0/+1 (alt timer + params)
+370C: E1              POP     HL                  ; HL = bird record + 4
+370D: 7E              LD      A,(HL)              ; phase timer (offset +4)
 370E: A7              AND     A                   ; updates the zero flag
-370F: C0              RET     NZ                  
-3710: 2C              INC     L                   
-3711: 2C              INC     L                   
-3712: 7E              LD      A,(HL)              
+370F: C0              RET     NZ                  ; still counting down -> not ready, leave
+3710: 2C              INC     L                   ; -> offset +6 (sub-counter)
+3711: 2C              INC     L                   ; 
+3712: 7E              LD      A,(HL)              ; 
 3713: E6 0F           AND     $0F                 ; 0000_1111
-3715: C0              RET     NZ                  
-3716: 2D              DEC     L                   
-3717: 2D              DEC     L                   
-3718: 70              LD      (HL),B              
-3719: 2D              DEC     L                   
-371A: 2D              DEC     L                   
-371B: 2D              DEC     L                   
-371C: 2D              DEC     L                   
-371D: 72              LD      (HL),D              
-371E: 3A 68 43        LD      A,($4368)           ; {ram.M4368} maturity of the birds
-3721: F6 04           OR      $04                 ; 0000_0100
+3715: C0              RET     NZ                  ; sub-counter low nibble busy -> not ready
+3716: 2D              DEC     L                   ; back to offset +4
+3717: 2D              DEC     L                   ; 
+3718: 70              LD      (HL),B              ; load new phase timer (from table +0)
+3719: 2D              DEC     L                   ; -> offset +0 (state index)
+371A: 2D              DEC     L                   ; 
+371B: 2D              DEC     L                   ; 
+371C: 2D              DEC     L                   ; 
+371D: 72              LD      (HL),D              ; set default NEXT state index (from table +2)
+371E: 3A 68 43        LD      A,($4368)           ; {ram.M4368} bird maturity flags
+3721: F6 04           OR      $04                 ; 0000_0100 set maturity stage bit 2
 3723: 32 68 43        LD      ($4368),A           ; {ram.M4368}
-3726: 3A 6F 43        LD      A,($436F)           ; {ram.M436F}
-3729: A3              AND     E                   
+3726: 3A 6F 43        LD      A,($436F)           ; {ram.M436F} per-wave random seed
+3729: A3              AND     E                   ; mask with table +3
 372A: E6 F0           AND     $F0                 ; 1111_0000
-372C: C0              RET     NZ                  
-372D: 7B              LD      A,E                 
+372C: C0              RET     NZ                  ; keep the default transition if high nibble hits
+372D: 7B              LD      A,E                 ; else take the RANDOMIZED branch:
 372E: E6 0F           AND     $0F                 ; 0000_1111
-3730: 77              LD      (HL),A              
-3731: 2C              INC     L                   
-3732: 2C              INC     L                   
-3733: 2C              INC     L                   
-3734: 2C              INC     L                   
-3735: 71              LD      (HL),C              
+3730: 77              LD      (HL),A              ; override state index = (table+3 low nibble)
+3731: 2C              INC     L                   ; -> offset +4
+3732: 2C              INC     L                   ; 
+3733: 2C              INC     L                   ; 
+3734: 2C              INC     L                   ; 
+3735: 71              LD      (HL),C              ; override phase timer = table +1
 3736: 3A 68 43        LD      A,($4368)           ; {ram.M4368} maturity of the birds
-3739: F6 08           OR      $08                 ; 0000_1000
+3739: F6 08           OR      $08                 ; 0000_1000 set maturity stage bit 3
 373B: 32 68 43        LD      ($4368),A           ; {ram.M4368}
-373E: C9              RET                         
+373E: C9              RET                         ; 
 
 373F: FF FF FF FF FF
 
@@ -8754,8 +8823,16 @@ T3EE0:
 3EF8: 05 05 06 06
 3EFC: 07 08 07 06
 
+; A stack built coroutine dispatcher:
 ; Register contents and address for stack manipulation 
 ; used at level 3,4,8,9.
+; T3F00 is a 16 * 8 byte per state descriptor table for the level 3/4/8/9 birds.
+; Each entry holds two register constant words plus two routine addresses
+; (a movement handler and a transition handler).
+; `L35B0` dispatches it with a stack trick: it pushes the bird pointer, the two constants,
+; and both addresses, then `RET`s — running the movement routine first,
+; which `RET`s into the transition routine, which pops the constants and returns to the caller.
+; It's an indirect double call built entirely on the stack.
 T3F00:
 ; For bird index to character block shape (0)
 3F00: FF FF FF FF   ; not used
@@ -8763,64 +8840,64 @@ T3F00:
 3F06: FF FF         ; not used
 ; For bird index to character block shape (1)
 3F08: 20 FF 02 FF   ;BC and DE register contents
-3F0C: 36 D2         ;address to call
-3F0E: 36 C0         ;address to call
+3F0C: 36 D2         ;address to call (a state transition handler)
+3F0E: 36 C0         ;address to call (a movement/animation handler)
 ; For bird index to character block shape (2)
-3F10: 20 FF 03 FF   ;
-3F14: 36 D2         ;address
-3F16: 35 E0         ;address
+3F10: 20 FF 03 FF   ;BC and DE register contents
+3F14: 36 D2         ;address to call
+3F16: 35 E0         ;address to call
 ; For bird index to character block shape (3)
-3F18: 30 FF 04 FF   ;
-3F1C: 36 D2         ;address
-3F1E: 35 E0         ;address
+3F18: 30 FF 04 FF   ;BC and DE register contents
+3F1C: 36 D2         ;address to call
+3F1E: 35 E0         ;address to call
 ; For bird index to character block shape (4)
-3F20: 10 FF 05 FF   ;
-3F24: 36 EA         ;     address
-3F26: 35 E0         ;address
+3F20: 10 FF 05 FF   ;BC and DE register contents
+3F24: 36 EA         ;address to call
+3F26: 35 E0         ;address to call
 ; For bird index to character block shape (5)
-3F28: 10 FF 06 FF   ;
-3F2C: 36 EA         ;address
-3F2E: 36 C0         ;address
+3F28: 10 FF 06 FF   ;BC and DE register contents
+3F2C: 36 EA         ;address to call
+3F2E: 36 C0         ;address to call
 ; For bird index to character block shape (6)
-3F30: 10 60 07 1F   ;
-3F34: 37 0A         ;address
-3F36: 36 C0         ;address
+3F30: 10 60 07 1F   ;BC and DE register contents
+3F34: 37 0A         ;address to call
+3F36: 36 C0         ;address to call
 ; For bird index to character block shape (7)
-3F38: F0 10 0B 1A   ;
-3F3C: 37 0A         ;address
-3F3E: 36 C0         ;address
+3F38: F0 10 0B 1A   ;BC and DE register contents
+3F3C: 37 0A         ;address to call
+3F3E: 36 C0         ;address to call
 ; For bird index to character block shape (8)
-3F40: 40 FF 04 FF   ;
-3F44: 36 EA         ;address
-3F46: 36 C0         ;address
+3F40: 40 FF 04 FF   ;BC and DE register contents
+3F44: 36 EA         ;address to call
+3F46: 36 C0         ;address to call
 ; For bird index to character block shape (9)
-3F48: 10 FF 08 FF   ;
-3F4C: 36 EA         ;address
-3F4E: 36 C0         ;address
+3F48: 10 FF 08 FF   ;BC and DE register contents
+3F4C: 36 EA         ;address to call
+3F4E: 36 C0         ;address to call
 ; For bird index to character block shape (A)
-3F50: 40 10 0F 17   ;
-3F54: 37 0A         ;address
-3F56: 36 C0         ;address
+3F50: 40 10 0F 17   ;BC and DE register contents
+3F54: 37 0A         ;address to call
+3F56: 36 C0         ;address to call
 ; For bird index to character block shape (B)
-3F58: 10 FF 0A FF   ;
-3F5C: 36 EA         ;address
-3F5E: 35 E0         ;address
+3F58: 10 FF 0A FF   ;BC and DE register contents
+3F5C: 36 EA         ;address to call
+3F5E: 35 E0         ;address to call
 ; For bird index to character block shape (C)
-3F60: FF FF FF FF   ;
-3F64: 36 CC         ;address
-3F66: 35 E0         ;address
+3F60: FF FF FF FF   ;BC and DE register contents
+3F64: 36 CC         ;address to call
+3F66: 35 E0         ;address to call
 ; For bird index to character block shape (D)
-3F68: FF FF FF FF   ;
-3F6C: 36 CC         ;address
-3F6E: 35 E0         ;address
+3F68: FF FF FF FF   ;BC and DE register contents
+3F6C: 36 CC         ;address to call
+3F6E: 35 E0         ;address to call
 ; For bird index to character block shape (E)
-3F70: 10 FF 06 FF   ;
-3F74: 36 EA         ;address
-3F76: 35 E0         ;address
+3F70: 10 FF 06 FF   ;BC and DE register contents
+3F74: 36 EA         ;address to call
+3F76: 35 E0         ;address to call
 ; For bird index to character block shape (F)
-3F78: 10 10 07 79   ;
-3F7C: 37 0A         ;address
-3F7E: 35 E0         ;address
+3F78: 10 10 07 79   ;BC and DE register contents
+3F7C: 37 0A         ;address to call
+3F7E: 35 E0         ;address to call
 
 ;
 ; Level 3 and 8 initial-state record for the 8 birds.
