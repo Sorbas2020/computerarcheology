@@ -8,7 +8,7 @@ COMMANDS_PYRAMID = {
 0x01:     ['move_look',                          'room_num'],
 0x02:     ['is_in_pack',                         'obj_num'],
 0x03:     ['is_in_pack_or_current_room',         'obj_num'],
-0x04:     ['print','ps_num'                      ],
+0x04:     ['print','ps_ptr'                      ],
 0x05:     ['death_and_resurrect'                 ],
 0x06:     None,
 0x07:     ['stop_if_pass'                        ],

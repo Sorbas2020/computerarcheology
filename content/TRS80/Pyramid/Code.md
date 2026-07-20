@@ -18,7 +18,7 @@
 
 ```code
 Start:
-4300: 31 BF 47        LD      SP,$47BF            ; {+code.TopOfStack} Small stack space
+4300: 31 BF 47        LD      SP,$47BF            ; {+} Small stack space
 4303: 3E 0E           LD      A,$0E               ; Turn on ....
 4305: CD 33 00        CALL    $0033               ; {hard.PrintChar} ... the cursor
 4308: 21 82 47        LD      HL,$4782            ; {+code.WelcomeMsg} "WELCOME TO PYRAMID!!"
@@ -118,25 +118,25 @@ SetObjectLocation:
 
 # Process Room Scripts
 
-Each room is a collection of verb and the script commands that go with each verb. We look through
+Each room is a collection of verbs and the script commands that go with each verb. We look through
 the verb-map for the room and run the list of script commands for that verb.
 
 As soon as an individual command fails, we stop the processing of the list. As long as the commands
 are passing, we continue to run them.
 
-Interestingly, if a command list for a verb FAILS, we continue looking for verb matches in the
+Interestingly, if a command list for a verb fails, we continue looking for verb matches in the
 collection. That allows for multiple command lists to be given for the same verb.
 
-If the user verb matches the collection and all the commands pass, we return with NOT ZERO as a sign
-of success. If there is no match or if any of the commands fail, we return with ZERO as a sign
-of failure.
+If the user's verb matches the collection and all the commands pass, we return with Z=0 as a sign
+of success. If there is no match or if any of the commands fail, we return with Z=1 as a sign
+of failure. In the next evolution of this engine (RaakaTu, Belam, and Zenos) Z=1 means success.
 
 ```code
-; Process the user input against the script for a room
 ProcessRoomScript:
+; Process the user input against the script for a room
 437D: 7E              LD      A,(HL)              ; Next byte from script
 437E: A7              AND     A                   ; Are we at the end?
-437F: C8              RET     Z                   ; Yes, we are done. Return ZERO as FAIL.
+437F: C8              RET     Z                   ; Yes, we are done. Return Z=1 FAIL.
 ;
 4380: 3A 7C 46        LD      A,($467C)           ; {code.inputVerb} User's input verb
 4383: BE              CP      (HL)                ; Does the input verb match the script verb?
@@ -148,11 +148,17 @@ ProcessRoomScript:
 438C: C3 7D 43        JP      $437D               ; {code.ProcessRoomScript} Try next script verb
 ;
 438F: CD 96 43        CALL    $4396               ; {code.RunScript} Run the script
-4392: C0              RET     NZ                  ; All the commands passed. Return not ZERO as SUCCESS
+4392: C0              RET     NZ                  ; All the commands passed. Return Z=0 PASS.
 4393: C3 7D 43        JP      $437D               ; {code.ProcessRoomScript} In case there are duplicate verbs -- others might succeed
 ```
 
 # Run Script
+
+Here, we run a list of commands as long as they are passing. If we reach the end of the list with
+all passing, we return Z=0 PASS. If any fail, we abort the script and return Z=1 FAIL.
+
+The first byte of the script is the total length of the script. One byte makes for short scripts. In the
+next evolution (RaakaTu, Bedlam, and Xenos) lengths can be one or two bytes.
 
 ```code
 RunScript:
@@ -224,7 +230,8 @@ There are a few places in Pyramid and Haunted House that nest these sublists, bu
 levels deep total.
 
 All of the other commands are "do something" commands. This command provides "if/else" abilities to the
-scripts.
+scripts. That's probably why the code for this command is near the general script processing and not
+the other commands.
 
 ```code
 COM_07_stop_if_pass:
@@ -241,10 +248,20 @@ COM_07_stop_if_pass:
 
 # Parse User Input
 
+This function prompts the user for a line of text allowing for edits (backspaces).
+
+Then the function tokenizes the line into a VERB and a NOUN. We check basic grammar here. If a verb
+expects a noun that's in the room, we make sure the given noun is in the room. if a verb expects
+a noun that's in the room OR in the backpack, we check both places.
+
+We also capture the user's input and feed it back in messages like "I SEE NO noun HERE" and
+"verb WHAT?"
+
 ```code
 ParseUserInput:
 43CF: CD 05 46        CALL    $4605               ; {code.PromptAndReadLine} Get the command line from the player
 43D2: CD A2 44        CALL    $44A2               ; {code.ParseInputString} Parse the input string
+;
 43D5: 2A AA 45        LD      HL,($45AA)          ; {code.nounDataPtr} Pointer to the noun word
 43D8: 3A A8 45        LD      A,($45A8)           ; {code.nounDataSize} Number of bytes ...
 43DB: 47              LD      B,A                 ; ... in word data
@@ -356,7 +373,7 @@ isLoneObject:
 
 # Tokenize the input
 
-Parse the input into words.
+Parse the user's input into a verb and a noun. We have a table of known words.
 
 ```code
 ParseInputString:
@@ -426,7 +443,7 @@ FindEndOfInputWord:
 450F: 23              INC     HL                  ; Next character in input
 4510: C3 05 45        JP      $4505               ; {code.FindEndOfInputWord} Find end of word
 ;
-4513: 3A 81 47        LD      A,($4781)           ; {code.testWord}
+4513: 3A 81 47        LD      A,($4781)           ; {code.testWord} Get the test word gramar
 4516: E6 C0           AND     $C0                 ; Is the word a noun? (anything else is a verb)
 4518: CA 2D 45        JP      Z,$452D             ; {} Yes ... record the noun
 451B: 32 7D 46        LD      ($467D),A           ; {code.verbGrammar} Hold the verb's grammar
@@ -538,6 +555,12 @@ nounDataPtr:
 
 # Print Packed
 
+See the discussion on "packed strings" below. Packing is a way to store three printable characters
+in two bytes of data. It conserves space.
+
+This function unpacks a string and prints it on the screen. Most of the text from the game
+passes through this function.
+
 ```code
 PrintPacked:
 ; Unpack a message (or multiple packed messages) and print.
@@ -593,6 +616,10 @@ PrintCarriageReturn:
 
 # Wait for key
 
+This function waits for the user to press a key. The wait is a spinning loop
+that increments a RAM location with each pass. This value is used as a
+random number in other parts of the code.
+
 ```code
 WaitForKey:
 45EE: D5              PUSH    DE                  ; ROM routine mangles this
@@ -608,6 +635,9 @@ WaitForKey:
 
 # Print Char
 
+This is a wrapper function that calls the TRS80 ROM to print a character on the screen. The ROM
+takes care of scrolling.
+
 ```code
 PrintChar:
 45FF: D5              PUSH    DE                  ; ROM routine mangles this
@@ -617,6 +647,8 @@ PrintChar:
 ```
 
 # Prompt And Read Line
+
+This function gets a line of text from the user allowing for edits (backspaces).
 
 ```code
 PromptAndReadLine:
@@ -671,33 +703,11 @@ BackSpace:
 InputDone:
 4657: 36 00           LD      (HL),$00            ; Put the null terminator on the end of the input
 4659: C9              RET                         
-```
 
-# Input Buffer
-
-```code
-; Input buffer (with some uninitialized leftover data!)
-; The buffer is 41 bytes (room for a null terminator after 40)
-; Again, look 99 bytes down for the last assembly's data.
-; Interestingly, the data 99 down overlaps a reserved area too,
-; which lets us see the assembly BEFORE THAT!
 inputBuffer:
-; UNINITIALIZED MEMORY
-465A: 41 4E 54 20 4D 45 20 54 4F 20 44 4F 20 57 49 54  ; WANT_ME_TO_DO_WIT
-466A: 48 20 54 48 45 20 2C 41 0D 12 30 30 30 30 20 20  ; H_THE_ ,A<CR>?000__  ; 18 bytes, whatever the instruction is
-
-; The 2nd line is long ... total length of 18, but the double space after "0000"
-; means it has no leading label. The text of the line would be 10 characters. There
-; are no 8080 opcodes that long, so the instruction likely references a label or
-; constant (like MVI H,123H).
-; 8080 instructions that end with ",A": "MOV x,A" where X is: B,C,D,E,H,L,M,A
-; Z80 "LD (xxxx),A" would be a "STA" opcode. We are looking for a "LD r,A" Z80
-; op followed by an instruction that references a label. There are lots and lots
-; of those.
-
-; Hole within the hole:
-; --  "---------------,A"  0D  ; Must be "MOV x,A" where x is B,C,D,E,H,L,M,A
-; 12  "0000  -----------"  --  ; Double-space means no label, and we know the length (10)
+; UNINITALIZED MEMORY (see discussion in next section)
+465A: 41 4E 54 20 4D 45 20 54 4F 20 44 4F 20 57 49 54  ; ANT_ME_TO_DO_WIT
+466A: 48 20 54 48 45 20 2C 41 0D 12 30 30 30 30 20 20  ; H_THE_,A..0000__ 
 467A: 00 ; null terminator for input buffer
 
 inputNoun:
@@ -741,9 +751,9 @@ MsgWhatDoWith:
 46B0: 57 48 41 54 20 44 4F 20 59 4F 55 20 57 41 4E 54 20 4D 45 20 54 4F 20 44 4F 20 57 49 54 48 20 54
 46D0: 48 45 20
 
-; 40 byte buffer for unknown noun word
+; 40 byte buffer for unknown noun word followed by "?" (changed to "." at times).
 unknownNoun:
-; UNINITIALIZED MEMORY
+; UNINITALIZED MEMORY (see discussion in next section)
 46D3: 4F 57 20 54 48 41 54 20 57 4F ; OW_THAT_WO
 46DD: 52 44 2E 00 49 20 44 4F 4E 27 ; RD.*I_DON'
 46E7: 54 20 55 4E 44 45 52 53 54 41 ; T_UNDERSTA
@@ -755,8 +765,7 @@ unknownNounPunct:
 
 ; 40 byte buffer for unknown verb (followed by WHAT?)
 unknownVerb:
-; UNINITIALIZED MEMORY
-; This is from the source code a few bytes down
+; UNINITALIZED MEMORY (see discussion in next section)
 46FD: 4B 4E 4F 57 20 57 48 41 54 20 ; KNOW_WHAT_
 4707: 59 4F 55 20 4D 45 41 4E 2E 00 ; YOU_MEAN.*
 4711: 00 00 00 00 00 00 00 00 00 00 ;
@@ -803,6 +812,57 @@ testWord:
 WelcomeMsg:
 4782: 57 45 4C 43 4F 4D 45 20 54 4F 20 50 59 52 41 4D 49 44 21 21 00
 
+StackSpace:
+; UNINITALIZED MEMORY (see discussion in next section)
+4797: E1 CA B8 47 3E 00 CE 00 29 44 85 2A 22 48 95 4F 78 9C 47 C5 
+47AB: D2 B0 47 09 E3 21 B7 47 3F C3 90 47 00 01 F9 47 09 7E C1 E1        
+
+; unused
+47BF: 00 
+
+EmptyString:
+47C0: 00 ; For objects that have no descriptions
+
+; unused
+47C1: 00
+```
+
+# Uninitalized Memory
+
+TODO lots here
+
+; Input buffer (with some uninitialized leftover data!)
+; The buffer is 33 bytes (room for a null terminator after 32)
+; Again, look 99 bytes down for the last assembly's data.
+; Interestingly, the data 99 down overlaps a reserved area too,
+; which lets us see the assembly BEFORE THAT!
+
+This is the 32-byte buffer that holds the user's input line. The next evolution of the engine (RaakaTu,
+Bedlam, and Xenos) reads the screen memory directly instead of using a buffer.
+
+In assembly, you can define a chunk of memory in two ways: reserve and define.
+
+When you DEFINE a chunk of memory, you tell the assmebler what values you want to appear in the
+produced image. When you RESERVE a chunk of memory, you tell the assembler that you don't
+care what's in memory -- just skip over whatever is there.
+
+The source code used the "reserve" directive (probably "BUFFER: DS 32"), and when the final image 
+was written to tape, the unitialized contents of the memory was written along with the assembled 
+image. What's in this previously used memory? Random data? A credit card number? Maybe a phone number?
+
+; The 2nd line is long ... total length of 18, but the double space after "0000"
+; means it has no leading label. The text of the line would be 10 characters. There
+; are no 8080 opcodes that long, so the instruction likely references a label or
+; constant (like MVI H,123H).
+; 8080 instructions that end with ",A": "MOV x,A" where X is: B,C,D,E,H,L,M,A
+; Z80 "LD (xxxx),A" would be a "STA" opcode. We are looking for a "LD r,A" Z80
+; op followed by an instruction that references a label. There are lots and lots
+; of those.
+
+; Hole within the hole:
+; --  "---------------,A"  0D  ; Must be "MOV x,A" where x is B,C,D,E,H,L,M,A
+; 12  "0000  -----------"  --  ; Double-space means no label, and we know the length (10)
+
 ; The next 40 bytes (there is that magic number 40 again) are uninitalized
 ; memory reserved for the stack. The uninitialized memory contains the output of
 ; a previous assembly, but with a different origin. You'll find these live
@@ -814,43 +874,35 @@ WelcomeMsg:
 ;                ; Disassembly of the PREVIOUS state of the code.
 ;                ; See 47FA below for this code in its final position.
 ; UNINITIALIZED MEMORY
-4797: E1         ;     POP     HL
-4798: CA B8 47   ;     JP      Z,$47B8
-479B: 3E 00      ;     LD      A,$00
-479D: CE 00      ;     ADC     $00
-479F: 29         ;     ADD     HL,HL
-47A0: 44         ;     LD      B,H
-47A1: 85         ;     ADD     A,L
-47A2: 2A 22 48   ;     LD      HL,($4822)
-47A5: 95         ;     SUB     L
-47A6: 4F         ;     LD      C,A
-47A7: 78         ;     LD      A,B
-47A8: 9C         ;     SBC     H
-47A9: 47         ;     LD      B,A
-47AA: C5         ;     PUSH    BC
-47AB: D2 B0 47   ;     JP      NC,$47B0
-47AE: 09         ;     ADD     HL,BC
-47AF: E3         ;     EX      (SP),HL
-47B0: 21 B7 47   ;     LD      HL,$47B7
-47B3: 3F         ;     CCF
-47B4: C3 90 47   ;     JP      $4790
-47B7: 00         ;
-47B8: 01 F9 47   ;     LD      NC,$47F9
-47BB: 09         ;     ADD     HL,BC
-47BC: 7E         ;     LD      A,(HL)
-47BD: C1         ;     POP     BC
-47BE: E1         ;     POP     HL
 
-TopOfStack:
-; The Z80 stack decrements before write. The 40 bytes above are the uninitialized
-; memory reserved for the statck.
-47BF: 00
-
-EmptyString:
-47C0: 00 ; For objects that have no descriptions
-
-; unused
-47C1: 00
+```
+THIS IS NOT LIVE CODE ... copied from below
+    : E1         ;     POP     HL
+    : CA B8 47   ;     JP      Z,$47B8
+    : 3E 00      ;     LD      A,$00
+    : CE 00      ;     ADC     $00
+    : 29         ;     ADD     HL,HL
+    : 44         ;     LD      B,H
+    : 85         ;     ADD     A,L
+    : 2A 22 48   ;     LD      HL,($4822)
+    : 95         ;     SUB     L
+    : 4F         ;     LD      C,A
+    : 78         ;     LD      A,B
+    : 9C         ;     SBC     H
+    : 47         ;     LD      B,A
+    : C5         ;     PUSH    BC
+    : D2 B0 47   ;     JP      NC,$47B0
+    : 09         ;     ADD     HL,BC
+    : E3         ;     EX      (SP),HL
+    : 21 B7 47   ;     LD      HL,$47B7
+    : 3F         ;     CCF
+    : C3 90 47   ;     JP      $4790
+    : 00         ;
+    : 01 F9 47   ;     LD      NC,$47F9
+    : 09         ;     ADD     HL,BC
+    : 7E         ;     LD      A,(HL)
+    : C1         ;     POP     BC
+    : E1         ;     POP     HL
 ```
 
 # Packed strings
@@ -861,8 +913,8 @@ By limiting a character to 40 possible values, we can pack three characters into
 
 The 40 characters from CharTable: ?!2_"'<>/03ABCDEFGHIJKLMNOPQRSTUVWXYZ-,.
 
-The first byte of a packed string is the number of words to unpack. Other printable characters
-may be listed after that with a 0 terminating the string.
+The first byte of a packed string is the number of words (two bytes) to unpack. Other 
+printable characters may be listed after that with a 0 terminating the string.
 
 For instance, PS_02:
 
@@ -891,7 +943,7 @@ Next is 1419:
 ```
 c1 = 28  -> 'R'
 c2 = 11  -> 'A'
-c3 = 3   -> '_' (really the space character)
+c3 = 3   -> ' ' 
 ```
 
 Bringing us to "YOU_AR", and so on.
@@ -1031,9 +1083,11 @@ unpackToScreen:
 
 # Room Table
 
-Each entry is 4 bytes. The first word is the packed room description.
-The second word is the room's command script.
+Each room is a 4 byte entry in this table. The first word of the entry is 
+a pointer to the packed string for the room description. The second word 
+a pointer to the room's command script.
 
+TODO
 Woods 1-8 rewritten left out. New desert sequence added here as 1-6.
 
 The following messages in loc.c are regular prints here: 16, 20, 21, 22,
@@ -1169,15 +1223,15 @@ Script_RM_01_BEFORE_ENTRANCE:
 ; IS_A_DESERT.
 ;
 49CC: 01 03      ; N
-49CE: 01 02      ;     move_look(RM_02_IN_ENTRANCE) ;; new
+49CE: 01 02      ;     move_look(RM_02_IN_ENTRANCE) ;; new for pyramid
 49D0: 02 03      ; E
-49D2: 01 03      ;     move_look(RM_03_DESERT1) ;; new
+49D2: 01 03      ;     move_look(RM_03_DESERT1) ;; new for pyramid
 49D4: 03 03      ; S
-49D6: 01 04      ;     move_look(RM_04_DESERT2) ;; new
+49D6: 01 04      ;     move_look(RM_04_DESERT2) ;; new for pyramid
 49D8: 04 03      ; W
-49DA: 01 05      ;     move_look(RM_05_DESERT3) ;; new
+49DA: 01 05      ;     move_look(RM_05_DESERT3) ;; new for pyramid
 49DC: 0B 03      ; IN
-49DE: 01 02      ;     move_look(RM_02_IN_ENTRANCE) ;; new
+49DE: 01 02      ;     move_look(RM_02_IN_ENTRANCE) ;; new for pyramid
 49E0: 00         ;
 
 Script_RM_02_IN_ENTRANCE:
@@ -2351,6 +2405,8 @@ Script_RM_44_CHAMBER_OF_NEKHEBET: ; woodsRoom94
 
 # Ambient Light Table
 
+TODO check for per-room score and this structure in the woods code
+
 When we calculate the score, we look at the upper bit in each room. If the bit is set, the second value
 is added to the score. This mechanism is not used by the existing code -- probably an old feature.
 
@@ -2451,12 +2507,11 @@ AmbientLightTable:
 
 # Object Data
 
+TODO look for this structure in the woods code
+
 ```code
 ; This two-byte table contains the object's attributes ("isTreasure" and "isGettable")
 ; and the object's current location (a room or inside another object).
-;
-; The code references the objects by numeric id, but I have given them unique names
-; in the table below. All object names begin with "#". All word names begin with "_".
 ;
 ; The format of the two bytes are:
 ;
@@ -2498,7 +2553,7 @@ ObjectData:
 5019: 40 02 ; 010..... OBJ_1A_FOOD              RM_02_IN_ENTRANCE
 501B: 40 02 ; 010..... OBJ_1B_BOTTLE            RM_02_IN_ENTRANCE
 501D: C0 1B ; 110..... OBJ_1C_WATER             RM_1B_CHAMBER_OF_ANUBIS
-501F: 00 00 ;          oil (in the bottle) from the eastern pit ??
+501F: 00 00 ;          oil (in the bottle) from the eastern pit used to oil hinges in woods??
 5021: 00 38 ; 000..... OBJ_1E_STREAM_ROOM_38    RM_38_PIT_LITTLE_STREAM
 5023: 60 4C ; 011..... OBJ_1F_EMERALD           RM_4C_EERIE_GREEN_LIGHT
 5025: 60 00 ; 011..... OBJ_20_VASE_ON_PILLOW    *
@@ -2603,9 +2658,7 @@ ObjectDescriptions:
 # Script Commands
 
 ```code
-; This lookup table holds the pointers to the individual script commands. Each command
-; reads 1 or 2 bytes of data from the script. The number of extra bytes read is show
-; for reference in the table.
+; This lookup table holds the pointers to the individual script commands. 
 
 ScriptCommands:
 509F: 8A 51        ; COM_01_move_look(room_num)
@@ -2644,7 +2697,7 @@ ScriptCommands:
 ```code
 ; This processing takes place after every user input.[[br]]
 ;  1. Increment the count on the lamp and the number of turns.[[br]]
-;  2.  Warn the player if the lamp is going dim and change the batteries automatically.
+;  2. Warn the player if the lamp is going dim and change the batteries automatically.
 AfterEveryStep:
 50D9: 3E 0F           LD      A,$0F               ; obj_LAMP_on
 50DB: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} Object table
@@ -2737,7 +2790,8 @@ BumpBCDTurnCount:
 This routine moves the player to a new room. If there is light in the new room or light
 in the old room then the move always works. Otherwise there is a 60% chance the move kills you.
 
-If there is light in the new room then the room description is printed.
+If there is light in the new room then the room description is printed. If not, you are
+warned about the 60% chance of death.
 
 After every move the code checks the pack for treasures. If there are 2 or more treasures then
 the Mummy moves them all to room 53 (the hard-to-find room in the maze). Then the code moves the
@@ -2747,7 +2801,7 @@ mummy no longer appears. You only see the mummy once.
 
 The mummy says he is going to take the treasures and "PUT_THEM_IN_THE_CHEST_DEEP_IN_THE_MAZE!".
 But he only puts them in the same room -- not actually in the chest. The code does not utilize
-the container relationship.
+the container relationship. ?? TODO verify that you have to move the treasures as individuals
 
 ```code
 COM_01_move_look:
@@ -2900,6 +2954,10 @@ DescribeRoom:
 
 # COM_18_move_object_to_current_room(obj_num)
 
+This code places the given object in the current room (with the player). If the given object
+is contained by another object, this code moves the container instead (and so on up the 
+containment tree).
+
 ```code
 COM_18_move_object_to_current_room:
 52A5: E1              POP     HL                  ; Get script pointer
@@ -2913,6 +2971,16 @@ COM_18_move_object_to_current_room:
 ```
 
 # COM_19_put_object_in_container_print_ok(obj_num, obj_num)
+
+This command is not used by any script. No other code calls into any part of it.
+
+This command puts the first object into the second object and sets the "contained"
+bit accordingly.
+
+This command prints "OK" at the end which means this can only be used in response
+to a user request.
+
+This is used to get the bird into the box and to fill the bottle with water.
 
 ```code
 COM_19_put_object_in_container_print_ok:
@@ -2953,6 +3021,12 @@ COM_02_is_in_pack:
 This command checks if the requested object is accessible (current room
 or backpack).
 
+!! Interestingly, this command is only used to check for the BRIDGE, PLANT, 
+and SERPENT -- none of which can be in the backpack. This is an early 
+command in the list. Maybe the 1A command next was added later after the
+game was mostly finished. The 1A is only used for dropping the vase on the
+pillow. Maybe that sequence was a late add. TODO check woods code.
+
 ```code
 COM_03_is_in_pack_or_current_room:
 52D7: E1              POP     HL                  ; Get the next ...
@@ -2963,7 +3037,7 @@ COM_03_is_in_pack_or_current_room:
 52DE: 5F              LD      E,A                 ; Check for current room
 52DF: 78              LD      A,B                 ; Requested object number
 52E0: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the info about the object
-52E3: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} It is in the room. Return SUCCESS
+52E3: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} It is in the room. Return PASS
 52E6: 78              LD      A,B                 ; Object number
 52E7: C3 CC 52        JP      $52CC               ; {} Check the backpack for the object
 ```
@@ -2971,7 +3045,7 @@ COM_03_is_in_pack_or_current_room:
 # COM_1A_is_in_current_room(obj_num)
 
 This command checks if the request object (or object's top level container) is in
-the current room.
+the current room. This is only used in dropping the vase on the pillow.
 
 ```code
 COM_1A_is_in_current_room:
@@ -2989,7 +3063,7 @@ COM_1A_is_in_current_room:
 # COM_0D_is_pack_just_emerald()
 
 This very specific command checks if the backpack is empty or has just the emerald. This is
-used in the script for room_73, the "TIGHT_SQUEEZE" from the "CHAMBER_OF_THE_HIGH_PRIEST".
+used in the script for RM_49_HIGH_PRIEST where we have the the "TIGHT_SQUEEZE".
 
 ```code
 COM_0D_is_pack_just_emerald:
@@ -3017,19 +3091,20 @@ the given target value, then the player stays in the same room. The code prints 
 around" message and reprints the current room description and the command returns success.
 If the random value is greater than the given value, the command fails.
 
-This script command is used in two rooms: room_65 (CHAMBER_OF_HORUS) and room_60 (LAND_OF_DEAD).
-In all cases, it is wrapped in a "StopIfPassElseContinue" like this:
+This script command is used in two rooms: RM_41_CHAMBER_OF_HORUS and RM_3C_LAND_OF_DEAD.
+In all cases, it is wrapped in a "StopIfPassElseContinue".
+
+For example:
 
 ```
-4DEE: 08 07     ; NW
-4DF0: 07 03     ;    StopIfPassElseContinue
-4DF2: 0A F0     ;        AssertRandomIsLessOrEqual(240)
-4DF4: 01 3B     ;    MoveToRoom(room_59) woodsRoom106
+4DEE: 08 07      ; NW
+4DF0: 07 03      ;     stop_if_pass ...
+4DF2: 0A F0      ;         pyramid_crawl_move_random(0xF0)
+4DF4: 01 3B      ;     move_look(RM_3B_ANTEROOM_OF_SEKER)
 ```
 
 Most of the time (random values 0 through 240) the command passes and the player stays put.
-But for values 241 through 255, the command fails and the player moves to room_59
-(ANTEROOM_OF_SEKER).
+But for values 241 through 255, the command fails and the player moves to RM_3B_ANTEROOM_OF_SEKER.
 
 ```code
 COM_0A_pyramid_crawl_move_random:
@@ -3049,11 +3124,12 @@ COM_0A_pyramid_crawl_move_random:
 
 # COM_0C_move_to_room_if_was_last(room_num)
 
-This command moves the player to the target room but only if the target room was the last room.
+This command moves the player to the target room, but only if the target room was the last room.
 
 If the target room is not the last room, the command fails.
 
-This command is not used in any script.
+This command is not used in any script. The BACK command uses COM_0E, which doesn't check that
+a room number. TODO check the woods code for a need of this.
 
 ```code
 COM_0C_move_to_room_if_was_last:
@@ -3072,6 +3148,12 @@ COM_0C_move_to_room_if_was_last:
 
 # COM_16_get_users_object_print_ok()
 
+This command places the user's object (given on the command line) into the backpack.
+If the object has already been checked by the parse-input function, so we know it
+is here. If it is already in the backpack, we print an error message.
+
+This command is used by the general script for all generic GET requests.
+
 ```code
 COM_16_get_users_object_print_ok:
 5343: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Get the object number the player requested
@@ -3089,7 +3171,14 @@ COM_16_get_users_object_print_ok:
 
 # COM_04_print(ps_num)
 
-This command unpacks a string and prints it. This command always succeeds.
+This command unpacks a string and prints it. This command always succeeds. Other script commands
+use an index for room numbers and object numbers. But this print command takes a two-byte
+pointer to memory.
+
+This one command means the script is not portable between implementations. The pyramid on the
+coco has different pointers than the pyramid on the TRS80. In the next evolution of the
+engine (RaakaTu, Bedlam, and Xenos) the strings are encoded in the scripts making the
+script portable.
 
 ```code
 COM_04_print:
@@ -3106,12 +3195,19 @@ COM_04_print:
 
 # COM_0B_drop_object_print_ok(obj_num)
 
+This command drops a specific object into the current room. It prints OK, which means it
+is a direct response to the user's request instead of a general purpose command.
+
+This command is never used in any scripts. Instead, the scripts use COM_17 which fetches
+the user's input object and calls into this code.
+
 ```code
 COM_0B_drop_object_print_ok:
 536B: E1              POP     HL                  ; Get the target ...
 536C: 46              LD      B,(HL)              ; ... object from the script
 536D: 23              INC     HL                  ; Update the ...
 536E: E5              PUSH    HL                  ; ... script pointer
+;
 536F: 3A 45 50        LD      A,($5045)           ; {code.numObjInPack} Decrease ...
 5372: 3D              DEC     A                   ; ... number of objects ...
 5373: 32 45 50        LD      ($5045),A           ; {code.numObjInPack} ... in pack
