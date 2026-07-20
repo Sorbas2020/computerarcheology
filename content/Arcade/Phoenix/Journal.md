@@ -14,7 +14,8 @@ Both things I found confirm the answer. There are really two distinct kinds of "
 
 You see gaps like these right before subroutines:
 
-```123:130:(computerarcheology Phoenix disassembly)
+```
+123:130:(computerarcheology Phoenix disassembly)
 ; not used
 004C: FF FF FF FF
 ...
@@ -22,7 +23,8 @@ InitSoundScreen:
 0050: 26 68  LD  H,$68        ; entry lands on $0050
 ```
 
-```564:571:(computerarcheology Phoenix disassembly)
+```
+564:571:(computerarcheology Phoenix disassembly)
 0252: C9  RET
 0253: FF FF FF FF FF
 ...
@@ -30,7 +32,8 @@ CompareBCtoMem:
 0258: 7E  LD  A,(HL)          ; entry lands on $0258
 ```
 
-```588:595:(computerarcheology Phoenix disassembly)
+```
+588:595:(computerarcheology Phoenix disassembly)
 0267: C9  RET
 0268: FF FF FF FF FF FF FF FF
 ...
@@ -50,7 +53,8 @@ SubtractFromMemory:
 
 The second kind of alignment is for lookup tables, and it's driven by a pervasive optimization: the code loads the table's high byte once as an immediate and then indexes using only the low byte:
 
-```1309:1667:(computerarcheology Phoenix disassembly)
+```
+1309:1667:(computerarcheology Phoenix disassembly)
 061F: 26 15  LD  H,$15   ; MSB for T1540-T15E0
 0731: 26 07  LD  H,$07   ; MSB for jump table
 0790: 26 14  LD  H,$14   ; T14xx alien character block shapes table
@@ -77,7 +81,8 @@ Phoenix runs two players on one machine by keeping two complete banks of work RA
 - `Player1Lives` (`$4390`) / `Player2Lives` (`$4391`) — separate life counts.
 - `Score1` (`$4380`–`$4383`) / `Score2` (`$4384`–`$4387`) — separate BCD scores, drawn to opposite corners of the top rows:
 
-```755:762:(computerarcheology Phoenix disassembly)
+```
+755:762:(computerarcheology Phoenix disassembly)
 033A: 2E 83     LD L,$83        ; print player 1 score
 033C: 11 61 42  LD DE,$4261     ; Score1 screen coordinates
 033F: 06 06     LD B,$06
@@ -92,7 +97,8 @@ The switch is performed by `CopyMemoryBank` (`$0460`). `B` = source bank, `C` = 
 For every byte it writes the source bank to `$5000`, reads the byte,
 writes the destination bank to `$5000`, and stores the byte — moving the data across the two hardware banks:
 
-```999:1043:(computerarcheology Phoenix disassembly)
+```
+999:1043:(computerarcheology Phoenix disassembly)
 CopyMemoryBank:
 0460: 21 00 50  LD HL,$5000     ; video/RAM bank-select register
 0463: 11 20 43  LD DE,ForegroundScreen+320
@@ -121,7 +127,8 @@ When it returns, `$5000` is left holding the destination bank, so that player's 
 The handover happens in game state 0 ("new game start" / new turn processing), `L0430`.
 It first bails out for splash and for one player mode, then routes to the correct direction:
 
-```971:990:(computerarcheology Phoenix disassembly)
+```
+971:990:(computerarcheology Phoenix disassembly)
 043D: FE 02     CP $02
 043F: C8        RET Z           ; was intro splash -> nothing
 0440: 77        LD (HL),A
@@ -140,7 +147,8 @@ It first bails out for splash and for one player mode, then routes to the correc
 
 And the player 1->player 2 direction:
 
-```1050:1055:(computerarcheology Phoenix disassembly)
+```
+1050:1055:(computerarcheology Phoenix disassembly)
 L04A0:
 04A0: 2E A3     LD L,$A3
 04A2: 36 01     LD (HL),$01     ; $43A3 = 1  (player 2)
@@ -162,7 +170,8 @@ plus the shared scoreboard into the bank that is about to become active.
 While the just ended player's score flashes (game state 1, `L04AC`),
 the code reads `GameAndDemoOrSplash` to decide which score/screen area to flash/redraw — player 1 at `$4261`, player 2 at `$4021`:
 
-```1082:1089:(computerarcheology Phoenix disassembly)
+```
+1082:1089:(computerarcheology Phoenix disassembly)
 04CD: 21 A3 43  LD HL,GameAndDemoOrSplash
 04D0: 7E        LD A,(HL)
 04D1: A7        AND A
@@ -190,7 +199,8 @@ Great question — it works because the stack itself lives in the banked RAM, an
 
 At boot the stack pointer is set to the very top of the `$4000`–`$4BFF` RAM, and the RAM bank is selected through bit 0 of the `$5000` register:
 
-```84:86:(computerarcheology Phoenix disassembly)
+```
+84:86:(computerarcheology Phoenix disassembly)
 0008: 31 FF 4B  LD   SP,$4BFF        ; Top-ish of RAM (stack grows downward from here)
 ...
 000D: 36 00     LD   (HL),$00        ; ($5000) Select the first bank of RAM
@@ -198,7 +208,8 @@ At boot the stack pointer is set to the very top of the `$4000`–`$4BFF` RAM, a
 
 The whole `$4000`–`$4BFF` region — screen memory *and* the stack — is one bank switched block. The clue is right there in `ClearRAMBank`, whose own header explains why it stops short of the top:
 
-```145:153:(computerarcheology Phoenix disassembly)
+```
+145:153:(computerarcheology Phoenix disassembly)
 ;* Clear a RAM Bank (bank 0 or 1)
 ;* Set the lower bit of the video register to pick the bank before calling.
 ;* 4000 - 4BF8
@@ -214,14 +225,15 @@ So each bank (0 and 1) has its own physical stack at `$4BF0`–`$4BFF`. Boot eve
 
 While a single player is playing, the bank bit never changes. Every `CALL`/`RET`/`PUSH`/`POP` hits that bank's stack consistently, exactly like a normal machine. The banking is invisible to ordinary code.
 
-## 3. The only bank change is `CopyMemoryBank`, and it protects the stack
+## 3. The only bank change is "CopyMemoryBank", and it protects the stack
 
 The bank bit is toggled for gameplay in exactly one place — `CopyMemoryBank` (the two player switch). The trick is that it copies the stack from the old bank into the new bank before returning, and touches nothing stack related in between:
 
 - `CopyMemoryBank` is reached by a `CALL`, so the return address is sitting on the source bank's stack (`$4BFx`), and `SP` points at it.
 - Its final region copy transfers `$4BC0`–`$4BFF` — which includes the entire stack area `$4BF0`–`$4BFF` — from the source bank (`B`) to the destination bank (`C`):
 
-```1032:1043:(computerarcheology Phoenix disassembly)
+```
+1032:1043:(computerarcheology Phoenix disassembly)
 048F: 11 C0 4B  LD   DE,B4BC0        ; object buffer ... and the stack live up here
 L0492:
 0492: 70        LD   (HL),B          ; select source bank
@@ -262,7 +274,8 @@ I now have the full mechanism. The key is the coordinate system plus the screen-
 
 Every alien slot in the `$4B70` structure holds a single‑byte X grid coordinate and a single‑byte Y grid coordinate. Movement is nothing more than repeatedly *adding* signed increments to those bytes, taken from the movement choreography (`T1000` -> `T1700`):
 
-```2733:2748:(computerarcheology Phoenix disassembly)
+```
+2733:2748:(computerarcheology Phoenix disassembly)
 0D4B: 2B        DEC  HL              ; value for X movement
 0D4C: 0A        LD   A,(BC)          ; get alien screen coordinate X
 0D4D: 86        ADD  A,(HL)          ; add the X delta from T1700
@@ -281,7 +294,8 @@ There is no clamping and no edge test here. The coordinates are 8 bit, so they s
 
 An alien is only *shown* when its coordinate is translated into a screen RAM address by `GetScreenRamAddress`. That routine takes the X coordinate, drops the sub cell pixel bits, and uses `X >> 3` (the column number) as an index into the `T0A00` address table:
 
-```2131:2150:(computerarcheology Phoenix disassembly)
+```
+2131:2150:(computerarcheology Phoenix disassembly)
 09BA: 21 00 0A  LD  HL,T0A00     ; Screen ram addresses for the top row
 09BD: 0A        LD  A,(BC)       ; get the X coordinate
 09BE: E6 F8     AND $F8          ; drop the low 3 (sub-cell) bits
@@ -296,7 +310,8 @@ An alien is only *shown* when its coordinate is translated into a screen RAM add
 
 `T0A00` only has 26 real entries — columns 0–25, the visible width of the (rotated) playfield:
 
-```2158:2192:(computerarcheology Phoenix disassembly)
+```
+2158:2192:(computerarcheology Phoenix disassembly)
 T0A00:
 0A00: 43 20 ; column 0  (upper-left corner)
 ...
@@ -337,7 +352,8 @@ This is a hand rolled non local return (a "longjmp" style stack unwind), not an 
 
 ## The three instructions
 
-```3063:3066:(computerarcheology Phoenix disassembly)
+```
+3063:3066:(computerarcheology Phoenix disassembly)
 0EE2: 35        DEC  (HL)            ; AliensLeft--
 0EE3: E1        POP  HL              ; discard one return address
 0EE4: E1        POP  HL              ; pop the NEXT return address into HL
@@ -369,7 +385,8 @@ Stack at `$0EE3` (top -> bottom): `$0E86`, `$0DF9`, `$2006`.
 
 The trick is that the second collision pass is entered by a `JP`, not a `CALL`:
 
-```2882:2882:(computerarcheology Phoenix disassembly)
+```
+2882:2882:(computerarcheology Phoenix disassembly)
 0DFF: C3 10 0E  JP  L0E10           ; second bullet check - no return pushed
 ```
 
@@ -384,16 +401,19 @@ So depending on the entry path there is one fewer frame on the stack, and the se
 
 I verified those call sites in the ROM:
 
-```101:102:(computerarcheology Phoenix disassembly)
+```
+101:102:(computerarcheology Phoenix disassembly)
 0024: CD 00 04  CALL GameStateMachine     ; return = $0027
 0027: CD 00 27  CALL UpdateScoresAndSound
 ```
 
-```4310:4310:(computerarcheology Phoenix disassembly)
+```
+4310:4310:(computerarcheology Phoenix disassembly)
 2003: CD F0 0D  CALL L0DF0                 ; return = $2006
 ```
 
-```4590:4591:(computerarcheology Phoenix disassembly)
+```
+4590:4591:(computerarcheology Phoenix disassembly)
 2196: CD 00 0F  CALL L0F00                 ; return = $2199
 2199: CD 60 25  CALL L2560
 ```
