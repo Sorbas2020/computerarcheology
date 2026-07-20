@@ -26,7 +26,7 @@ Start:
 430E: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Wait for a key
 
 4311: 3E 01           LD      A,$01               ; Starting room is ...
-4313: 32 3F 50        LD      ($503F),A           ; {code.currentRoom} ... room 1
+4313: 32 3F 50        LD      ($503F),A           ; {code.currentRoom} ... RM_01_BEFORE_ENTRANCE
 4316: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Print room description
 
 GameLoop:
@@ -2694,83 +2694,102 @@ ScriptCommands:
 
 # After Every Step
 
+This code runs after every user input. It bumps the player's turn count, and it handles the lamp running 
+out of power (and battery replacement).
+
+The player's turn count is kept in 4 BCD digits (2 bytes). The count rolls over from 9999 back to 0000.
+
+If OBJ_0F_LAMP_ON object is in play (anywhere but room 0), then we bump the turn counter on the lamp. If
+after bumping, the count is exactly 290, we print "YOUR LAMP IS GETTING DIM". This message appears even
+if the lamp is not in the same room or the backpack. If after bumping, the count is exactly 310, we
+swap OBJ_2C_LAMP_DEAD and OBJ_2C_LAMP_DEAD. This moves the shining lamp out of play and the dead lamp
+to the backpack.
+
+After 300 turns, we check for automatic battery replacement every turn. If the dead lamp and the fresh
+batteries are in the backpack, we move the dead lamp out of play and the shining lamp to the backpack.
+We also swap the fresh batteries with the worn batteries.
+
+The code does not reset the turn count on the lamp! The count continues with the fresh batteries until it 
+rolls back around to 310. You get 300 turns on the original batteries but 65,536 turns on the new ones. 
+Then the lamp goes out again, but there are no more coins to put in the vending machine. TODO check this
+with a save-game edit.
+
 ```code
-; This processing takes place after every user input.[[br]]
-;  1. Increment the count on the lamp and the number of turns.[[br]]
-;  2. Warn the player if the lamp is going dim and change the batteries automatically.
 AfterEveryStep:
-50D9: 3E 0F           LD      A,$0F               ; obj_LAMP_on
+50D9: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
 50DB: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} Object table
 50DE: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} Lookup the object info
 50E1: 23              INC     HL                  ; Location
-50E2: 7E              LD      A,(HL)              ; Is the ...
-50E3: A7              AND     A                   ; ... lamp turned on?
-50E4: CA 34 51        JP      Z,$5134             ; {code.CheckAutoBatteries} No, bump BCD turn count and out
+50E2: 7E              LD      A,(HL)              ; Is the lamp ...
+50E3: A7              AND     A                   ; ... turned on (not out of play at location 0)?
+50E4: CA 34 51        JP      Z,$5134             ; {code.CheckAutoBatteries} The lamp is not lit, don't bump the count
+;
 50E7: 2A 42 50        LD      HL,($5042)          ; {code.lampOnTurnCount} Bump ...
-50EA: 23              INC     HL                  ; ... turns the lamp ...
+50EA: 23              INC     HL                  ; ... binary count of turns the lamp ...
 50EB: 22 42 50        LD      ($5042),HL          ; {code.lampOnTurnCount} ... has been on
 50EE: 7C              LD      A,H                 ; Has lamp been ...
 50EF: FE 01           CP      $01                 ; ... on 256 turns or more?
-50F1: C2 34 51        JP      NZ,$5134            ; {code.CheckAutoBatteries} No, bump BCD turn count and out
+50F1: C2 34 51        JP      NZ,$5134            ; {code.CheckAutoBatteries} No, the lamp is still young, we are done
 50F4: 7D              LD      A,L                 ; Has lamp been lit ...
 50F5: FE 22           CP      $22                 ; ... exactly 256+34 = 290 turns?
 50F7: C2 03 51        JP      NZ,$5103            ; {} No, skip message
 50FA: 21 C5 79        LD      HL,$79C5            ; {+code.PS_A6} "YOUR_LAMP_IS_GETTING_DIM."
 50FD: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
-5100: C3 77 51        JP      $5177               ; {code.BumpBCDTurnCount} Bump BCD turn count and out
+5100: C3 77 51        JP      $5177               ; {code.BumpBCDTurnCount} Done
+;
 5103: FE 36           CP      $36                 ; Has lamp been lit 256+54 = 310 turns?
-5105: C2 34 51        JP      NZ,$5134            ; {code.CheckAutoBatteries} No, bump BCD turn count and out
-5108: 3E 0F           LD      A,$0F               ; obj_LAMP_on
+5105: C2 34 51        JP      NZ,$5134            ; {code.CheckAutoBatteries} No, all other counts check for batteries
+5108: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
 510A: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} Object table
 510D: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} Look up the object info
 5110: 23              INC     HL                  ; Point to location
-5111: 46              LD      B,(HL)              ; Current location of the obj_LAMP_on
-5112: 36 00           LD      (HL),$00            ; The obj_LAMP_on is now out of play
+5111: 46              LD      B,(HL)              ; Current location of the OBJ_0F_LAMP_ON
+5112: 36 00           LD      (HL),$00            ; The OBJ_0F_LAMP_ON is now out of play
 5114: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} Look up ...
 5117: 3E 2C           LD      A,$2C               ; ... info for ...
-5119: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} ... obj_LAMP_dead
+5119: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} ... OBJ_2C_LAMP_DEAD
 511C: 23              INC     HL                  ; Location
-511D: 70              LD      (HL),B              ; Replace the obj_LAMP_on with obj_LAMP_dead
-511E: 3E 23           LD      A,$23               ; obj_BATTERIES_fresh
+511D: 70              LD      (HL),B              ; Replace the OBJ_0F_LAMP_ON with OBJ_2C_LAMP_DEAD
+511E: 3E 23           LD      A,$23               ; OBJ_23_BATTERIES_FRESH
 5120: 1E FF           LD      E,$FF               ; Fresh batteries in ...
 5122: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... backpack?
 5125: CA 34 51        JP      Z,$5134             ; {code.CheckAutoBatteries} Yes, automatically replace them
 5128: 21 4A 7A        LD      HL,$7A4A            ; {+code.PS_A7} "YOUR_LAMP_HAS_RUN_OUT_OF_POWER."
 512B: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the message
 512E: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Describe the dark room
-5131: C3 77 51        JP      $5177               ; {code.BumpBCDTurnCount} Bump the BCD turn count and out
+5131: C3 77 51        JP      $5177               ; {code.BumpBCDTurnCount} We are done
 ;
 CheckAutoBatteries:
 5134: 2A 42 50        LD      HL,($5042)          ; {code.lampOnTurnCount} Get the turns the lamp has been on
 5137: 11 2C 01        LD      DE,$012C            ; Match 300 turns
 513A: 7C              LD      A,H                 ; Has lamp been on ...
-513B: BA              CP      D                   ; ... 300 turns?
-513C: DA 77 51        JP      C,$5177             ; {code.BumpBCDTurnCount} No, bump the BCD turn count and out
+513B: BA              CP      D                   ; ... 300 (MSB) turns?
+513C: DA 77 51        JP      C,$5177             ; {code.BumpBCDTurnCount} Less than, we are done
 513F: 7D              LD      A,L                 ; Has lamp been on ...
-5140: BB              CP      E                   ; ... 300 turns?
-5141: DA 77 51        JP      C,$5177             ; {code.BumpBCDTurnCount} No, bump the BCD turn count and out
+5140: BB              CP      E                   ; ... 300 (LSB) turns?
+5141: DA 77 51        JP      C,$5177             ; {code.BumpBCDTurnCount} Less than, we are done
 5144: 3E 23           LD      A,$23               ; Are the ...
-5146: 1E FF           LD      E,$FF               ; obj_BATTERIES_fresh ...
+5146: 1E FF           LD      E,$FF               ; OBJ_23_BATTERIES_FRESH ...
 5148: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the backpack?
-514B: C2 77 51        JP      NZ,$5177            ; {code.BumpBCDTurnCount} No, bump the BCD turn count and out
+514B: C2 77 51        JP      NZ,$5177            ; {code.BumpBCDTurnCount} No, we are done
 514E: 3E 2C           LD      A,$2C               ; Is the ...
-5150: 1E FF           LD      E,$FF               ; ... obj_LAMP_dead ...
+5150: 1E FF           LD      E,$FF               ; ... OBJ_2C_LAMP_DEAD ...
 5152: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the backpack?
-5155: C2 77 51        JP      NZ,$5177            ; {code.BumpBCDTurnCount} No, bump the BCD turn count and out
-5158: 23              INC     HL                  ; The obj_LAMP_dead ...
+5155: C2 77 51        JP      NZ,$5177            ; {code.BumpBCDTurnCount} No, we are done
+5158: 23              INC     HL                  ; The OBJ_2C_LAMP_DEAD ...
 5159: 36 00           LD      (HL),$00            ; ... is now out of play
 515B: 3E 23           LD      A,$23               ; Get the ...
 515D: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} ... info for ...
-5160: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} ... obj_BATTERIES_fresh
+5160: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} ... OBJ_23_BATTERIES_FRESH
 5163: 23              INC     HL                  ; Fresh batteries ...
 5164: 36 00           LD      (HL),$00            ; ... are now out of play
 5166: 23              INC     HL                  ; Bump to ...
-5167: 23              INC     HL                  ; ... obj_BATTERIES_worn
+5167: 23              INC     HL                  ; ... OBJ_24_BATTERIES_WORN
 5168: 36 FF           LD      (HL),$FF            ; Worn out batteries are now ...
 516A: 1E FF           LD      E,$FF               ; ... in the backpack
-516C: 3E 0F           LD      A,$0F               ; obj_LAMP_on
-516E: CD 76 43        CALL    $4376               ; {code.SetObjectLocation} Move the obj_LAMP_on to the backpack
-5171: 21 91 7A        LD      HL,$7A91            ; {+code.PS_A9} "REPLACING__THE_BATTERIES."
+516C: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
+516E: CD 76 43        CALL    $4376               ; {code.SetObjectLocation} Move the OBJ_0F_LAMP_ON to the backpack
+5171: 21 91 7A        LD      HL,$7A91            ; {+code.PS_A9} "REPLACING_THE_BATTERIES."
 5174: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
 ;
 BumpBCDTurnCount:
@@ -2795,7 +2814,7 @@ warned about the 60% chance of death.
 
 After every move the code checks the pack for treasures. If there are 2 or more treasures then
 the Mummy moves them all to room 53 (the hard-to-find room in the maze). Then the code moves the
-chest to room 53. Up till now the chest has been in room 0 (out of play). The only way to make the
+chest to RM_35. Up till now the chest has been in room 0 (out of play). The only way to make the
 chest appear in the maze is to encounter the mummy. Once the chest is in a room (any room) the
 mummy no longer appears. You only see the mummy once.
 
@@ -2812,11 +2831,11 @@ COM_01_move_look:
 ;
 518E: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Checking ...
 5191: 5F              LD      E,A                 ; ... current room
-5192: 3E 0F           LD      A,$0F               ; obj_LAMP_on
+5192: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
 5194: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Is the lit-lamp in this room?
 5197: CA DA 51        JP      Z,$51DA             ; {} Yes, there is light. Make the move.
 519A: 1E FF           LD      E,$FF               ; Backpack room number
-519C: 3E 0F           LD      A,$0F               ; obj_LAMP_on
+519C: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
 519E: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Is the lit-lamp in the backpack?
 51A1: CA DA 51        JP      Z,$51DA             ; {} Yes, there is light. Make the move.
 51A4: 21 45 4F        LD      HL,$4F45            ; {+code.AmbientLightTable} Ambient light table
@@ -2832,7 +2851,7 @@ COM_01_move_look:
 51BB: E6 40           AND     $40                 ; Check the bit
 51BD: C2 DA 51        JP      NZ,$51DA            ; {} There is light in the next room. Make the move.
 51C0: 58              LD      E,B                 ; Destination room
-51C1: 3E 0F           LD      A,$0F               ; obj_LAMP_on
+51C1: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
 51C3: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Is the lit-lamp in the next room?
 51C6: CA DA 51        JP      Z,$51DA             ; {} Yes, there is light. Make the move.
 51C9: 3A 74 47        LD      A,($4774)           ; {code.keyWaitCounter} Random number (key-input wait counter)
@@ -2849,7 +2868,7 @@ COM_01_move_look:
 51E1: 32 3F 50        LD      ($503F),A           ; {code.currentRoom} ... current room
 ;
 51E4: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Print room and room description (with objects)
-51E7: 3E 2A           LD      A,$2A               ; obj_CHEST
+51E7: 3E 2A           LD      A,$2A               ; OBJ_2A_CHEST
 51E9: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} object info
 51EC: CD 61 43        CALL    $4361               ; {code.TableOffsetTwoBytes} Look up the info on the chest
 51EF: 23              INC     HL                  ; Get the ...
@@ -2892,8 +2911,8 @@ COM_01_move_look:
 5230: 23              INC     HL                  ; Next object
 5231: 0D              DEC     C                   ; Have we checked all objects?
 5232: C2 1A 52        JP      NZ,$521A            ; {} No, go back for them all
-5235: 1E 35           LD      E,$35               ; room_53 in the maze
-5237: 3E 2A           LD      A,$2A               ; obj_CHEST
+5235: 1E 35           LD      E,$35               ; RM_35 in the maze
+5237: 3E 2A           LD      A,$2A               ; OBJ_2A_CHEST
 5239: CD 76 43        CALL    $4376               ; {code.SetObjectLocation} Place the chest in the maze
 523C: 21 4C 7B        LD      HL,$7B4C            ; {+code.PS_AD} "_____SUDDENLY,_A_MUMMY_CREEPS_UP_BEHIND_YOU!!"
 523F: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the message
@@ -2909,11 +2928,11 @@ DescribeRoom:
 5251: C2 71 52        JP      NZ,$5271            ; {} Yes, show the room description
 5254: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Get the current room number
 5257: 5F              LD      E,A                 ; Is the ...
-5258: 3E 0F           LD      A,$0F               ; ... obj_LAMP_ON ...
+5258: 3E 0F           LD      A,$0F               ; ... OBJ_0F_LAMP_ON ...
 525A: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the current room?
 525D: CA 71 52        JP      Z,$5271             ; {} Yes, there is light. Show the room description
 5260: 1E FF           LD      E,$FF               ; Is the ...
-5262: 3E 0F           LD      A,$0F               ; ... obj_LAMP_ON ...
+5262: 3E 0F           LD      A,$0F               ; ... OBJ_0F_LAMP_ON ...
 5264: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the backpack?
 5267: CA 71 52        JP      Z,$5271             ; {} Yes, there is light. Show the room description
 526A: 21 76 79        LD      HL,$7976            ; {+code.PS_A4} "IT_IS_NOW_PITCH_DARK.__IF_YOU_PROCEED,_YOU_"
@@ -3071,7 +3090,7 @@ COM_0D_is_pack_just_emerald:
 52FE: 0E 01           LD      C,$01               ; Start checking with object 1
 5300: 23              INC     HL                  ; Location of object
 5301: 79              LD      A,C                 ; Is this object ...
-5302: FE 1F           CP      $1F                 ; ... the obj_EMERALD?
+5302: FE 1F           CP      $1F                 ; ... the OBJ_1F_EMERALD?
 5304: CA 0D 53        JP      Z,$530D             ; {} Yes, ignore it
 5307: 7E              LD      A,(HL)              ; Get the location
 5308: FE FF           CP      $FF                 ; Is this object in the backpack?
@@ -3395,10 +3414,10 @@ COM_05_death_and_resurrect:
 546B: C2 EF 55        JP      NZ,$55EF            ; {code.COM_09_end_of_game} No, print score and stop
 546E: 2A C5 54        LD      HL,($54C5)          ; {code.nextResurrectMessage} Print resurrection ...
 5471: CD AE 45        CALL    $45AE               ; {code.PrintPacked} ... message
-5474: 21 02 50        LD      HL,$5002            ; {+} obj_LAMP_off to ...
-5477: 36 01           LD      (HL),$01            ; ... room_1
+5474: 21 02 50        LD      HL,$5002            ; {+} OBJ_0E_LAMP_OFF to ...
+5477: 36 01           LD      (HL),$01            ; ... RM_01_BEFORE_ENTRANCE
 5479: 23              INC     HL                  ; Point to ...
-547A: 23              INC     HL                  ; ... obj_LAMP_on
+547A: 23              INC     HL                  ; ... OBJ_0F_LAMP_ON
 547B: 36 00           LD      (HL),$00            ; Move it out of play
 547D: 21 E7 4F        LD      HL,$4FE7            ; {+code.ObjectData} Object data
 5480: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Player's ...
@@ -3650,8 +3669,8 @@ COM_1B_load_game:
 ; manually reset here. ?? why are we reading more than we need ??
 ;
 5642: 21 58 6D        LD      HL,$6D58            ; Reset the ...
-5645: 22 47 50        LD      ($5047),HL          ; {code.ObjectDescriptions} ... obj_bridge_15 ...
-5648: 22 49 50        LD      ($5049),HL          ; {} ... and obj_bridge_18 descriptions.
+5645: 22 47 50        LD      ($5047),HL          ; {code.ObjectDescriptions} ... OBJ_01_BRIDGE_ROOM_0F ...
+5648: 22 49 50        LD      ($5049),HL          ; {} ... and OBJ_02_BRIDGE_ROOM_12 descriptions.
 564B: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Print the current room description after the load
 564E: 31 BF 47        LD      SP,$47BF            ; Abandon previous stack
 5651: C3 19 43        JP      $4319               ; {code.GameLoop} Back to input loop
