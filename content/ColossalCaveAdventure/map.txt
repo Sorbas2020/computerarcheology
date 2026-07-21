@@ -1,0 +1,1073 @@
+---------------- 1 ----------------
+YOU ARE STANDING AT THE END OF A ROAD BEFORE A SMALL BRICK BUILDING.
+AROUND YOU IS A FOREST.  A SMALL STREAM FLOWS OUT OF THE BUILDING AND
+DOWN A GULLY.
+    (2, 0, ['ROAD', 'HILL', 'WEST', 'W', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (3, 0, ['ENTER', 'BUILD', 'HOUSE', 'INWAR', 'INSID', 'IN', 'EAST', 'E'])
+    (4, 0, ['DOWNS', 'GULLY', 'STREA', 'SOUTH', 'S', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (5, 0, ['FORES', 'NORTH', 'N', 'EAST', 'E'])
+    (8, 0, ['DEPRE'])
+
+---------------- 2 ----------------
+YOU HAVE WALKED UP A HILL, STILL IN THE FOREST.  THE ROAD SLOPES BACK
+DOWN THE OTHER SIDE OF THE HILL.  THERE IS A BUILDING IN THE DISTANCE.
+    (1, 0, ['ROAD', 'HILL', 'BUILD', 'HOUSE', 'FORWA', 'CONTI', 'ONWAR', 'EAST', 'E', 'NORTH', 'N', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (5, 0, ['FORES', 'NORTH', 'N', 'SOUTH', 'S'])
+
+---------------- 3 ----------------
+YOU ARE INSIDE A BUILDING, A WELL HOUSE FOR A LARGE SPRING.
+    (1, 0, ['ENTER', 'OUT', 'OUTSI', 'EXIT', 'LEAVE', 'OUTDO', 'WEST', 'W'])
+    (11, 0, ['XYZZY'])
+    (33, 0, ['PLUGH'])
+    (79, 0, ['DOWNS', 'STREA'])
+
+---------------- 4 ----------------
+YOU ARE IN A VALLEY IN THE FOREST BESIDE A STREAM TUMBLING ALONG A
+ROCKY BED.
+    (1, 0, ['UPSTR', 'BUILD', 'HOUSE', 'NORTH', 'N'])
+    (5, 0, ['FORES', 'EAST', 'E', 'WEST', 'W', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (7, 0, ['DOWNS', 'SOUTH', 'S', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (8, 0, ['DEPRE'])
+
+---------------- 5 ----------------
+YOU ARE IN OPEN FOREST, WITH A DEEP VALLEY TO ONE SIDE.
+    (4, 0, ['VALLE', 'EAST', 'E', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (5, 50, ['FORES', 'FORWA', 'CONTI', 'ONWAR', 'NORTH', 'N'])
+    (6, 0, ['FORES'])
+    (5, 0, ['WEST', 'W', 'SOUTH', 'S'])
+
+---------------- 6 ----------------
+YOU ARE IN OPEN FOREST NEAR BOTH A VALLEY AND A ROAD.
+    (1, 0, ['ROAD', 'HILL', 'NORTH', 'N'])
+    (4, 0, ['VALLE', 'EAST', 'E', 'WEST', 'W', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (5, 0, ['FORES', 'SOUTH', 'S'])
+
+---------------- 7 ----------------
+AT YOUR FEET ALL THE WATER OF THE STREAM SPLASHES INTO A 2-INCH SLIT
+IN THE ROCK.  DOWNSTREAM THE STREAMBED IS BARE ROCK.
+    (1, 0, ['BUILD', 'HOUSE'])
+    (4, 0, ['UPSTR', 'NORTH', 'N'])
+    (5, 0, ['FORES', 'EAST', 'E', 'WEST', 'W'])
+    (8, 0, ['DOWNS', 'ROCK', 'BED', 'SOUTH', 'S'])
+    (595, 0, ['SLIT', 'STREA', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 8 ----------------
+YOU ARE IN A 20-FOOT DEPRESSION FLOORED WITH BARE DIRT.  SET INTO THE
+DIRT IS A STRONG STEEL GRATE MOUNTED IN CONCRETE.  A DRY STREAMBED
+LEADS INTO THE DEPRESSION.
+    (5, 0, ['FORES', 'EAST', 'E', 'WEST', 'W', 'SOUTH', 'S'])
+    (1, 0, ['BUILD', 'HOUSE'])
+    (7, 0, ['UPSTR', 'GULLY', 'NORTH', 'N'])
+    (9, 303, ['ENTER', 'INWAR', 'INSID', 'IN', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (593, 0, ['ENTER'])
+
+---------------- 9 ----------------
+YOU ARE IN A SMALL CHAMBER BENEATH A 3X3 STEEL GRATE TO THE SURFACE.
+A LOW CRAWL OVER COBBLES LEADS INWARD TO THE WEST.
+    (8, 303, ['OUT', 'OUTSI', 'EXIT', 'LEAVE', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (593, 0, ['OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (10, 0, ['CRAWL', 'COBBL', 'INWAR', 'INSID', 'IN', 'WEST', 'W'])
+    (14, 0, ['PIT'])
+    (11, 0, ['DEBRI'])
+
+---------------- 10 ----------------
+YOU ARE CRAWLING OVER COBBLES IN A LOW PASSAGE.  THERE IS A DIM LIGHT
+AT THE EAST END OF THE PASSAGE.
+    (9, 0, ['OUT', 'OUTSI', 'EXIT', 'LEAVE', 'SURFA', 'NULL', 'NOWHE', 'EAST', 'E'])
+    (11, 0, ['INWAR', 'INSID', 'IN', 'DARK', 'WEST', 'W', 'DEBRI'])
+    (14, 0, ['PIT'])
+
+---------------- 11 ----------------
+YOU ARE IN A DEBRIS ROOM FILLED WITH STUFF WASHED IN FROM THE SURFACE.
+A LOW WIDE PASSAGE WITH COBBLES BECOMES PLUGGED WITH MUD AND DEBRIS
+HERE, BUT AN AWKWARD CANYON LEADS UPWARD AND WEST.  A NOTE ON THE WALL
+SAYS "MAGIC WORD XYZZY".
+    (8, 303, ['DEPRE'])
+    (9, 0, ['ENTRA'])
+    (10, 0, ['CRAWL', 'COBBL', 'PASSA', 'TUNNE', 'LOW', 'EAST', 'E'])
+    (12, 0, ['CANYO', 'INWAR', 'INSID', 'IN', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'WEST', 'W'])
+    (3, 0, ['XYZZY'])
+    (14, 0, ['PIT'])
+
+---------------- 12 ----------------
+YOU ARE IN AN AWKWARD SLOPING EAST/WEST CANYON.
+    (8, 303, ['DEPRE'])
+    (9, 0, ['ENTRA'])
+    (11, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'EAST', 'E', 'DEBRI'])
+    (13, 0, ['INWAR', 'INSID', 'IN', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'WEST', 'W'])
+    (14, 0, ['PIT'])
+
+---------------- 13 ----------------
+YOU ARE IN A SPLENDID CHAMBER THIRTY FEET HIGH.  THE WALLS ARE FROZEN
+RIVERS OF ORANGE STONE.  AN AWKWARD CANYON AND A GOOD PASSAGE EXIT
+FROM EAST AND WEST SIDES OF THE CHAMBER.
+    (8, 303, ['DEPRE'])
+    (9, 0, ['ENTRA'])
+    (11, 0, ['DEBRI'])
+    (12, 0, ['CANYO', 'EAST', 'E'])
+    (14, 0, ['PASSA', 'TUNNE', 'PIT', 'WEST', 'W'])
+
+---------------- 14 ----------------
+AT YOUR FEET IS A SMALL PIT BREATHING TRACES OF WHITE MIST.  AN EAST
+PASSAGE ENDS HERE EXCEPT FOR A SMALL CRACK LEADING ON.
+    (8, 303, ['DEPRE'])
+    (9, 0, ['ENTRA'])
+    (11, 0, ['DEBRI'])
+    (13, 0, ['PASSA', 'TUNNE', 'EAST', 'E'])
+    (20, 150, ['D', 'DOWNW', 'DOWN', 'DESCE', 'PIT', 'STEPS'])
+    (15, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (16, 0, ['CRACK', 'WEST', 'W'])
+
+---------------- 15 ----------------
+YOU ARE AT ONE END OF A VAST HALL STRETCHING FORWARD OUT OF SIGHT TO
+THE WEST.  THERE ARE OPENINGS TO EITHER SIDE.  NEARBY, A WIDE STONE
+STAIRCASE LEADS DOWNWARD.  THE HALL IS FILLED WITH WISPS OF WHITE MIST
+SWAYING TO AND FRO ALMOST AS IF ALIVE.	A COLD WIND BLOWS UP THE
+STAIRCASE.  THERE IS A PASSAGE AT THE TOP OF A DOME BEHIND YOU.
+    (18, 0, ['LEFT', 'SOUTH', 'S'])
+    (17, 0, ['FORWA', 'CONTI', 'ONWAR', 'HALL', 'WEST', 'W'])
+    (19, 0, ['STAIR', 'D', 'DOWNW', 'DOWN', 'DESCE', 'NORTH', 'N'])
+    (22, 150, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'PIT', 'STEPS', 'DOME', 'PASSA', 'TUNNE', 'EAST', 'E'])
+    (14, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (34, 0, ['Y2'])
+
+---------------- 16 ----------------
+THE CRACK IS FAR TOO SMALL FOR YOU TO FOLLOW.
+    (14, 0, ['??1??'])
+
+---------------- 17 ----------------
+YOU ARE ON THE EAST BANK OF A FISSURE SLICING CLEAR ACROSS THE HALL.
+THE MIST IS QUITE THICK HERE, AND THE FISSURE IS TOO WIDE TO JUMP.
+    (15, 0, ['HALL', 'EAST', 'E'])
+    (596, 312, ['JUMP'])
+    (21, 412, ['FORWA', 'CONTI', 'ONWAR'])
+    (597, 412, ['OVER', 'ACROS', 'WEST', 'W', 'CROSS'])
+    (27, 0, ['OVER'])
+
+---------------- 18 ----------------
+THIS IS A LOW ROOM WITH A CRUDE NOTE ON THE WALL.  THE NOTE SAYS,
+"YOU WON'T GET IT UP THE STEPS".
+    (15, 0, ['HALL', 'OUT', 'OUTSI', 'EXIT', 'LEAVE', 'NORTH', 'N'])
+
+---------------- 19 ----------------
+YOU ARE IN THE HALL OF THE MOUNTAIN KING, WITH PASSAGES OFF IN ALL
+DIRECTIONS.
+    (15, 0, ['STAIR', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'EAST', 'E'])
+    (28, 311, ['NORTH', 'N', 'LEFT'])
+    (29, 311, ['SOUTH', 'S', 'RIGHT'])
+    (30, 311, ['WEST', 'W', 'FORWA', 'CONTI', 'ONWAR'])
+    (32, 0, ['NORTH', 'N'])
+    (74, 35, ['SW'])
+    (32, 211, ['SW'])
+    (74, 0, ['SECRE'])
+
+---------------- 20 ----------------
+YOU ARE AT THE BOTTOM OF THE PIT WITH A BROKEN NECK.
+    (0, 0, ['??1??'])
+
+---------------- 21 ----------------
+YOU DIDN'T MAKE IT.
+    (0, 0, ['??1??'])
+
+---------------- 22 ----------------
+THE DOME IS UNCLIMBABLE.
+    (15, 0, ['??1??'])
+
+---------------- 23 ----------------
+YOU ARE AT THE WEST END OF THE TWOPIT ROOM.  THERE IS A LARGE HOLE IN
+THE WALL ABOVE THE PIT AT THIS END OF THE ROOM.
+    (67, 0, ['EAST', 'E', 'ACROS'])
+    (68, 0, ['WEST', 'W', 'SLAB', 'SLABR'])
+    (25, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'PIT'])
+    (648, 0, ['HOLE'])
+
+---------------- 24 ----------------
+YOU ARE AT THE BOTTOM OF THE EASTERN PIT IN THE TWOPIT ROOM.  THERE IS
+A SMALL POOL OF OIL IN ONE CORNER OF THE PIT.
+    (67, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 25 ----------------
+YOU ARE AT THE BOTTOM OF THE WESTERN PIT IN THE TWOPIT ROOM.  THERE IS
+A LARGE HOLE IN THE WALL ABOUT 25 FEET ABOVE YOU.
+    (23, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (31, 724, ['CLIMB'])
+    (26, 0, ['CLIMB'])
+
+---------------- 26 ----------------
+YOU CLAMBER UP THE PLANT AND SCURRY THROUGH THE HOLE AT THE TOP.
+    (88, 0, ['??1??'])
+
+---------------- 27 ----------------
+YOU ARE ON THE WEST SIDE OF THE FISSURE IN THE HALL OF MISTS.
+    (596, 312, ['JUMP'])
+    (21, 412, ['FORWA', 'CONTI', 'ONWAR'])
+    (597, 412, ['OVER', 'ACROS', 'EAST', 'E', 'CROSS'])
+    (17, 0, ['OVER'])
+    (40, 0, ['NORTH', 'N'])
+    (41, 0, ['WEST', 'W'])
+
+---------------- 28 ----------------
+YOU ARE IN A LOW N/S PASSAGE AT A HOLE IN THE FLOOR.  THE HOLE GOES
+DOWN TO AN E/W PASSAGE.
+    (19, 0, ['HALL', 'OUT', 'OUTSI', 'EXIT', 'LEAVE', 'SOUTH', 'S'])
+    (33, 0, ['NORTH', 'N', 'Y2'])
+    (36, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'HOLE'])
+
+---------------- 29 ----------------
+YOU ARE IN THE SOUTH SIDE CHAMBER.
+    (19, 0, ['HALL', 'OUT', 'OUTSI', 'EXIT', 'LEAVE', 'NORTH', 'N'])
+
+---------------- 30 ----------------
+YOU ARE IN THE WEST SIDE CHAMBER OF THE HALL OF THE MOUNTAIN KING.
+A PASSAGE CONTINUES WEST AND UP HERE.
+    (19, 0, ['HALL', 'OUT', 'OUTSI', 'EXIT', 'LEAVE', 'EAST', 'E'])
+    (62, 0, ['WEST', 'W', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+
+---------------- 31 ----------------
+>$<
+    (89, 524, ['??1??'])
+    (90, 0, ['??1??'])
+
+---------------- 32 ----------------
+YOU CAN'T GET BY THE SNAKE.
+    (19, 0, ['??1??'])
+
+---------------- 33 ----------------
+YOU ARE IN A LARGE ROOM, WITH A PASSAGE TO THE SOUTH, A PASSAGE TO THE
+WEST, AND A WALL OF BROKEN ROCK TO THE EAST.  THERE IS A LARGE "Y2" ON
+A ROCK IN THE ROOM'S CENTER.
+    (3, 0, ['PLUGH'])
+    (28, 0, ['SOUTH', 'S'])
+    (34, 0, ['EAST', 'E', 'WALL', 'BROKE'])
+    (35, 0, ['WEST', 'W'])
+    (302, 159, ['PLOVE'])
+    (100, 0, ['PLOVE'])
+
+---------------- 34 ----------------
+YOU ARE IN A JUMBLE OF ROCK, WITH CRACKS EVERYWHERE.
+    (33, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'Y2'])
+    (15, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+
+---------------- 35 ----------------
+YOU'RE AT A LOW WINDOW OVERLOOKING A HUGE PIT, WHICH EXTENDS UP OUT OF
+SIGHT.	A FLOOR IS INDISTINCTLY VISIBLE OVER 50 FEET BELOW.  TRACES OF
+WHITE MIST COVER THE FLOOR OF THE PIT, BECOMING THICKER TO THE RIGHT.
+MARKS IN THE DUST AROUND THE WINDOW WOULD SEEM TO INDICATE THAT
+SOMEONE HAS BEEN HERE RECENTLY.  DIRECTLY ACROSS THE PIT FROM YOU AND
+25 FEET AWAY THERE IS A SIMILAR WINDOW LOOKING INTO A LIGHTED ROOM.  A
+SHADOWY FIGURE CAN BE SEEN THERE PEERING BACK AT YOU.
+    (33, 0, ['EAST', 'E', 'Y2'])
+    (20, 0, ['JUMP'])
+
+---------------- 36 ----------------
+YOU ARE IN A DIRTY BROKEN PASSAGE.  TO THE EAST IS A CRAWL.  TO THE
+WEST IS A LARGE PASSAGE.  ABOVE YOU IS A HOLE TO ANOTHER PASSAGE.
+    (37, 0, ['EAST', 'E', 'CRAWL'])
+    (28, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'HOLE'])
+    (39, 0, ['WEST', 'W'])
+    (65, 0, ['BEDQU'])
+
+---------------- 37 ----------------
+YOU ARE ON THE BRINK OF A SMALL CLEAN CLIMBABLE PIT.  A CRAWL LEADS
+WEST.
+    (36, 0, ['WEST', 'W', 'CRAWL'])
+    (38, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'PIT', 'CLIMB'])
+
+---------------- 38 ----------------
+YOU ARE IN THE BOTTOM OF A SMALL PIT WITH A LITTLE STREAM, WHICH
+ENTERS AND EXITS THROUGH TINY SLITS.
+    (37, 0, ['CLIMB', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (595, 0, ['SLIT', 'STREA', 'D', 'DOWNW', 'DOWN', 'DESCE', 'UPSTR', 'DOWNS'])
+
+---------------- 39 ----------------
+YOU ARE IN A LARGE ROOM FULL OF DUSTY ROCKS.  THERE IS A BIG HOLE IN
+THE FLOOR.  THERE ARE CRACKS EVERYWHERE, AND A PASSAGE LEADING EAST.
+    (36, 0, ['EAST', 'E', 'PASSA', 'TUNNE'])
+    (64, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'HOLE', 'FLOOR'])
+    (65, 0, ['BEDQU'])
+
+---------------- 40 ----------------
+YOU HAVE CRAWLED THROUGH A VERY LOW WIDE PASSAGE PARALLEL TO AND NORTH
+OF THE HALL OF MISTS.
+    (41, 0, ['??1??'])
+
+---------------- 41 ----------------
+YOU ARE AT THE WEST END OF HALL OF MISTS.  A LOW WIDE CRAWL CONTINUES
+WEST AND ANOTHER GOES NORTH.  TO THE SOUTH IS A LITTLE PASSAGE 6 FEET
+OFF THE FLOOR.
+    (42, 0, ['SOUTH', 'S', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'PASSA', 'TUNNE', 'CLIMB'])
+    (27, 0, ['EAST', 'E'])
+    (59, 0, ['NORTH', 'N'])
+    (60, 0, ['WEST', 'W', 'CRAWL'])
+
+---------------- 42 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (41, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (42, 0, ['NORTH', 'N'])
+    (43, 0, ['EAST', 'E'])
+    (45, 0, ['SOUTH', 'S'])
+    (80, 0, ['WEST', 'W'])
+
+---------------- 43 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (42, 0, ['WEST', 'W'])
+    (44, 0, ['SOUTH', 'S'])
+    (45, 0, ['EAST', 'E'])
+
+---------------- 44 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (43, 0, ['EAST', 'E'])
+    (48, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (50, 0, ['SOUTH', 'S'])
+    (82, 0, ['NORTH', 'N'])
+
+---------------- 45 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (42, 0, ['WEST', 'W'])
+    (43, 0, ['NORTH', 'N'])
+    (46, 0, ['EAST', 'E'])
+    (47, 0, ['SOUTH', 'S'])
+    (87, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 46 ----------------
+DEAD END
+    (45, 0, ['WEST', 'W', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 47 ----------------
+DEAD END
+    (45, 0, ['EAST', 'E', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 48 ----------------
+DEAD END
+    (44, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 49 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (50, 0, ['EAST', 'E'])
+    (51, 0, ['WEST', 'W'])
+
+---------------- 50 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (44, 0, ['EAST', 'E'])
+    (49, 0, ['WEST', 'W'])
+    (51, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (52, 0, ['SOUTH', 'S'])
+
+---------------- 51 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (49, 0, ['WEST', 'W'])
+    (50, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (52, 0, ['EAST', 'E'])
+    (53, 0, ['SOUTH', 'S'])
+
+---------------- 52 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (50, 0, ['WEST', 'W'])
+    (51, 0, ['EAST', 'E'])
+    (52, 0, ['SOUTH', 'S'])
+    (53, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (55, 0, ['NORTH', 'N'])
+    (86, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 53 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (51, 0, ['WEST', 'W'])
+    (52, 0, ['NORTH', 'N'])
+    (54, 0, ['SOUTH', 'S'])
+
+---------------- 54 ----------------
+DEAD END
+    (53, 0, ['WEST', 'W', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 55 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (52, 0, ['WEST', 'W'])
+    (55, 0, ['NORTH', 'N'])
+    (56, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (57, 0, ['EAST', 'E'])
+
+---------------- 56 ----------------
+DEAD END
+    (55, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 57 ----------------
+YOU ARE ON THE BRINK OF A THIRTY FOOT PIT WITH A MASSIVE ORANGE COLUMN
+DOWN ONE WALL.	YOU COULD CLIMB DOWN HERE BUT YOU COULD NOT GET BACK
+UP.  THE MAZE CONTINUES AT THIS LEVEL.
+    (13, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'CLIMB'])
+    (55, 0, ['WEST', 'W'])
+    (58, 0, ['SOUTH', 'S'])
+    (83, 0, ['NORTH', 'N'])
+    (84, 0, ['EAST', 'E'])
+
+---------------- 58 ----------------
+DEAD END
+    (57, 0, ['EAST', 'E', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 59 ----------------
+YOU HAVE CRAWLED THROUGH A VERY LOW WIDE PASSAGE PARALLEL TO AND NORTH
+OF THE HALL OF MISTS.
+    (27, 0, ['??1??'])
+
+---------------- 60 ----------------
+YOU ARE AT THE EAST END OF A VERY LONG HALL APPARENTLY WITHOUT SIDE
+CHAMBERS.  TO THE EAST A LOW WIDE CRAWL SLANTS UP.  TO THE NORTH A
+ROUND TWO FOOT HOLE SLANTS DOWN.
+    (41, 0, ['EAST', 'E', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'CRAWL'])
+    (61, 0, ['WEST', 'W'])
+    (62, 0, ['NORTH', 'N', 'D', 'DOWNW', 'DOWN', 'DESCE', 'HOLE'])
+
+---------------- 61 ----------------
+YOU ARE AT THE WEST END OF A VERY LONG FEATURELESS HALL.  THE HALL
+JOINS UP WITH A NARROW NORTH/SOUTH PASSAGE.
+    (60, 0, ['EAST', 'E'])
+    (62, 0, ['NORTH', 'N'])
+    (107, 100, ['SOUTH', 'S'])
+
+---------------- 62 ----------------
+YOU ARE AT A CROSSOVER OF A HIGH N/S PASSAGE AND A LOW E/W ONE.
+    (60, 0, ['WEST', 'W'])
+    (63, 0, ['NORTH', 'N'])
+    (30, 0, ['EAST', 'E'])
+    (61, 0, ['SOUTH', 'S'])
+
+---------------- 63 ----------------
+DEAD END
+    (62, 0, ['SOUTH', 'S', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 64 ----------------
+YOU ARE AT A COMPLEX JUNCTION.	A LOW HANDS AND KNEES PASSAGE FROM THE
+NORTH JOINS A HIGHER CRAWL FROM THE EAST TO MAKE A WALKING PASSAGE
+GOING WEST.  THERE IS ALSO A LARGE ROOM ABOVE.	THE AIR IS DAMP HERE.
+    (39, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'CLIMB', 'ROOM'])
+    (65, 0, ['WEST', 'W', 'BEDQU'])
+    (103, 0, ['NORTH', 'N', 'SHELL'])
+    (106, 0, ['EAST', 'E'])
+
+---------------- 65 ----------------
+YOU ARE IN BEDQUILT, A LONG EAST/WEST PASSAGE WITH HOLES EVERYWHERE.
+TO EXPLORE AT RANDOM SELECT NORTH, SOUTH, UP, OR DOWN.
+    (64, 0, ['EAST', 'E'])
+    (66, 0, ['WEST', 'W'])
+    (556, 80, ['SOUTH', 'S'])
+    (68, 0, ['SLAB', 'SLABR'])
+    (556, 80, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (70, 50, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (39, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (556, 60, ['NORTH', 'N'])
+    (72, 75, ['NORTH', 'N'])
+    (71, 0, ['NORTH', 'N'])
+    (556, 80, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (106, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 66 ----------------
+YOU ARE IN A ROOM WHOSE WALLS RESEMBLE SWISS CHEESE.  OBVIOUS PASSAGES
+GO WEST, EAST, NE, AND NW.  PART OF THE ROOM IS OCCUPIED BY A LARGE
+BEDROCK BLOCK.
+    (65, 0, ['NE'])
+    (67, 0, ['WEST', 'W'])
+    (556, 80, ['SOUTH', 'S'])
+    (77, 0, ['CANYO'])
+    (96, 0, ['EAST', 'E'])
+    (556, 50, ['NW'])
+    (97, 0, ['ORIEN'])
+
+---------------- 67 ----------------
+YOU ARE AT THE EAST END OF THE TWOPIT ROOM.  THE FLOOR HERE IS
+LITTERED WITH THIN ROCK SLABS, WHICH MAKE IT EASY TO DESCEND THE PITS.
+THERE IS A PATH HERE BYPASSING THE PITS TO CONNECT PASSAGES FROM EAST
+AND WEST.  THERE ARE HOLES ALL OVER, BUT THE ONLY BIG ONE IS ON THE
+WALL DIRECTLY OVER THE WEST PIT WHERE YOU CAN'T GET TO IT.
+    (66, 0, ['EAST', 'E'])
+    (23, 0, ['WEST', 'W', 'ACROS'])
+    (24, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'PIT'])
+
+---------------- 68 ----------------
+YOU ARE IN A LARGE LOW CIRCULAR CHAMBER WHOSE FLOOR IS AN IMMENSE SLAB
+FALLEN FROM THE CEILING (SLAB ROOM).  EAST AND WEST THERE ONCE WERE
+LARGE PASSAGES, BUT THEY ARE NOW FILLED WITH BOULDERS.	LOW SMALL
+PASSAGES GO NORTH AND SOUTH, AND THE SOUTH ONE QUICKLY BENDS WEST
+AROUND THE BOULDERS.
+    (23, 0, ['SOUTH', 'S'])
+    (69, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'CLIMB'])
+    (65, 0, ['NORTH', 'N'])
+
+---------------- 69 ----------------
+YOU ARE IN A SECRET N/S CANYON ABOVE A LARGE ROOM.
+    (68, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'SLAB', 'SLABR'])
+    (120, 331, ['SOUTH', 'S'])
+    (119, 0, ['SOUTH', 'S'])
+    (109, 0, ['NORTH', 'N'])
+    (113, 0, ['RESER'])
+
+---------------- 70 ----------------
+YOU ARE IN A SECRET N/S CANYON ABOVE A SIZABLE PASSAGE.
+    (71, 0, ['NORTH', 'N'])
+    (65, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'PASSA', 'TUNNE'])
+    (111, 0, ['SOUTH', 'S'])
+
+---------------- 71 ----------------
+YOU ARE IN A SECRET CANYON AT A JUNCTION OF THREE CANYONS, BEARING
+NORTH, SOUTH, AND SE.  THE NORTH ONE IS AS TALL AS THE OTHER TWO
+COMBINED.
+    (65, 0, ['SE'])
+    (70, 0, ['SOUTH', 'S'])
+    (110, 0, ['NORTH', 'N'])
+
+---------------- 72 ----------------
+YOU ARE IN A LARGE LOW ROOM.  CRAWLS LEAD NORTH, SE, AND SW.
+    (65, 0, ['BEDQU'])
+    (118, 0, ['SW'])
+    (73, 0, ['NORTH', 'N'])
+    (97, 0, ['SE', 'ORIEN'])
+
+---------------- 73 ----------------
+DEAD END CRAWL.
+    (72, 0, ['SOUTH', 'S', 'CRAWL', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 74 ----------------
+YOU ARE IN A SECRET CANYON WHICH HERE RUNS E/W.  IT CROSSES OVER A
+VERY TIGHT CANYON 15 FEET BELOW.  IF YOU GO DOWN YOU MAY NOT BE ABLE
+TO GET BACK UP.
+    (19, 0, ['EAST', 'E'])
+    (120, 331, ['WEST', 'W'])
+    (121, 0, ['WEST', 'W'])
+    (75, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 75 ----------------
+YOU ARE AT A WIDE PLACE IN A VERY TIGHT N/S CANYON.
+    (76, 0, ['SOUTH', 'S'])
+    (77, 0, ['NORTH', 'N'])
+
+---------------- 76 ----------------
+THE CANYON HERE BECOMES TOO TIGHT TO GO FURTHER SOUTH.
+    (75, 0, ['NORTH', 'N'])
+
+---------------- 77 ----------------
+YOU ARE IN A TALL E/W CANYON.  A LOW TIGHT CRAWL GOES 3 FEET NORTH AND
+SEEMS TO OPEN UP.
+    (75, 0, ['EAST', 'E'])
+    (78, 0, ['WEST', 'W'])
+    (66, 0, ['NORTH', 'N', 'CRAWL'])
+
+---------------- 78 ----------------
+THE CANYON RUNS INTO A MASS OF BOULDERS -- DEAD END.
+    (77, 0, ['SOUTH', 'S'])
+
+---------------- 79 ----------------
+THE STREAM FLOWS OUT THROUGH A PAIR OF 1 FOOT DIAMETER SEWER PIPES.
+IT WOULD BE ADVISABLE TO USE THE EXIT.
+    (3, 0, ['??1??'])
+
+---------------- 80 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (42, 0, ['NORTH', 'N'])
+    (80, 0, ['WEST', 'W'])
+    (80, 0, ['SOUTH', 'S'])
+    (81, 0, ['EAST', 'E'])
+
+---------------- 81 ----------------
+DEAD END
+    (80, 0, ['WEST', 'W', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 82 ----------------
+DEAD END
+    (44, 0, ['SOUTH', 'S', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 83 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (57, 0, ['SOUTH', 'S'])
+    (84, 0, ['EAST', 'E'])
+    (85, 0, ['WEST', 'W'])
+
+---------------- 84 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (57, 0, ['NORTH', 'N'])
+    (83, 0, ['WEST', 'W'])
+    (114, 0, ['NW'])
+
+---------------- 85 ----------------
+DEAD END
+    (83, 0, ['EAST', 'E', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 86 ----------------
+DEAD END
+    (52, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 87 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL ALIKE.
+    (45, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 88 ----------------
+YOU ARE IN A LONG, NARROW CORRIDOR STRETCHING OUT OF SIGHT TO THE
+WEST.  AT THE EASTERN END IS A HOLE THROUGH WHICH YOU CAN SEE A
+PROFUSION OF LEAVES.
+    (25, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'CLIMB', 'EAST', 'E'])
+    (20, 0, ['JUMP'])
+    (92, 0, ['WEST', 'W', 'GIANT'])
+
+---------------- 89 ----------------
+THERE IS NOTHING HERE TO CLIMB.  USE "UP" OR "OUT" TO LEAVE THE PIT.
+    (25, 0, ['??1??'])
+
+---------------- 90 ----------------
+YOU HAVE CLIMBED UP THE PLANT AND OUT OF THE PIT.
+    (23, 0, ['??1??'])
+
+---------------- 91 ----------------
+YOU ARE AT THE TOP OF A STEEP INCLINE ABOVE A LARGE ROOM.  YOU COULD
+CLIMB DOWN HERE, BUT YOU WOULD NOT BE ABLE TO CLIMB UP.  THERE IS A
+PASSAGE LEADING BACK TO THE NORTH.
+    (95, 0, ['NORTH', 'N', 'CAVER', 'PASSA', 'TUNNE'])
+    (72, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'CLIMB'])
+
+---------------- 92 ----------------
+YOU ARE IN THE GIANT ROOM.  THE CEILING HERE IS TOO HIGH UP FOR YOUR
+LAMP TO SHOW IT.  CAVERNOUS PASSAGES LEAD EAST, NORTH, AND SOUTH.  ON
+THE WEST WALL IS SCRAWLED THE INSCRIPTION, "FEE FIE FOE FOO" [SIC].
+    (88, 0, ['SOUTH', 'S'])
+    (93, 0, ['EAST', 'E'])
+    (94, 0, ['NORTH', 'N'])
+
+---------------- 93 ----------------
+THE PASSAGE HERE IS BLOCKED BY A RECENT CAVE-IN.
+    (92, 0, ['SOUTH', 'S', 'GIANT', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 94 ----------------
+YOU ARE AT ONE END OF AN IMMENSE NORTH/SOUTH PASSAGE.
+    (92, 0, ['SOUTH', 'S', 'GIANT', 'PASSA', 'TUNNE'])
+    (95, 309, ['NORTH', 'N', 'ENTER', 'CAVER'])
+    (611, 0, ['NORTH', 'N'])
+
+---------------- 95 ----------------
+YOU ARE IN A MAGNIFICENT CAVERN WITH A RUSHING STREAM, WHICH CASCADES
+OVER A SPARKLING WATERFALL INTO A ROARING WHIRLPOOL WHICH DISAPPEARS
+THROUGH A HOLE IN THE FLOOR.  PASSAGES EXIT TO THE SOUTH AND WEST.
+    (94, 0, ['SOUTH', 'S', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (92, 0, ['GIANT'])
+    (91, 0, ['WEST', 'W'])
+
+---------------- 96 ----------------
+YOU ARE IN THE SOFT ROOM.  THE WALLS ARE COVERED WITH HEAVY CURTAINS,
+THE FLOOR WITH A THICK PILE CARPET.  MOSS COVERS THE CEILING.
+    (66, 0, ['WEST', 'W', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 97 ----------------
+THIS IS THE ORIENTAL ROOM.  ANCIENT ORIENTAL CAVE DRAWINGS COVER THE
+WALLS.	A GENTLY SLOPING PASSAGE LEADS UPWARD TO THE NORTH, ANOTHER
+PASSAGE LEADS SE, AND A HANDS AND KNEES CRAWL LEADS WEST.
+    (66, 0, ['SE'])
+    (72, 0, ['WEST', 'W', 'CRAWL'])
+    (98, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'NORTH', 'N', 'CAVER'])
+
+---------------- 98 ----------------
+YOU ARE FOLLOWING A WIDE PATH AROUND THE OUTER EDGE OF A LARGE CAVERN.
+FAR BELOW, THROUGH A HEAVY WHITE MIST, STRANGE SPLASHING NOISES CAN BE
+HEARD.	THE MIST RISES UP THROUGH A FISSURE IN THE CEILING.  THE PATH
+EXITS TO THE SOUTH AND WEST.
+    (97, 0, ['SOUTH', 'S', 'ORIEN'])
+    (99, 0, ['WEST', 'W'])
+
+---------------- 99 ----------------
+YOU ARE IN AN ALCOVE.  A SMALL NW PATH SEEMS TO WIDEN AFTER A SHORT
+DISTANCE.  AN EXTREMELY TIGHT TUNNEL LEADS EAST.  IT LOOKS LIKE A VERY
+TIGHT SQUEEZE.	AN EERIE LIGHT CAN BE SEEN AT THE OTHER END.
+    (98, 0, ['NW', 'CAVER'])
+    (301, 0, ['EAST', 'E', 'PASSA', 'TUNNE'])
+    (100, 0, ['EAST', 'E'])
+
+---------------- 100 ----------------
+YOU'RE IN A SMALL CHAMBER LIT BY AN EERIE GREEN LIGHT.	AN EXTREMELY
+NARROW TUNNEL EXITS TO THE WEST.  A DARK CORRIDOR LEADS NE.
+    (301, 0, ['WEST', 'W', 'PASSA', 'TUNNE', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (99, 0, ['WEST', 'W'])
+    (302, 159, ['PLOVE'])
+    (33, 0, ['PLOVE'])
+    (101, 0, ['NE', 'DARK'])
+
+---------------- 101 ----------------
+YOU'RE IN THE DARK-ROOM.  A CORRIDOR LEADING SOUTH IS THE ONLY EXIT.
+    (100, 0, ['SOUTH', 'S', 'PLOVE', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 102 ----------------
+YOU ARE IN AN ARCHED HALL.  A CORAL PASSAGE ONCE CONTINUED UP AND EAST
+FROM HERE, BUT IS NOW BLOCKED BY DEBRIS.  THE AIR SMELLS OF SEA WATER.
+    (103, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'SHELL', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+
+---------------- 103 ----------------
+YOU'RE IN A LARGE ROOM CARVED OUT OF SEDIMENTARY ROCK.	THE FLOOR AND
+WALLS ARE LITTERED WITH BITS OF SHELLS IMBEDDED IN THE STONE.  A
+SHALLOW PASSAGE PROCEEDS DOWNWARD, AND A SOMEWHAT STEEPER ONE LEADS
+UP.  A LOW HANDS AND KNEES PASSAGE ENTERS FROM THE SOUTH.
+    (102, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'HALL'])
+    (104, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (618, 114, ['SOUTH', 'S'])
+    (619, 115, ['SOUTH', 'S'])
+    (64, 0, ['SOUTH', 'S'])
+
+---------------- 104 ----------------
+YOU ARE IN A LONG SLOPING CORRIDOR WITH RAGGED SHARP WALLS.
+    (103, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'SHELL'])
+    (105, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 105 ----------------
+YOU ARE IN A CUL-DE-SAC ABOUT EIGHT FEET ACROSS.
+    (104, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (103, 0, ['SHELL'])
+
+---------------- 106 ----------------
+YOU ARE IN AN ANTEROOM LEADING TO A LARGE PASSAGE TO THE EAST.	SMALL
+PASSAGES GO WEST AND UP.  THE REMNANTS OF RECENT DIGGING ARE EVIDENT.
+A SIGN IN MIDAIR HERE SAYS "CAVE UNDER CONSTRUCTION BEYOND THIS POINT.
+PROCEED AT OWN RISK.  [WITT CONSTRUCTION COMPANY]"
+    (64, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (65, 0, ['WEST', 'W'])
+    (108, 0, ['EAST', 'E'])
+
+---------------- 107 ----------------
+YOU ARE IN A MAZE OF TWISTY LITTLE PASSAGES, ALL DIFFERENT.
+    (131, 0, ['SOUTH', 'S'])
+    (132, 0, ['SW'])
+    (133, 0, ['NE'])
+    (134, 0, ['SE'])
+    (135, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (136, 0, ['NW'])
+    (137, 0, ['EAST', 'E'])
+    (138, 0, ['WEST', 'W'])
+    (139, 0, ['NORTH', 'N'])
+    (61, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 108 ----------------
+YOU ARE AT WITT'S END.	PASSAGES LEAD OFF IN *ALL* DIRECTIONS.
+    (556, 95, ['EAST', 'E', 'NORTH', 'N', 'SOUTH', 'S', 'NE', 'SE', 'SW', 'NW', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (106, 0, ['EAST', 'E'])
+    (626, 0, ['WEST', 'W'])
+
+---------------- 109 ----------------
+YOU ARE IN A NORTH/SOUTH CANYON ABOUT 25 FEET ACROSS.  THE FLOOR IS
+COVERED BY WHITE MIST SEEPING IN FROM THE NORTH.  THE WALLS EXTEND
+UPWARD FOR WELL OVER 100 FEET.	SUSPENDED FROM SOME UNSEEN POINT FAR
+ABOVE YOU, AN ENORMOUS TWO-SIDED MIRROR IS HANGING PARALLEL TO AND
+MIDWAY BETWEEN THE CANYON WALLS.  (THE MIRROR IS OBVIOUSLY PROVIDED
+FOR THE USE OF THE DWARVES, WHO AS YOU KNOW, ARE EXTREMELY VAIN.)  A
+SMALL WINDOW CAN BE SEEN IN EITHER WALL, SOME FIFTY FEET UP.
+    (69, 0, ['SOUTH', 'S'])
+    (113, 0, ['NORTH', 'N', 'RESER'])
+
+---------------- 110 ----------------
+YOU'RE AT A LOW WINDOW OVERLOOKING A HUGE PIT, WHICH EXTENDS UP OUT OF
+SIGHT.	A FLOOR IS INDISTINCTLY VISIBLE OVER 50 FEET BELOW.  TRACES OF
+WHITE MIST COVER THE FLOOR OF THE PIT, BECOMING THICKER TO THE LEFT.
+MARKS IN THE DUST AROUND THE WINDOW WOULD SEEM TO INDICATE THAT
+SOMEONE HAS BEEN HERE RECENTLY.  DIRECTLY ACROSS THE PIT FROM YOU AND
+25 FEET AWAY THERE IS A SIMILAR WINDOW LOOKING INTO A LIGHTED ROOM.  A
+SHADOWY FIGURE CAN BE SEEN THERE PEERING BACK AT YOU.
+    (71, 0, ['WEST', 'W'])
+    (20, 0, ['JUMP'])
+
+---------------- 111 ----------------
+A LARGE STALACTITE EXTENDS FROM THE ROOF AND ALMOST REACHES THE FLOOR
+BELOW.	YOU COULD CLIMB DOWN IT, AND JUMP FROM IT TO THE FLOOR, BUT
+HAVING DONE SO YOU WOULD BE UNABLE TO REACH IT TO CLIMB BACK UP.
+    (70, 0, ['NORTH', 'N'])
+    (50, 40, ['D', 'DOWNW', 'DOWN', 'DESCE', 'JUMP', 'CLIMB'])
+    (53, 50, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (45, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 112 ----------------
+YOU ARE IN A LITTLE MAZE OF TWISTING PASSAGES, ALL DIFFERENT.
+    (131, 0, ['SW'])
+    (132, 0, ['NORTH', 'N'])
+    (133, 0, ['EAST', 'E'])
+    (134, 0, ['NW'])
+    (135, 0, ['SE'])
+    (136, 0, ['NE'])
+    (137, 0, ['WEST', 'W'])
+    (138, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (139, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (140, 0, ['SOUTH', 'S'])
+
+---------------- 113 ----------------
+YOU ARE AT THE EDGE OF A LARGE UNDERGROUND RESERVOIR.  AN OPAQUE CLOUD
+OF WHITE MIST FILLS THE ROOM AND RISES RAPIDLY UPWARD.	THE LAKE IS
+FED BY A STREAM, WHICH TUMBLES OUT OF A HOLE IN THE WALL ABOUT 10 FEET
+OVERHEAD AND SPLASHES NOISILY INTO THE WATER SOMEWHERE WITHIN THE
+MIST.  THE ONLY PASSAGE GOES BACK TOWARD THE SOUTH.
+    (109, 0, ['SOUTH', 'S', 'OUT', 'OUTSI', 'EXIT', 'LEAVE', '??109??'])
+
+---------------- 114 ----------------
+DEAD END
+    (84, 0, ['SE'])
+
+---------------- 115 ----------------
+YOU ARE AT THE NORTHEAST END OF AN IMMENSE ROOM, EVEN LARGER THAN THE
+GIANT ROOM.  IT APPEARS TO BE A REPOSITORY FOR THE "ADVENTURE"
+PROGRAM.  MASSIVE TORCHES FAR OVERHEAD BATHE THE ROOM WITH SMOKY
+YELLOW LIGHT.  SCATTERED ABOUT YOU CAN BE SEEN A PILE OF BOTTLES (ALL
+OF THEM EMPTY), A NURSERY OF YOUNG BEANSTALKS MURMURING QUIETLY, A BED
+OF OYSTERS, A BUNDLE OF BLACK RODS WITH RUSTY STARS ON THEIR ENDS, AND
+A COLLECTION OF BRASS LANTERNS.  OFF TO ONE SIDE A GREAT MANY DWARVES
+ARE SLEEPING ON THE FLOOR, SNORING LOUDLY.  A SIGN NEARBY READS: "DO
+NOT DISTURB THE DWARVES!"  AN IMMENSE MIRROR IS HANGING AGAINST ONE
+WALL, AND STRETCHES TO THE OTHER END OF THE ROOM, WHERE VARIOUS OTHER
+SUNDRY OBJECTS CAN BE GLIMPSED DIMLY IN THE DISTANCE.
+    (116, 0, ['SW'])
+
+---------------- 116 ----------------
+YOU ARE AT THE SOUTHWEST END OF THE REPOSITORY.  TO ONE SIDE IS A PIT
+FULL OF FIERCE GREEN SNAKES.  ON THE OTHER SIDE IS A ROW OF SMALL
+WICKER CAGES, EACH OF WHICH CONTAINS A LITTLE SULKING BIRD.  IN ONE
+CORNER IS A BUNDLE OF BLACK RODS WITH RUSTY MARKS ON THEIR ENDS.  A
+LARGE NUMBER OF VELVET PILLOWS ARE SCATTERED ABOUT ON THE FLOOR.  A
+VAST MIRROR STRETCHES OFF TO THE NORTHEAST.  AT YOUR FEET IS A LARGE
+STEEL GRATE, NEXT TO WHICH IS A SIGN WHICH READS, "TREASURE VAULT.
+KEYS IN MAIN OFFICE."
+    (115, 0, ['NE'])
+    (593, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+
+---------------- 117 ----------------
+YOU ARE ON ONE SIDE OF A LARGE, DEEP CHASM.  A HEAVY WHITE MIST RISING
+UP FROM BELOW OBSCURES ALL VIEW OF THE FAR SIDE.  A SW PATH LEADS AWAY
+FROM THE CHASM INTO A WINDING CORRIDOR.
+    (118, 0, ['SW'])
+    (660, 233, ['OVER', 'ACROS', 'CROSS', 'NE'])
+    (661, 332, ['OVER'])
+    (303, 0, ['OVER'])
+    (21, 332, ['JUMP'])
+    (596, 0, ['JUMP'])
+
+---------------- 118 ----------------
+YOU ARE IN A LONG WINDING CORRIDOR SLOPING OUT OF SIGHT IN BOTH
+DIRECTIONS.
+    (72, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (117, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+
+---------------- 119 ----------------
+YOU ARE IN A SECRET CANYON WHICH EXITS TO THE NORTH AND EAST.
+    (69, 0, ['NORTH', 'N', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (653, 0, ['EAST', 'E', 'FORWA', 'CONTI', 'ONWAR'])
+
+---------------- 120 ----------------
+YOU ARE IN A SECRET CANYON WHICH EXITS TO THE NORTH AND EAST.
+    (69, 0, ['NORTH', 'N'])
+    (74, 0, ['EAST', 'E'])
+
+---------------- 121 ----------------
+YOU ARE IN A SECRET CANYON WHICH EXITS TO THE NORTH AND EAST.
+    (74, 0, ['EAST', 'E', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (653, 0, ['NORTH', 'N', 'FORWA', 'CONTI', 'ONWAR'])
+
+---------------- 122 ----------------
+YOU ARE ON THE FAR SIDE OF THE CHASM.  A NE PATH LEADS AWAY FROM THE
+CHASM ON THIS SIDE.
+    (123, 0, ['NE'])
+    (660, 233, ['OVER', 'ACROS', 'CROSS', 'SW'])
+    (303, 0, ['OVER'])
+    (596, 0, ['JUMP'])
+    (124, 0, ['FORK'])
+    (126, 0, ['VIEW'])
+    (129, 0, ['BARRE'])
+
+---------------- 123 ----------------
+YOU'RE IN A LONG EAST/WEST CORRIDOR.  A FAINT RUMBLING NOISE CAN BE
+HEARD IN THE DISTANCE.
+    (122, 0, ['WEST', 'W'])
+    (124, 0, ['EAST', 'E', 'FORK'])
+    (126, 0, ['VIEW'])
+    (129, 0, ['BARRE'])
+
+---------------- 124 ----------------
+THE PATH FORKS HERE.  THE LEFT FORK LEADS NORTHEAST.  A DULL RUMBLING
+SEEMS TO GET LOUDER IN THAT DIRECTION.	THE RIGHT FORK LEADS SOUTHEAST
+DOWN A GENTLE SLOPE.  THE MAIN CORRIDOR ENTERS FROM THE WEST.
+    (123, 0, ['WEST', 'W'])
+    (125, 0, ['NE', 'LEFT'])
+    (128, 0, ['SE', 'RIGHT', 'D', 'DOWNW', 'DOWN', 'DESCE'])
+    (126, 0, ['VIEW'])
+    (129, 0, ['BARRE'])
+
+---------------- 125 ----------------
+THE WALLS ARE QUITE WARM HERE.	FROM THE NORTH CAN BE HEARD A STEADY
+ROAR, SO LOUD THAT THE ENTIRE CAVE SEEMS TO BE TREMBLING.  ANOTHER
+PASSAGE LEADS SOUTH, AND A LOW CRAWL GOES EAST.
+    (124, 0, ['SOUTH', 'S', 'FORK'])
+    (126, 0, ['NORTH', 'N', 'VIEW'])
+    (127, 0, ['EAST', 'E', 'CRAWL'])
+
+---------------- 126 ----------------
+YOU ARE ON THE EDGE OF A BREATH-TAKING VIEW.  FAR BELOW YOU IS AN
+ACTIVE VOLCANO, FROM WHICH GREAT GOUTS OF MOLTEN LAVA COME SURGING
+OUT, CASCADING BACK DOWN INTO THE DEPTHS.  THE GLOWING ROCK FILLS THE
+FARTHEST REACHES OF THE CAVERN WITH A BLOOD-RED GLARE, GIVING EVERY-
+THING AN EERIE, MACABRE APPEARANCE.  THE AIR IS FILLED WITH FLICKERING
+SPARKS OF ASH AND A HEAVY SMELL OF BRIMSTONE.  THE WALLS ARE HOT TO
+THE TOUCH, AND THE THUNDERING OF THE VOLCANO DROWNS OUT ALL OTHER
+SOUNDS.  EMBEDDED IN THE JAGGED ROOF FAR OVERHEAD ARE MYRIAD TWISTED
+FORMATIONS COMPOSED OF PURE WHITE ALABASTER, WHICH SCATTER THE MURKY
+LIGHT INTO SINISTER APPARITIONS UPON THE WALLS.  TO ONE SIDE IS A DEEP
+GORGE, FILLED WITH A BIZARRE CHAOS OF TORTURED ROCK WHICH SEEMS TO
+HAVE BEEN CRAFTED BY THE DEVIL HIMSELF.  AN IMMENSE RIVER OF FIRE
+CRASHES OUT FROM THE DEPTHS OF THE VOLCANO, BURNS ITS WAY THROUGH THE
+GORGE, AND PLUMMETS INTO A BOTTOMLESS PIT FAR OFF TO YOUR LEFT.  TO
+THE RIGHT, AN IMMENSE GEYSER OF BLISTERING STEAM ERUPTS CONTINUOUSLY
+FROM A BARREN ISLAND IN THE CENTER OF A SULFUROUS LAKE, WHICH BUBBLES
+OMINOUSLY.  THE FAR RIGHT WALL IS AFLAME WITH AN INCANDESCENCE OF ITS
+OWN, WHICH LENDS AN ADDITIONAL INFERNAL SPLENDOR TO THE ALREADY
+HELLISH SCENE.	A DARK, FOREBODING PASSAGE EXITS TO THE SOUTH.
+    (125, 0, ['SOUTH', 'S', 'PASSA', 'TUNNE', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (124, 0, ['FORK'])
+    (610, 0, ['D', 'DOWNW', 'DOWN', 'DESCE', 'JUMP'])
+
+---------------- 127 ----------------
+YOU ARE IN A SMALL CHAMBER FILLED WITH LARGE BOULDERS.	THE WALLS ARE
+VERY WARM, CAUSING THE AIR IN THE ROOM TO BE ALMOST STIFLING FROM THE
+HEAT.  THE ONLY EXIT IS A CRAWL HEADING WEST, THROUGH WHICH IS COMING
+A LOW RUMBLING.
+    (125, 0, ['WEST', 'W', 'OUT', 'OUTSI', 'EXIT', 'LEAVE', 'CRAWL'])
+    (124, 0, ['FORK'])
+    (126, 0, ['VIEW'])
+
+---------------- 128 ----------------
+YOU ARE WALKING ALONG A GENTLY SLOPING NORTH/SOUTH PASSAGE LINED WITH
+ODDLY SHAPED LIMESTONE FORMATIONS.
+    (124, 0, ['NORTH', 'N', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN', 'FORK'])
+    (129, 0, ['SOUTH', 'S', 'D', 'DOWNW', 'DOWN', 'DESCE', 'BARRE'])
+    (126, 0, ['VIEW'])
+
+---------------- 129 ----------------
+YOU ARE STANDING AT THE ENTRANCE TO A LARGE, BARREN ROOM.  A SIGN
+POSTED ABOVE THE ENTRANCE READS:  "CAUTION!  BEAR IN ROOM!"
+    (128, 0, ['WEST', 'W', 'UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (124, 0, ['FORK'])
+    (130, 0, ['EAST', 'E', 'INWAR', 'INSID', 'IN', 'BARRE', 'ENTER'])
+    (126, 0, ['VIEW'])
+
+---------------- 130 ----------------
+YOU ARE INSIDE A BARREN ROOM.  THE CENTER OF THE ROOM IS COMPLETELY
+EMPTY EXCEPT FOR SOME DUST.  MARKS IN THE DUST LEAD AWAY TOWARD THE
+FAR END OF THE ROOM.  THE ONLY EXIT IS THE WAY YOU CAME IN.
+    (129, 0, ['WEST', 'W', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+    (124, 0, ['FORK'])
+    (126, 0, ['VIEW'])
+
+---------------- 131 ----------------
+YOU ARE IN A MAZE OF TWISTING LITTLE PASSAGES, ALL DIFFERENT.
+    (107, 0, ['WEST', 'W'])
+    (132, 0, ['SE'])
+    (133, 0, ['NW'])
+    (134, 0, ['SW'])
+    (135, 0, ['NE'])
+    (136, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (137, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (138, 0, ['NORTH', 'N'])
+    (139, 0, ['SOUTH', 'S'])
+    (112, 0, ['EAST', 'E'])
+
+---------------- 132 ----------------
+YOU ARE IN A LITTLE MAZE OF TWISTY PASSAGES, ALL DIFFERENT.
+    (107, 0, ['NW'])
+    (131, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (133, 0, ['NORTH', 'N'])
+    (134, 0, ['SOUTH', 'S'])
+    (135, 0, ['WEST', 'W'])
+    (136, 0, ['SW'])
+    (137, 0, ['NE'])
+    (138, 0, ['EAST', 'E'])
+    (139, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (112, 0, ['SE'])
+
+---------------- 133 ----------------
+YOU ARE IN A TWISTING MAZE OF LITTLE PASSAGES, ALL DIFFERENT.
+    (107, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (131, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (132, 0, ['WEST', 'W'])
+    (134, 0, ['NE'])
+    (135, 0, ['SW'])
+    (136, 0, ['EAST', 'E'])
+    (137, 0, ['NORTH', 'N'])
+    (138, 0, ['NW'])
+    (139, 0, ['SE'])
+    (112, 0, ['SOUTH', 'S'])
+
+---------------- 134 ----------------
+YOU ARE IN A TWISTING LITTLE MAZE OF PASSAGES, ALL DIFFERENT.
+    (107, 0, ['NE'])
+    (131, 0, ['NORTH', 'N'])
+    (132, 0, ['NW'])
+    (133, 0, ['SE'])
+    (135, 0, ['EAST', 'E'])
+    (136, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (137, 0, ['SOUTH', 'S'])
+    (138, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (139, 0, ['WEST', 'W'])
+    (112, 0, ['SW'])
+
+---------------- 135 ----------------
+YOU ARE IN A TWISTY LITTLE MAZE OF PASSAGES, ALL DIFFERENT.
+    (107, 0, ['NORTH', 'N'])
+    (131, 0, ['SE'])
+    (132, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (133, 0, ['SOUTH', 'S'])
+    (134, 0, ['EAST', 'E'])
+    (136, 0, ['WEST', 'W'])
+    (137, 0, ['SW'])
+    (138, 0, ['NE'])
+    (139, 0, ['NW'])
+    (112, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+
+---------------- 136 ----------------
+YOU ARE IN A TWISTY MAZE OF LITTLE PASSAGES, ALL DIFFERENT.
+    (107, 0, ['EAST', 'E'])
+    (131, 0, ['WEST', 'W'])
+    (132, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (133, 0, ['SW'])
+    (134, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (135, 0, ['SOUTH', 'S'])
+    (137, 0, ['NW'])
+    (138, 0, ['SE'])
+    (139, 0, ['NE'])
+    (112, 0, ['NORTH', 'N'])
+
+---------------- 137 ----------------
+YOU ARE IN A LITTLE TWISTY MAZE OF PASSAGES, ALL DIFFERENT.
+    (107, 0, ['SE'])
+    (131, 0, ['NE'])
+    (132, 0, ['SOUTH', 'S'])
+    (133, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (134, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (135, 0, ['NW'])
+    (136, 0, ['NORTH', 'N'])
+    (138, 0, ['SW'])
+    (139, 0, ['EAST', 'E'])
+    (112, 0, ['WEST', 'W'])
+
+---------------- 138 ----------------
+YOU ARE IN A MAZE OF LITTLE TWISTING PASSAGES, ALL DIFFERENT.
+    (107, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (131, 0, ['EAST', 'E'])
+    (132, 0, ['NE'])
+    (133, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (134, 0, ['WEST', 'W'])
+    (135, 0, ['NORTH', 'N'])
+    (136, 0, ['SOUTH', 'S'])
+    (137, 0, ['SE'])
+    (139, 0, ['SW'])
+    (112, 0, ['NW'])
+
+---------------- 139 ----------------
+YOU ARE IN A MAZE OF LITTLE TWISTY PASSAGES, ALL DIFFERENT.
+    (107, 0, ['SW'])
+    (131, 0, ['NW'])
+    (132, 0, ['EAST', 'E'])
+    (133, 0, ['WEST', 'W'])
+    (134, 0, ['NORTH', 'N'])
+    (135, 0, ['D', 'DOWNW', 'DOWN', 'DESCE'])
+    (136, 0, ['SE'])
+    (137, 0, ['UPWAR', 'UP', 'U', 'ABOVE', 'ASCEN'])
+    (138, 0, ['SOUTH', 'S'])
+    (112, 0, ['NE'])
+
+---------------- 140 ----------------
+DEAD END
+    (112, 0, ['NORTH', 'N', 'OUT', 'OUTSI', 'EXIT', 'LEAVE'])
+

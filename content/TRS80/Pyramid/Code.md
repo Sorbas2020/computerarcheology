@@ -55,7 +55,7 @@ GameLoop:
 434D: C3 19 43        JP      $4319               ; {code.GameLoop} Back to get user input
 ```
 
-# Get Object Info
+# Get Room Number
 
 Every object has a room number. The object might be physically in the room. Or the object
 might be inside another object that is physically in the room -- or so on recursively.
@@ -64,7 +64,7 @@ This function traverses the containers to find out the room number this object a
 containers are in.
 
 ```code
-GetObjectInfo:
+GetRoomNumber:
 ; Recurse through carriers to find the room number of the requested object.
 ; Return HL points to the top level object entry.
 ; Return ZF is set if top level object room number matches E.
@@ -2977,6 +2977,9 @@ This code places the given object in the current room (with the player). If the 
 is contained by another object, this code moves the container instead (and so on up the 
 containment tree).
 
+No feedback is printed here, and this function is used in chains of move commands to
+shuffle objects around behind the scenes (like swapping the small plant for the medium one).
+
 ```code
 COM_18_move_object_to_current_room:
 52A5: E1              POP     HL                  ; Get script pointer
@@ -2990,8 +2993,6 @@ COM_18_move_object_to_current_room:
 ```
 
 # COM_19_put_object_in_container_print_ok(obj_num, obj_num)
-
-This command is not used by any script. No other code calls into any part of it.
 
 This command puts the first object into the second object and sets the "contained"
 bit accordingly.
@@ -3021,7 +3022,9 @@ COM_19_put_object_in_container_print_ok:
 
 # COM_02_is_in_pack(obj_num)
 
-This command checks if the requested object is in the backpack.
+This command checks if the requested object is in the backpack (room 0xFF). This checks for
+containment; if the bird is in the box and the box is in the pack, then technically the bird
+is in the pack.
 
 ```code
 COM_02_is_in_pack:
@@ -3030,7 +3033,7 @@ COM_02_is_in_pack:
 52CA: 23              INC     HL                  ; ... the script
 52CB: E5              PUSH    HL                  ; Update the script pointer
 52CC: 1E FF           LD      E,$FF               ; Room location of pack
-52CE: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Find the object. Is it in the pack (at E)?
+52CE: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Find the room number. Is it in the pack (at E)?
 52D1: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} Yes, command passes
 52D4: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} No, command fails
 ```
@@ -3038,7 +3041,9 @@ COM_02_is_in_pack:
 # COM_03_is_in_pack_or_current_room(obj_num)
 
 This command checks if the requested object is accessible (current room
-or backpack).
+or backpack). This check accounts for containment; if the bird is in the
+box and the box is in the current room, then technically the bird is in the
+current room.
 
 !! Interestingly, this command is only used to check for the BRIDGE, PLANT, 
 and SERPENT -- none of which can be in the backpack. This is an early 
@@ -3055,7 +3060,7 @@ COM_03_is_in_pack_or_current_room:
 52DB: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Current room number
 52DE: 5F              LD      E,A                 ; Check for current room
 52DF: 78              LD      A,B                 ; Requested object number
-52E0: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the info about the object
+52E0: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the room number
 52E3: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} It is in the room. Return PASS
 52E6: 78              LD      A,B                 ; Object number
 52E7: C3 CC 52        JP      $52CC               ; {} Check the backpack for the object
@@ -3063,8 +3068,10 @@ COM_03_is_in_pack_or_current_room:
 
 # COM_1A_is_in_current_room(obj_num)
 
-This command checks if the request object (or object's top level container) is in
-the current room. This is only used in dropping the vase on the pillow.
+This command checks if the request object is in the current room -- either directly or 
+contained by an object in this room.
+
+This is only used to check for the pillow before dropping the vase.
 
 ```code
 COM_1A_is_in_current_room:
@@ -3074,7 +3081,7 @@ COM_1A_is_in_current_room:
 52EF: 7E              LD      A,(HL)              ; Requested object number
 52F0: 23              INC     HL                  ; Update ...
 52F1: E5              PUSH    HL                  ; ... script pointer
-52F2: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the info about the object
+52F2: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the room number (of self or container)
 52F5: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} Success if parent container is in the current room
 52F8: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} Otherwise the command fails
 ```
@@ -3111,7 +3118,7 @@ around" message and reprints the current room description and the command return
 If the random value is greater than the given value, the command fails.
 
 This script command is used in two rooms: RM_41_CHAMBER_OF_HORUS and RM_3C_LAND_OF_DEAD.
-In all cases, it is wrapped in a "StopIfPassElseContinue".
+In all cases, it is wrapped in a "stop_if_pass".
 
 For example:
 
@@ -3124,6 +3131,8 @@ For example:
 
 Most of the time (random values 0 through 240) the command passes and the player stays put.
 But for values 241 through 255, the command fails and the player moves to RM_3B_ANTEROOM_OF_SEKER.
+
+TODO check the WOODS code for the 5% value.
 
 ```code
 COM_0A_pyramid_crawl_move_random:
@@ -3168,8 +3177,8 @@ COM_0C_move_to_room_if_was_last:
 # COM_16_get_users_object_print_ok()
 
 This command places the user's object (given on the command line) into the backpack.
-If the object has already been checked by the parse-input function, so we know it
-is here. If it is already in the backpack, we print an error message.
+The object has already been checked by the parse-input function, so we know it is here. 
+If it is already in the backpack, we print an error message.
 
 This command is used by the general script for all generic GET requests.
 
@@ -3218,7 +3227,7 @@ This command drops a specific object into the current room. It prints OK, which 
 is a direct response to the user's request instead of a general purpose command.
 
 This command is never used in any scripts. Instead, the scripts use COM_17 which fetches
-the user's input object and calls into this code.
+the user's input object and calls into this code. TODO check WOODS code.
 
 ```code
 COM_0B_drop_object_print_ok:
@@ -3260,6 +3269,9 @@ COM_0E_move_to_last_room:
 
 # COM_0F_print_inventory()
 
+This command prints a list of the items in the player's backpack. It prints
+a special message if the player isn't carying anything.
+
 ```code
 COM_0F_print_inventory:
 539B: 3A 45 50        LD      A,($5045)           ; {code.numObjInPack} Is there anything in ...
@@ -3300,6 +3312,12 @@ COM_0F_print_inventory:
 
 # COM_10_print_room_description()
 
+This command prints the room's description along with all the objects in the room.
+
+This command is only used by the LOOK user command. All the logic for printing the
+room and objects was already coded in the "COM_01_move_look" command. This command
+invokes that code.
+
 ```code
 COM_10_print_room_description:
 53DB: CD 45 52        CALL    $5245               ; {code.DescribeRoom} Print the room description (with objects)
@@ -3307,6 +3325,9 @@ COM_10_print_room_description:
 ```
 
 # COM_11_is_object_user_input(obj_num)
+
+This command checks to see if the user's input object is a specific object. The input parsing
+has already verified the object is here.
 
 ```code
 COM_11_is_object_user_input:
@@ -3321,6 +3342,11 @@ COM_11_is_object_user_input:
 ```
 
 # COM_12_get_from_room_print_ok(obj_num)
+
+This command gets a specific object from the current room and prints OK.
+
+This is only used to pick up the pillow along with the vase. All other objects
+are picked up by COM_16_get_users_object_print_ok.
 
 ```code
 COM_12_get_from_room_print_ok:
@@ -3356,6 +3382,13 @@ GetToBackpack:
 
 # COM_17_drop_users_object_print_ok()
 
+This command drops the player's requested object in the current room. This breaks any containment; if the
+bird is in the box and you DROP BIRD, the bird comes out of the box.
+
+TODO check if you can pick up the sarcophagus and then DROP PEARL.
+
+This is only used by the general "DROP" command handler.
+
 ```code
 COM_17_drop_users_object_print_ok:
 5424: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Get the player's ...
@@ -3365,6 +3398,8 @@ COM_17_drop_users_object_print_ok:
 
 # COM_14_print_ok()
 
+This command prints an aknowledgement -- a simple "OK".
+
 ```code
 COM_14_print_ok:
 542B: 21 2F 75        LD      HL,$752F            ; {+code.PS_85} "OK_"
@@ -3373,6 +3408,11 @@ COM_14_print_ok:
 ```
 
 # COM_15_move_object_to_room(obj_num, room_num)
+
+This command puts the given object in the given room. This is similar to COM_18_move_object_to_current_room
+except the destination can be any room.
+
+Like COM_15, this breaks containment; only the target object moves and not any containers.
 
 ```code
 COM_15_move_object_to_room:
@@ -3393,6 +3433,23 @@ COM_15_move_object_to_room:
 ```
 
 # COM_05_death_and_resurrect()
+
+This command resurrects the player to continue the game. The player loses 10 points for
+each death. The player can only be resurrected three times. Each time gives a different
+funny message about "magic smoke".
+
+The lamp is turned off and moved to RM_01_BEFORE_ENTRANCE. The lamp count is reset to 0,
+paid for by those 10 points. All objects in the player's pack are dropped in the current
+room at time of death.
+
+The player is moved just beyond the lamp to room M_02_IN_ENTRANCE. The player has to 
+backtrack to get the lamp.
+
+TODO verify this:
+
+You can do a BACK to return to the room you died in to collect your things. Then do a BACK
+again to return to the entrance. Once you move to get the lamp, the BACK location is
+changed. Thus you can't use BACK to return to the room you died in after you get the lamp.
 
 ```code
 COM_05_death_and_resurrect:
@@ -3461,6 +3518,12 @@ nextResurrectMessage:
 ```
 
 # COM_08_print_score()
+
+TODO talk about the ambient light table
+
+-10 for each death
+20 points for each treasure. There are 11 treasure objects for max 220. 12 of the objects have the treasure
+bit set, but you either have the VASE or the VASE_ON_PILLOW -- never both.
 
 ```code
 COM_08_print_score:
@@ -3606,6 +3669,8 @@ turnMsg:
 
 # COM_09_end_of_game()
 
+This command ends the game. It prints the score and enters an endless loop.
+
 ```code
 COM_09_end_of_game:
 55EF: CD CD 54        CALL    $54CD               ; {code.PrintScore} Print the score
@@ -3616,7 +3681,9 @@ EndlessLoop:
 
 # COM_1B_load_game()
 
-"RCONT:" ; Label appears in unitialized memory in Code1.md!
+TODO
+
+TODO "RCONT:" ; Label appears in unitialized memory in Code1.md!
 
 ```code
 COM_1B_load_game:
@@ -3678,6 +3745,8 @@ COM_1B_load_game:
 
 # COM_1C_save_game()
 
+TODO
+
 Save 4F45 through 5047 That's one too many and picks up a byte from the ObjectDescriptions table (read only).
 The LoadGame code restores the first four bytes of this ObjectDescriptions table for some reason.
 
@@ -3720,6 +3789,8 @@ COM_1C_save_game:
 ```
 
 # COM_1D_scramble_directions_print_ack()
+
+TODO
 
 ```code
 COM_1D_scramble_directions_print_ack:
