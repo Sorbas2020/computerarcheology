@@ -28,10 +28,10 @@ for record in org_data:
 for rn in range(1,141):
     desc = rooms.ROOMS[rn]['long']
     trav = TRAVEL[rn]
-    print(f'---------------- {rn} ----------------')
+    print(f'---------------- {rn:02X} ----------------')
     print('\n'.join(desc))
     for t in trav:
-        print(f'    {t}')
+        print(f'    {int(t[0]):03X} {int(t[1]):03} {t[2]}')
     print('')
 
 
