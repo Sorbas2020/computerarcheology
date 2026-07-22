@@ -74,7 +74,7 @@ GetRoomNumber:
 4357: E6 80           AND     $80                 ; Is this object being carried by another?
 4359: 23              INC     HL                  ; Second byte (S is not affected)
 435A: 7E              LD      A,(HL)              ; Get location (S is not affected)
-435B: C2 50 43        JP      NZ,$4350            ; {code.GetObjectInfo} If this is being carried, recurse to the carrier
+435B: C2 50 43        JP      NZ,$4350            ; {code.GetRoomNumber} If this is being carried, recurse to the carrier
 435E: 2B              DEC     HL                  ; Back to first entry for return
 435F: BB              CP      E                   ; Room number matches E?
 4360: C9              RET                         
@@ -109,7 +109,7 @@ SetObjectLocation:
 ; Set object's location by recursing containers to the top
 ; level container and setting the room number.
 ; E is the new room number for the top level container
-4376: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Find the parent container
+4376: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Find the parent container
 4379: 23              INC     HL                  ; Second entry is location
 437A: 73              LD      (HL),E              ; Set the room number of the parent container
 437B: 2B              DEC     HL                  ; Back to 1st entry
@@ -310,11 +310,11 @@ ParseUserInput:
 4426: 7E              LD      A,(HL)              ; Get the object number
 4427: 23              INC     HL                  ; Next word
 4428: 22 AA 45        LD      ($45AA),HL          ; {code.nounDataPtr} Noun word data pointer
-442B: 1E FF           LD      E,$FF               ; Backpack location
+442B: 1E FF           LD      E,$FF               ; Query location = backpack
 442D: C5              PUSH    BC                  ; Save BC
-442E: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Look up the requested object
+442E: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Look up the requested object
 4431: C1              POP     BC                  ; Restore BC
-4432: CA 86 44        JP      Z,$4486             ; {} Object is actually in pack ... go use it
+4432: CA 86 44        JP      Z,$4486             ; {} Object is here -- in the pack -- go use it
 4435: 3A 7D 46        LD      A,($467D)           ; {code.verbGrammar} Grammar type
 4438: FE 40           CP      $40                 ; 01_000_000 means noun-in-pack
 443A: CA 4E 44        JP      Z,$444E             ; {} Yes, check the backpack
@@ -324,7 +324,7 @@ ParseUserInput:
 4444: 5F              LD      E,A                 ; ... this ...
 4445: 7E              LD      A,(HL)              ; ... object ...
 4446: C5              PUSH    BC                  ; ... in the ...
-4447: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... current room?
+4447: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} ... current room?
 444A: C1              POP     BC                  ; Restore BC
 444B: CA 86 44        JP      Z,$4486             ; {} Yes, go use it
 ;
@@ -2752,7 +2752,7 @@ AfterEveryStep:
 511D: 70              LD      (HL),B              ; Replace the OBJ_0F_LAMP_ON with OBJ_2C_LAMP_DEAD
 511E: 3E 23           LD      A,$23               ; OBJ_23_BATTERIES_FRESH
 5120: 1E FF           LD      E,$FF               ; Fresh batteries in ...
-5122: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... backpack?
+5122: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} ... backpack?
 5125: CA 34 51        JP      Z,$5134             ; {code.CheckAutoBatteries} Yes, automatically replace them
 5128: 21 4A 7A        LD      HL,$7A4A            ; {+code.PS_A7} "YOUR_LAMP_HAS_RUN_OUT_OF_POWER."
 512B: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the message
@@ -2770,11 +2770,11 @@ CheckAutoBatteries:
 5141: DA 77 51        JP      C,$5177             ; {code.BumpBCDTurnCount} Less than, we are done
 5144: 3E 23           LD      A,$23               ; Are the ...
 5146: 1E FF           LD      E,$FF               ; OBJ_23_BATTERIES_FRESH ...
-5148: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the backpack?
+5148: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} ... in the backpack?
 514B: C2 77 51        JP      NZ,$5177            ; {code.BumpBCDTurnCount} No, we are done
 514E: 3E 2C           LD      A,$2C               ; Is the ...
 5150: 1E FF           LD      E,$FF               ; ... OBJ_2C_LAMP_DEAD ...
-5152: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the backpack?
+5152: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} ... in the backpack?
 5155: C2 77 51        JP      NZ,$5177            ; {code.BumpBCDTurnCount} No, we are done
 5158: 23              INC     HL                  ; The OBJ_2C_LAMP_DEAD ...
 5159: 36 00           LD      (HL),$00            ; ... is now out of play
@@ -2820,7 +2820,7 @@ mummy no longer appears. You only see the mummy once.
 
 The mummy says he is going to take the treasures and "PUT_THEM_IN_THE_CHEST_DEEP_IN_THE_MAZE!".
 But he only puts them in the same room -- not actually in the chest. The code does not utilize
-the container relationship. ?? TODO verify that you have to move the treasures as individuals
+the container relationship.
 
 ```code
 COM_01_move_look:
@@ -2832,11 +2832,11 @@ COM_01_move_look:
 518E: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Checking ...
 5191: 5F              LD      E,A                 ; ... current room
 5192: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
-5194: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Is the lit-lamp in this room?
+5194: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Is the lit-lamp in this room?
 5197: CA DA 51        JP      Z,$51DA             ; {} Yes, there is light. Make the move.
 519A: 1E FF           LD      E,$FF               ; Backpack room number
 519C: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
-519E: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Is the lit-lamp in the backpack?
+519E: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Is the lit-lamp in the backpack?
 51A1: CA DA 51        JP      Z,$51DA             ; {} Yes, there is light. Make the move.
 51A4: 21 45 4F        LD      HL,$4F45            ; {+code.AmbientLightTable} Ambient light table
 51A7: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Get the light setting ...
@@ -2852,7 +2852,7 @@ COM_01_move_look:
 51BD: C2 DA 51        JP      NZ,$51DA            ; {} There is light in the next room. Make the move.
 51C0: 58              LD      E,B                 ; Destination room
 51C1: 3E 0F           LD      A,$0F               ; OBJ_0F_LAMP_ON
-51C3: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Is the lit-lamp in the next room?
+51C3: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Is the lit-lamp in the next room?
 51C6: CA DA 51        JP      Z,$51DA             ; {} Yes, there is light. Make the move.
 51C9: 3A 74 47        LD      A,($4774)           ; {code.keyWaitCounter} Random number (key-input wait counter)
 51CC: FE 67           CP      $67                 ; random(255) < 103? That's 40% of the time.
@@ -2929,11 +2929,11 @@ DescribeRoom:
 5254: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Get the current room number
 5257: 5F              LD      E,A                 ; Is the ...
 5258: 3E 0F           LD      A,$0F               ; ... OBJ_0F_LAMP_ON ...
-525A: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the current room?
+525A: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} ... in the current room?
 525D: CA 71 52        JP      Z,$5271             ; {} Yes, there is light. Show the room description
 5260: 1E FF           LD      E,$FF               ; Is the ...
 5262: 3E 0F           LD      A,$0F               ; ... OBJ_0F_LAMP_ON ...
-5264: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... in the backpack?
+5264: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} ... in the backpack?
 5267: CA 71 52        JP      Z,$5271             ; {} Yes, there is light. Show the room description
 526A: 21 76 79        LD      HL,$7976            ; {+code.PS_A4} "IT_IS_NOW_PITCH_DARK.__IF_YOU_PROCEED,_YOU_"
 526D: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the warning
@@ -2956,7 +2956,7 @@ DescribeRoom:
 5289: FE 2D           CP      $2D                 ; ... all objects?
 528B: D0              RET     NC                  ; Yes, done
 ;
-528C: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the info about the object
+528C: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Get the info about the object
 528F: C2 83 52        JP      NZ,$5283            ; {} Ignore object if it isn't in the current room
 5292: 78              LD      A,B                 ; Object number
 5293: 21 47 50        LD      HL,$5047            ; {+code.ObjectDescriptions} Object description table
@@ -2977,7 +2977,7 @@ This code places the given object in the current room (with the player). If the 
 is contained by another object, this code moves the container instead (and so on up the 
 containment tree).
 
-No feedback is printed here, and this function is used in chains of move commands to
+No feedback is printed here. This function is used in groups of move commands to
 shuffle objects around behind the scenes (like swapping the small plant for the medium one).
 
 ```code
@@ -2995,12 +2995,17 @@ COM_18_move_object_to_current_room:
 # COM_19_put_object_in_container_print_ok(obj_num, obj_num)
 
 This command puts the first object into the second object and sets the "contained"
-bit accordingly.
+bit accordingly. It doesn't check for containment. If the target object is already in 
+a container, then it moves to a new container.
 
 This command prints "OK" at the end which means this can only be used in response
 to a user request.
 
-This is used to get the bird into the box and to fill the bottle with water.
+This is only used to get the bird into the box and to fill the bottle with water. These are the 
+only two "containment" uses in the game. No other object is ever inside another. The PEARL appears 
+to be in the SARCOPHAGUS, but there are two distinct SARCOPHAGUS objects to simulate empty
+and full. The LAMP object doesn't really contain batteries. The Mummy drops the treasures next to 
+the CHEST in the maze; he doesn't put them into it.
 
 ```code
 COM_19_put_object_in_container_print_ok:
@@ -3033,7 +3038,7 @@ COM_02_is_in_pack:
 52CA: 23              INC     HL                  ; ... the script
 52CB: E5              PUSH    HL                  ; Update the script pointer
 52CC: 1E FF           LD      E,$FF               ; Room location of pack
-52CE: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Find the room number. Is it in the pack (at E)?
+52CE: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Find the room number. Is it in the pack (at E)?
 52D1: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} Yes, command passes
 52D4: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} No, command fails
 ```
@@ -3060,7 +3065,7 @@ COM_03_is_in_pack_or_current_room:
 52DB: 3A 3F 50        LD      A,($503F)           ; {code.currentRoom} Current room number
 52DE: 5F              LD      E,A                 ; Check for current room
 52DF: 78              LD      A,B                 ; Requested object number
-52E0: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the room number
+52E0: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Get the room number
 52E3: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} It is in the room. Return PASS
 52E6: 78              LD      A,B                 ; Object number
 52E7: C3 CC 52        JP      $52CC               ; {} Check the backpack for the object
@@ -3081,7 +3086,7 @@ COM_1A_is_in_current_room:
 52EF: 7E              LD      A,(HL)              ; Requested object number
 52F0: 23              INC     HL                  ; Update ...
 52F1: E5              PUSH    HL                  ; ... script pointer
-52F2: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the room number (of self or container)
+52F2: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Get the room number (of self or container)
 52F5: CA AB 43        JP      Z,$43AB             ; {code.ScriptCommandPASS} Success if parent container is in the current room
 52F8: C3 BE 43        JP      $43BE               ; {code.ScriptCommandFAIL} Otherwise the command fails
 ```
@@ -3180,13 +3185,17 @@ This command places the user's object (given on the command line) into the backp
 The object has already been checked by the parse-input function, so we know it is here. 
 If it is already in the backpack, we print an error message.
 
+Containment is respected. If the target object is in a container, then the container is moved
+to the backpack. Thus if there is WATER in the BOTTLE and you GET WATER, you'll get the BOTTLE
+and the WATER.
+
 This command is used by the general script for all generic GET requests.
 
 ```code
 COM_16_get_users_object_print_ok:
 5343: 3A 7B 46        LD      A,($467B)           ; {code.inputNoun} Get the object number the player requested
 5346: 1E FF           LD      E,$FF               ; Get the ...
-5348: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} ... target object's info
+5348: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} ... target object's info
 534B: C2 57 53        JP      NZ,$5357            ; {} It isn't in the backpack. No error here.
 534E: 21 60 75        LD      HL,$7560            ; {+code.PS_87} "YOU_ARE_ALREADY_CARRYING_IT."
 5351: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print the error
@@ -3291,7 +3300,7 @@ COM_0F_print_inventory:
 53B7: FE 2D           CP      $2D                 ; ... all objects?
 53B9: D2 AB 43        JP      NC,$43AB            ; {code.ScriptCommandPASS} Yes, command passes
 ;
-53BC: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Get the object info
+53BC: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Get the object info
 53BF: C2 B3 53        JP      NZ,$53B3            ; {} Object is not in backpack, move to next object
 53C2: 78              LD      A,B                 ; Object number
 53C3: 21 47 50        LD      HL,$5047            ; {+code.ObjectDescriptions} Object info table
@@ -3315,7 +3324,7 @@ COM_0F_print_inventory:
 This command prints the room's description along with all the objects in the room.
 
 This command is only used by the LOOK user command. All the logic for printing the
-room and objects was already coded in the "COM_01_move_look" command. This command
+room and objects is coded in the "COM_01_move_look" command above. This LOOK command
 invokes that code.
 
 ```code
@@ -3343,7 +3352,8 @@ COM_11_is_object_user_input:
 
 # COM_12_get_from_room_print_ok(obj_num)
 
-This command gets a specific object from the current room and prints OK.
+This command gets a specific object from the current room and prints OK. It respects
+containment. 
 
 This is only used to pick up the pillow along with the vase. All other objects
 are picked up by COM_16_get_users_object_print_ok.
@@ -3357,7 +3367,7 @@ COM_12_get_from_room_print_ok:
 53F3: 78              LD      A,B                 ; To parameter register
 ;
 GetToBackpack:
-53F4: CD 50 43        CALL    $4350               ; {code.GetObjectInfo} Look up the target object
+53F4: CD 50 43        CALL    $4350               ; {code.GetRoomNumber} Look up the target object
 53F7: 7E              LD      A,(HL)              ; Is this object ...
 53F8: E6 40           AND     $40                 ; ... able to be picked up?
 53FA: C2 06 54        JP      NZ,$5406            ; {} Yes, skip the error
@@ -3382,10 +3392,8 @@ GetToBackpack:
 
 # COM_17_drop_users_object_print_ok()
 
-This command drops the player's requested object in the current room. This breaks any containment; if the
-bird is in the box and you DROP BIRD, the bird comes out of the box.
-
-TODO check if you can pick up the sarcophagus and then DROP PEARL.
+This command drops the player's requested object in the current room. This respects containment. If the
+BIRD is in the BOX and you DROP BIRD, you drop the BOX with the BIRD in it.
 
 This is only used by the general "DROP" command handler.
 
@@ -3412,7 +3420,8 @@ COM_14_print_ok:
 This command puts the given object in the given room. This is similar to COM_18_move_object_to_current_room
 except the destination can be any room.
 
-Like COM_15, this breaks containment; only the target object moves and not any containers.
+This command explicitly breaks containment, which is how the code moves the bird to NOWHERE (after fighting
+the snake) without moving the BOX.
 
 ```code
 COM_15_move_object_to_room:
@@ -3438,18 +3447,16 @@ This command resurrects the player to continue the game. The player loses 10 poi
 each death. The player can only be resurrected three times. Each time gives a different
 funny message about "magic smoke".
 
-The lamp is turned off and moved to RM_01_BEFORE_ENTRANCE. The lamp count is reset to 0,
-paid for by those 10 points. All objects in the player's pack are dropped in the current
-room at time of death.
+The lamp is turned off and moved to RM_01_BEFORE_ENTRANCE. The lamp count is reset to 0.
+All objects in the player's pack are dropped in the current room at time of death.
 
 The player is moved just beyond the lamp to room M_02_IN_ENTRANCE. The player has to 
 backtrack to get the lamp.
 
-TODO verify this:
-
-You can do a BACK to return to the room you died in to collect your things. Then do a BACK
-again to return to the entrance. Once you move to get the lamp, the BACK location is
-changed. Thus you can't use BACK to return to the room you died in after you get the lamp.
+The BACK location is not touched. It remains the room you were in before you entered
+the room you died in. Thus, you can't use BACK-BACK to get to your lost objects. You would
+have to BACK-MOVE-BACK, but then the second BACK wouldn't return you to the entrance. You'd
+be deep in the pyramid without a lamp.
 
 ```code
 COM_05_death_and_resurrect:
@@ -3519,11 +3526,31 @@ nextResurrectMessage:
 
 # COM_08_print_score()
 
-TODO talk about the ambient light table
+This command prints the player's current score. You get 5 points for every treasure object in the backpack.
+You get 20 points for every treasure on the floor in the RM_02_IN_ENTRANCE.
 
--10 for each death
-20 points for each treasure. There are 11 treasure objects for max 220. 12 of the objects have the treasure
-bit set, but you either have the VASE or the VASE_ON_PILLOW -- never both.
+There are 12 objects with the "treasure" bit set. But two of them are different states of the vase (on the
+illow or not on the pillow). Only one of these vase objects is in play at a time. Thus, the max score
+is 20*11 = 220.
+
+You lose 10 points for each death. You could end up with a negative score, and this code handles the sign.
+
+In Colossal Cave, you also get points for exploring deep in the cave, freeing the bear, and killing the
+dragon. You also get points for dropping the "SPELUNKER TODAY" magazines in the "Witt's End" room.
+
+There are magazines in Pyramid too. The "EGYPTIAN WEEKLY" issues are located in the same place as in
+Colossal Cave (in RM_3B_ANTEROOM_OF_SEEKER instead of Woods_106 ANTEROOM LEADING TO A LARGE PASSAGE).
+There is no parallel to Witt's End in Pyramid, and the magazines have no purpose.
+
+The code in Pyramid has a per-room scoring system. There is a table with properties of each room. Each room
+gets two bytes. The first byte has only one flag -- the "natural light" bit. If the bit is not set, you
+need the LAMP to see.
+
+This score routine runs the table and adds the second byte of each room to the score. This gives the ability
+to score actions in a room, but the ability is never utilized. All the values are zero.
+
+The save/load game does cover this room table, so the original design was for it to change. Maybe the feature
+was never finished. Maybe this is where the magazines would be scored.
 
 ```code
 COM_08_print_score:
@@ -3681,12 +3708,26 @@ EndlessLoop:
 
 # COM_1B_load_game()
 
-TODO
+This function loads a saved game from tape.
 
-TODO "RCONT:" ; Label appears in unitialized memory in Code1.md!
+The save-game code below writes one extra byte beyond the game variables. It picks up the first byte from
+the object-description table. This isn't normally a problem, but if you were trying to share a save-game
+between the two different versions of the code (Level1 ROM and Level2 ROM), the mangled byte would print
+garbage when you see the retractable stone bridge.
+
+The fix would be to save one less byte. But instead, this code overwrites the pointers manually. And
+it writes FOUR bytes instead of just one.
+
+I would love to know why.
+
+From the unitialized memory discussed above, we know this code in the original
+source had the label "RCONT". TODO verify again
 
 ```code
 COM_1B_load_game:
+
+RCONT:  ; This label appears in unitialized memory in Code1.md!
+
 55F5: 21 A0 7F        LD      HL,$7FA0            ; {+code.PS_BE} "READY CASSETTE"
 55F8: CD AE 45        CALL    $45AE               ; {code.PrintPacked} Print message
 55FB: CD EE 45        CALL    $45EE               ; {code.WaitForKey} Wait on key
@@ -3698,7 +3739,7 @@ COM_1B_load_game:
 5609: CD 12 02        CALL    $0212               ; {hard.TapeOn} Turn on cassette 0
 560C: CD 96 02        CALL    $0296               ; {hard.ReadTapeLeader} Read tape leader
 560F: 21 45 4F        LD      HL,$4F45            ; {+code.AmbientLightTable} Load destination
-5612: 01 03 01        LD      BC,$0103            ; 259 bytes
+5612: 01 03 01        LD      BC,$0103            ; 259 bytes (should be 258)
 5615: 1E 00           LD      E,$00               ; Initialize checksum
 5617: E5              PUSH    HL                  ; ROM function ...
 5618: C5              PUSH    BC                  ; ... mangles ...
@@ -3732,8 +3773,8 @@ COM_1B_load_game:
 ;
 563F: CD F8 01        CALL    $01F8               ; {hard.TapeOff} Turn off the tape
 ;
-; We loaded 103 bytes starting at 4F45. This overwrites part of the object descriptions, which we
-; manually reset here. ?? why are we reading more than we need ??
+; We loaded 0x103 bytes starting at 4F45. This overwrites part of the object descriptions, which we
+; manually reset here. ?? why are we saving more than we need
 ;
 5642: 21 58 6D        LD      HL,$6D58            ; Reset the ...
 5645: 22 47 50        LD      ($5047),HL          ; {code.ObjectDescriptions} ... OBJ_01_BRIDGE_ROOM_0F ...
@@ -3745,10 +3786,19 @@ COM_1B_load_game:
 
 # COM_1C_save_game()
 
-TODO
+This function saves the current game to tape. It saves 259 bytes starting with the Room Table. This
+captures the room scores (if there were any), all the object states, and the game variables.
 
-Save 4F45 through 5047 That's one too many and picks up a byte from the ObjectDescriptions table (read only).
-The LoadGame code restores the first four bytes of this ObjectDescriptions table for some reason.
+It captures one byte too many. It should be 258 instead of 259. The extra byte is the LSB of the
+object description of the OBJ_01_BRIDGE_ROOM_OF. This shouldn't matter since the pointer doesn't
+change.
+
+But the pointers are different for the ROMLevel1 and ROMLevel2 code. The save-game data is portable
+between code versions except for this one overflow byte. If the code used 258 instead of 259, then
+you could share save-games. Because of this one byte overflow, the data isn't portable.
+
+To fix this overflow, the load_game comand manually overwrites the pointer after loading. It would 
+have been easier to fix the save length. Why this was done instead is a mystery to me.
 
 ```code
 COM_1C_save_game:
@@ -3764,7 +3814,7 @@ COM_1C_save_game:
 5668: CD 12 02        CALL    $0212               ; {hard.TapeOn} ... cassette 1
 566B: CD 87 02        CALL    $0287               ; {hard.WriteTapeLeader} Write the tape leader
 566E: 21 45 4F        LD      HL,$4F45            ; {+code.AmbientLightTable} 4F45 ...
-5671: 01 03 01        LD      BC,$0103            ; ... through 5047 ?? too many??
+5671: 01 03 01        LD      BC,$0103            ; ... through 5047 ?? one byte too many
 5674: 1E 00           LD      E,$00               ; Checksum as we go
 5676: E5              PUSH    HL                  ; Hold the memory pointer
 5677: C5              PUSH    BC                  ; Hold the count
@@ -3790,7 +3840,13 @@ COM_1C_save_game:
 
 # COM_1D_scramble_directions_print_ack()
 
-TODO
+This command rewrites all of the room scripts to change the compass points!
+
+The command PLUGH is a magic word in Colossal Cave to quickly move between strategic
+locations. In Pyramid, it scrambles the compass points by adding a random value (0..3)
+to each. If you keep typing PLUGH, you can eventually put them back.
+
+This is a unique feature to Pyramid; Colossal Cave does not do this.
 
 ```code
 COM_1D_scramble_directions_print_ack:

@@ -1,6 +1,7 @@
 ![Phoenix](Phoenix.jpg)
 
 >>> deploy:<br>
+>>>   +phoenix-t2fa0-pattern.svg<br>
 >>>   +Phoenix.jpg<br>
 >>>   +Phoenix.js<br>
 >>>   +sketch1s.jpg<br>
